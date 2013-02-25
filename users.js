@@ -1,5 +1,5 @@
 var sql = require('msnodesql');
-var conn_str = process.env.SQL_CONNECTION_STRING || 'Driver={SQL Server Native Client 11.0};Server={.\\sqlexpress};Database={wellscordoba};UID={wellsweb};PWD={wellsweb};';
+var conn_str = process.env.SQL_CONNECTION_STRING;
 
 var bcrypt = require('bcrypt');
 var salt = bcrypt.genSaltSync(10);
