@@ -1,6 +1,5 @@
 var sql = require('msnodesql');
 var conn_str = process.env.SQL_CONNECTION_STRING;
-
 var bcrypt = require('bcrypt');
 var salt = bcrypt.genSaltSync(10);
 
@@ -27,6 +26,7 @@ exports.findByName = function (name, callback) {
     if(err) return callback(err);
     conn.queryRaw("SELECT id, name, displayname, lastname, firstname, password, email FROM Users where name = ?", [name], function (err, results) {
       if(err) return callback(err);
+      
       if(!results.rows[0]) return callback(null , null);
 
       //create an object from the array of properties + metadata.

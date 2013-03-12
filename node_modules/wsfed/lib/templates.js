@@ -1,14 +1,11 @@
 var ejs = require('ejs');
-
 var fs = require('fs');
 var path = require('path');
-var formTemplateString = fs.readFileSync(path.join(__dirname, '../templates/wsfedform.ejs')).toString();
-var metadataTemplateString = fs.readFileSync(path.join(__dirname, '../templates/metadata.ejs')).toString();
 
-var formTemplate = ejs.compile(formTemplateString);
-var metadataTemplate = ejs.compile(metadataTemplateString);
+var templates = fs.readdirSync(path.join(__dirname, '../templates'));
 
-module.exports = {
-  form:     formTemplate,
-  metadata: metadataTemplate
-};
+templates.forEach(function (tmplFile) {
+  var content = fs.readFileSync(path.join(__dirname, '../templates', tmplFile));
+  var template = ejs.compile(content.toString());
+  exports[tmplFile.slice(0, -4)] = template;
+});

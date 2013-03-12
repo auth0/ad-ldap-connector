@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<s:Envelope 
+    xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+    <s:Body>
+        <GetFsTrustInformationResponse 
+            xmlns="http://schemas.microsoft.com/ActiveDirectory/FederationService/2005/07/" 
+            xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+            <GetFsTrustInformationResult>true</GetFsTrustInformationResult>
+            <fsVersion>
+                <SoftwareVersion>1</SoftwareVersion>
+                <Guid>26886a27-50ad-9695-3511-8d24a1a3a23b</Guid>
+                <Version>1</Version>
+            </fsVersion>
+            <trustInfo>
+                <verificationMethod>
+                    <TrustedCertificates>
+                        <CertInfo>
+                            <X509Thumbprint><%= thumbprint %></X509Thumbprint>
+                        </CertInfo>
+                    </TrustedCertificates>
+                    <RevocationCheckFlags>None</RevocationCheckFlags>
+                </verificationMethod>
+                <certificates>
+                    <SerializedStore><%= cert %></SerializedStore>
+                </certificates>
+                <hostedRealmUri><%= location %></hostedRealmUri>
+                <lsUrl><%= location %></lsUrl>
+            </trustInfo>
+        </GetFsTrustInformationResponse>
+    </s:Body>
+</s:Envelope>

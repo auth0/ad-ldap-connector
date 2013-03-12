@@ -2,6 +2,8 @@ Create SAML assertions.
 
 NOTE: currently supports SAML 1.1 tokens
 
+[![Build Status](https://travis-ci.org/auth0/node-saml.png)](https://travis-ci.org/auth0/node-saml)
+
 ### Usage
 
 ```js
