@@ -26,6 +26,7 @@
     "passport-local": "~0.1.6",
     "bcrypt": "~0.7.5",
     "ejs": "~0.8.3",
-    "wsfed": "~0.2.8"
+    "wsfed": "~0.2.8",
+    "cookie-sessions": "0.0.2"
   }
 }
