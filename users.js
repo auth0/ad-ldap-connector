@@ -1,7 +1,6 @@
 var sql = require('msnodesql');
 var conn_str = process.env.SQL_CONNECTION_STRING;
 var bcrypt = require('bcrypt');
-var salt = bcrypt.genSaltSync(10);
 
 function mapProfileToPassportProfile (userProfile) {
   var passportUser = {

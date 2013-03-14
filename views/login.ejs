@@ -1,20 +1,34 @@
 <html>
 <head>
-	<title>Login to Wells Cordoba Bank (sql demo)</title>
+	<title><%= title %></title>
+	<link rel="stylesheet" href="/site.css">
 </head>
-<body>
-	<form action="<%= url %>" method="post">
-		<div>
-			<label for="username">Username:</label>
-			<input id="username" type="text" name="username"/><br/>
+<body id="login">
+	<div id="login-wrapper" class="png_bg">
+		<div id="login-top">
+			<img src="/imgs/logo.png" alt="<%= title %>" title="<%= title %>" />			
 		</div>
-		<div>
-			<label for="password">Password:</label>
-			<input id="password" type="password" name="password"/>
+		
+		<div id="login-content">
+			<form method="post">					
+				<p>
+					<label>Username</label>
+					<input value="" name="username" class="text-input" type="text" />
+				</p>
+				<br style="clear: both;" />
+				<p>
+					<label>Password</label>
+					<input name="password" class="text-input" type="password" />
+				</p>
+				<br style="clear: both;" />
+				<p>
+					<input class="button" type="submit" value="Sign In" />
+				</p>
+				
+			</form>
 		</div>
-		<div>
-			<input type="submit" value="Submit"/>
-		</div>
-	</form>
+	</div>
+	<div id="dummy"></div>
+	<div id="dummy2"></div>
 </body>
 </html>
