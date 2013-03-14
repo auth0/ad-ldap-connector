@@ -111,4 +111,20 @@ describe('wsfed', function () {
       });
     });
   });
+
+  describe('when using an invalid callback url', function () {
+    it('should return error', function(done){
+      request.get({
+        jar: request.jar(), 
+        uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:auth0:superclient&wreply=http://google.comcomcom'
+      }, function (err, response, b){
+        if(err) return done(err);
+        expect(response.statusCode)
+          .to.equal(400);
+        expect(b)
+          .to.equal('invalid wreply parameter');
+        done();
+      });
+    });
+  });
 });

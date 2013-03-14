@@ -7,7 +7,7 @@ function getEndpointAddress (req, endpointPath) {
   endpointPath = endpointPath || 
     (req.originalUrl.substr(0, req.originalUrl.length - URL_PATH.length));
 
-  var protocol = req.headers['x-iisnode-https'] && req.headers['x-iisnode-https'] == 'ON' ? 
+  var protocol = req.headers['x-iisnode-https'] && req.headers['x-iisnode-https'] == 'on' ? 
                  'https' : 
                  (req.headers['x-forwarded-proto'] || req.protocol);
   
