@@ -20,13 +20,12 @@
   "author": "Auth0",
   "license": "MIT",
   "dependencies": {
-    "msnodesql": "~0.2.1",
     "express": "~3.1.0",
     "passport": "~0.1.16",
-    "passport-local": "~0.1.6",
     "bcrypt": "~0.7.5",
     "ejs": "~0.8.3",
-    "wsfed": "~0.2.8",
-    "cookie-sessions": "0.0.2"
+    "cookie-sessions": "0.0.2",
+    "passport-windowsauth": "~0.1.1",
+    "wsfed": "~0.3.0"
   }
 }

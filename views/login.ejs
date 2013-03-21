@@ -1,34 +1,63 @@
-<html>
+<!doctype html>
+<!--[if lt IE 7 ]><html class="ie ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]><html class="ie ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]><html class="ie ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--> 	<html lang="en"> <!--<![endif]-->
 <head>
+
+	<!-- General Metas -->
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">	<!-- Force Latest IE rendering engine -->
 	<title><%= title %></title>
-	<link rel="stylesheet" href="/site.css">
+	<!--[if lt IE 9]>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	
+	<!-- Mobile Specific Metas -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" /> 
+	
+	<!-- Stylesheets -->
+	<link rel="stylesheet" href="css/base.css">
+	<link rel="stylesheet" href="css/skeleton.css">
+	<link rel="stylesheet" href="css/layout.css">
+	<link rel="stylesheet" href="css/zocial.css">
+	
 </head>
-<body id="login">
-	<div id="login-wrapper" class="png_bg">
-		<div id="login-top">
-			<img src="/imgs/logo.png" alt="<%= title %>" title="<%= title %>" />			
-		</div>
-		
-		<div id="login-content">
-			<form method="post">					
-				<p>
-					<label>Username</label>
-					<input value="" name="username" class="text-input" type="text" />
-				</p>
-				<br style="clear: both;" />
-				<p>
-					<label>Password</label>
-					<input name="password" class="text-input" type="password" />
-				</p>
-				<br style="clear: both;" />
-				<p>
-					<input class="button" type="submit" value="Sign In" />
-				</p>
-				
-			</form>
-		</div>
+<body>
+<!-- 
+	<div class="notice">
+		<a href="" class="close">close</a>
+		<p class="warn">Whoops! We didn't recognise your username or password. Please try again.</p>
 	</div>
-	<div id="dummy"></div>
-	<div id="dummy2"></div>
+ -->
+
+
+	<!-- Primary Page Layout -->
+
+	<div class="container">
+		
+		<div class="form-bg">
+			<form method="post">					
+				<h2><%= title %></h2>
+				<p><input name="username" type="text" placeholder="Username"></p>
+				<p><input name="password" type="password" placeholder="Password"></p>
+				<!-- <label for="remember">
+				  <input type="checkbox" id="remember" value="remember" />
+				  <span>Remember me on this computer</span>
+				</label> -->
+				<!-- <button type="submit"></button> -->
+				<button type="submit" class="zocial windows">Login</a>
+			<form>
+		</div>
+
+	
+		<!-- <p class="forgot">Forgot your password? <a href="">Click here to reset it.</a></p> -->
+		<p class="forgot">Powered by <a href="http://auth0.com">Auth0</a> Active Directory connector.</p>
+
+
+	</div><!-- container -->
+
+	
+<!-- End Document -->
 </body>
 </html>

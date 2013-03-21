@@ -8,7 +8,6 @@ require('./setupPassport');
 var cookieSessions = require('cookie-sessions');
 var app = express();
 
-
 //configure the webserver
 app.configure(function(){
   this.set('view engine', 'ejs');
@@ -19,7 +18,7 @@ app.configure(function(){
   this.use(express.cookieParser());
   this.use(express.bodyParser());
   this.use(cookieSessions({
-    session_key:    'sqlfs',
+    session_key:    'microadfs',
     secret:         process.env.SESSION_SECRET
   }));
 

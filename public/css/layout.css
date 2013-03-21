@@ -1,0 +1,214 @@
+
+/* Table of Content
+==================================================
+    #Site Styles
+    #Page Styles
+    #Media Queries
+    #Font-Face */
+    
+/* #Site Styles
+================================================== */
+
+/* #Page Styles
+================================================== */
+    .notice {
+        width: 100%;
+        background: #fff;
+        border-bottom: 4px solid #eaeff3;
+        color: #e34848;
+        position: fixed;
+        top: 0;
+        font-size: 14px;
+        font-weight: bold;
+        height: 45px;
+        -moz-box-shadow:0px 0px 3px 1px rgba(0,0,0,0.3);
+        -webkit-box-shadow:0px 0px 3px 1px rgba(0,0,0,0.3);
+        box-shadow:0px 0px 3px 1px rgba(0,0,0,0.3);
+    }
+    
+    .notice p.warn {
+        text-align: center;
+        line-height: 45px;
+    }
+    
+    .notice a.close {
+        width: 9px;
+        height: 9px;
+        float: right;
+        background: url(../images/close.png) no-repeat top left;
+        text-indent: -9999px;
+        margin-right: 15px;
+        margin-top: 20px;
+    }
+    
+    .notice a.close:hover {
+        background: url(../images/close-hover.png) no-repeat top left;      
+    }
+    
+    .form-bg {
+        width: 370px;
+        height: 248px;
+        -moz-border-radius:9px;
+        -webkit-border-radius:9px;
+        border-radius:9px;
+        margin: 150px auto 0;
+        background: url(../images/form-bg.png) top left;
+        padding: 8px 0 0 8px; 
+        }
+    
+    .form-bg form {
+        width: 360px;
+        height: 239px;
+        background: #fff url(../images/bg_form.jpg) repeat-x top left;      
+        -moz-border-radius:4px;
+        -webkit-border-radius:4px;
+        border-radius:4px;
+        -moz-box-shadow:0px 1px 3px 2px rgba(0,0,0,0.1);
+        -webkit-box-shadow:0px 1px 3px 2px rgba(0,0,0,0.1);
+        box-shadow:0px 1px 3px 2px rgba(0,0,0,0.1);
+    }
+    
+    .form-bg form h2 {
+        font-size: 14px;
+        font-weight: bold;
+        color: #555555;
+        font-family:"HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        text-shadow: 0 1px 0 #fff;
+        filter: dropshadow(color=#fff, offx=0, offy=1);
+        line-height: 45px;
+        margin-bottom: 24px;
+        margin-left:25px;
+    }
+    
+    input[type="text"], input[type="password"]{
+        box-shadow: 0px 0px 0px 4px #f2f5f7;
+        width: 290px;
+        height: 33px;
+
+        padding: 0 10px 0 10px;
+        margin: 0 auto;
+        color: #aeaeae;
+        border: 1px solid #bec2c4;
+    }
+    
+    input[type="text"]:focus, input[type="password"]:focus{
+        box-shadow: 0px 0px 0px 4px #e0f1fc;
+        border:1px solid #7dc6dd;
+    }
+    
+    input[type="checkbox"] {
+        vertical-align: middle;
+    }
+    
+    
+
+.login{
+width: 82px;
+height: 32px;
+}
+.login_hover{
+width: 82px;
+height: 32px;
+}
+
+    button {
+        float: right;
+        margin-right: 24px;
+    }
+
+ /*   
+    
+    button:hover {
+        background:url(../images/login.png) no-repeat;
+        background-position: -90px -3px;
+        width:82px;
+        height:32px;
+        border:0px;
+    }
+    
+    button:active {
+        background:url(../images/login.png) no-repeat;
+        background-position: -176px -3px;
+        width:82px;
+        height:32px;
+        border:0px;
+    }   */
+    
+    
+    label {
+        display: inline;
+        margin-left: 24px;
+        vertical-align: middle;
+    }
+    
+    label span {
+        color: 555555;
+        font-size: 12px;
+    }
+    
+    p.forgot {
+        text-align: center;
+        margin-top: 10px;
+        /*margin-left:-55px;*/
+        color: rgb(94, 80, 80);
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    p.forgot a {
+        color: rgba(78, 81, 119, 0.91);
+        text-decoration: none;
+        transition: color 0.5s linear;
+        -moz-transition: color 0.5s linear;
+        -webkit-transition: color 0.5s linear;
+        -o-transition: color 0.5s linear;
+    }
+
+    p.forgot a:hover {
+        color: #65c4e5;
+    }
+
+    
+
+/* #Media Queries
+================================================== */
+    
+    /* iPad Portrait/Browser */
+    @media only screen and (min-width: 768px) and (max-width: 991px) {}
+    
+    /* Mobile/Browser */
+    @media only screen and (max-width: 767px) {}
+    
+    /* Mobile Landscape/Browser */
+    @media only screen and (min-width: 480px) and (max-width: 767px) {}
+    
+    /* Anything smaller than standard 960 */
+    @media only screen and (max-width: 959px) {}
+    
+    /* iPad Portrait Only */
+    @media only screen and (min-width: 768px) and (max-width: 991px) and (max-device-width: 1000px) {}
+    
+    /* Mobile Only */
+    @media only screen and (max-width: 767px) and (max-device-width: 1000px) {}
+    
+    /* Mobile Landscape Only */
+    @media only screen and (min-width: 480px) and (max-width: 767px) and (max-device-width: 1000px) {}
+    
+
+/* #Font-Face
+================================================== */
+/*  This is the proper syntax for an @font-face file 
+        Just create a "fonts" folder at the root, 
+        copy your FontName into code below and remove
+        comment brackets */
+        
+/*  @font-face {
+        font-family: 'FontName';
+        src: url('../fonts/FontName.eot');
+        src: url('../fonts/FontName.eot?iefix') format('eot'),
+             url('../fonts/FontName.woff') format('woff'),
+             url('../fonts/FontName.ttf') format('truetype'),
+             url('../fonts/FontName.svg#webfontZam02nTh') format('svg');
+        font-weight: normal;
+        font-style: normal; }
+*/

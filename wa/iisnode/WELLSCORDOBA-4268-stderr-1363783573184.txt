@@ -1,0 +1,12 @@
+Application has thrown an uncaught exception and is terminated:
+Error: This socket is closed.
+    at Socket._write (net.js:519:19)
+    at Socket.write (net.js:511:15)
+    at Client._send (C:\inetpub\micro-ad-fs\node_modules\ldapjs\lib\client\client.js:893:17)
+    at Client.unbind (C:\inetpub\micro-ad-fs\node_modules\ldapjs\lib\client\client.js:693:15)
+    at Pool.destroy (C:\inetpub\micro-ad-fs\node_modules\ldapjs\lib\client\pool.js:93:14)
+    at Pool._kill (C:\inetpub\micro-ad-fs\node_modules\ldapjs\node_modules\pooling\lib\pool.js:549:22)
+    at Client.__poolingWatch (C:\inetpub\micro-ad-fs\node_modules\ldapjs\node_modules\pooling\lib\pool.js:609:38)
+    at Client.g (events.js:192:14)
+    at Client.EventEmitter.emit (events.js:96:17)
+    at Socket.onClose (C:\inetpub\micro-ad-fs\node_modules\ldapjs\lib\client\client.js:120:10)

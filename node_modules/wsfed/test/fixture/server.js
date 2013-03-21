@@ -39,9 +39,6 @@ module.exports.start = function(options, callback){
       req.user = fakeUser;
       next();
     });
-
-
-
   });
 
   app.get('/wsfed/FederationMetadata/2007-06/FederationMetadata.xml',
@@ -59,11 +56,18 @@ module.exports.start = function(options, callback){
         cert:  credentials.cert
       }));
 
+  function getPostURL (wtrealm, wreply, req, callback) {
+    if(!wreply || wreply == 'http://office.google.com'){
+      callback(null, 'http://office.google.com');
+    }
+    callback();
+  }
+
   //configure wsfed middleware
   app.get('/wsfed', 
       wsfed.auth(xtend({}, {
         issuer:             'fixture-test',
-        callbackUrl:        'http://office.google.com',
+        getPostURL:         getPostURL,
         cert:               credentials.cert,
         key:                credentials.key
       }, options)));

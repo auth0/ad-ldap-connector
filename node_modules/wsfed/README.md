@@ -22,7 +22,7 @@ Options
 | --------------------|:-------------------------------------------------| ---------------------------------------------|
 | cert                | public key used by this identity provider        | REQUIRED                                     |
 | key                 | private key used by this identity provider       | REQUIRED                                     |
-| callbackUrl         | the callback to post the token                   | REQUIRED                                     |
+| getPostURL          | get the url to post the token f(wtrealm, wreply, req, callback)                | REQUIRED                                     |
 | issuer              | the name of the issuer of the token              | REQUIRED                                     |
 | audience            | the audience for the saml token                  | req.query.wtrealm || req.query.wreply        |
 | getUserFromRequest  | how to extract the user information from request | function(req) { return req.user; }           |
@@ -36,10 +36,12 @@ Add the middleware as follows:
 
 ~~~javascript
 app.get('/wsfed', wsfed.auth({
-  issuer:   'the-issuer',
-  callback: 'http://myapp/callback',
-  cert:     fs.readFileSync(path.join(__dirname, 'some-cert.pem')),
-  key:      fs.readFileSync(path.join(__dirname, 'some-cert.key')),
+  issuer:     'the-issuer',
+  cert:       fs.readFileSync(path.join(__dirname, 'some-cert.pem')),
+  key:        fs.readFileSync(path.join(__dirname, 'some-cert.key')),
+  getPostUrl: function (wtrealm, wreply, req, callback) { 
+                return cb( null, 'http://someurl.com')
+              }
 }));
 ~~~~
 
