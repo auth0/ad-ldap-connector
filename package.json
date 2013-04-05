@@ -26,6 +26,8 @@
     "ejs": "~0.8.3",
     "cookie-sessions": "0.0.2",
     "passport-windowsauth": "~0.1.1",
-    "wsfed": "~0.3.0"
+    "wsfed": "~0.3.0",
+    "nconf": "~0.6.7",
+    "connector-setup": "git+https://github.com/auth0/connector-setup.git"
   }
 }

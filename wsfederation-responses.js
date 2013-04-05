@@ -9,12 +9,14 @@ var credentials = {
   key:  fs.readFileSync(path.join(__dirname, '/certs/cert.key'))
 };
 
+var nconf = require('nconf');
+
 exports.token = wsfed.auth({
   issuer:      issuer,
   cert:        credentials.cert,
   key:         credentials.key,
   getPostURL:  function (wtrealm, wreply, req, callback) {
-    var realmPostURLs = process.env['REALM-' + wtrealm];
+    var realmPostURLs = nconf.get(wtrealm);
     if (realmPostURLs) {
       realmPostURLs = realmPostURLs.split(',');
       if (wreply && ~realmPostURLs.indexOf(wreply)) {
@@ -29,7 +31,7 @@ exports.token = wsfed.auth({
 });
 
 exports.metadata = function () {
-  if (process.env.AUTHENTICATION === 'INTEGRATED') {
+  if (nconf.get('AUTHENTICATION') === 'INTEGRATED') {
     return wsfed.metadata({
         cert:   credentials.cert,
         issuer: issuer,
