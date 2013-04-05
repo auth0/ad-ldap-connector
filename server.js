@@ -2,9 +2,9 @@ var nconf = require('nconf');
 var connectorSetup = require('connector-setup');
 
 nconf.env('||')
-     .file({ file: __dirname + '/config.json' })
+     .file({ file: __dirname + '/config.json', logicalSeparator: '||' })
      .defaults({
-        PORT:           5000,
+        PORT:           4000,
         SESSION_SECRET: 'a1b2c3d4567',
         AUTHENTICATION: 'FORM'
      });
@@ -40,7 +40,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     this.use(express.cookieParser());
     this.use(express.bodyParser());
     this.use(cookieSessions({
-      session_key:    'microadfs',
+      session_key:    'adsad',
       secret:         nconf.get('SESSION_SECRET')
     }));
 
@@ -52,5 +52,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   require('./endpoints').install(app);
 
   http.createServer(app)
-      .listen(nconf.get('PORT'));
+      .listen(nconf.get('PORT'), function () {
+        console.log('listening on http://localhost:' + nconf.get('PORT'));
+      });
 });

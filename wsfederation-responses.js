@@ -2,7 +2,6 @@ var fs = require('fs');
 var path = require('path');
 var wsfed = require('wsfed');
 
-var issuer = process.env.WSFED_ISSUER;
 
 var credentials = {
   cert: fs.readFileSync(path.join(__dirname, '/certs/cert.pem')),
@@ -10,6 +9,7 @@ var credentials = {
 };
 
 var nconf = require('nconf');
+var issuer = nconf.get('WSFED_ISSUER');
 
 exports.token = wsfed.auth({
   issuer:      issuer,

@@ -1,12 +1,13 @@
 var passport = require('passport');
 var wsfederationResponses = require('./wsfederation-responses');
+var nconf = require('nconf');
 
 exports.install = function (app) {
 
-  if (process.env.AUTHENTICATION === 'FORM') {
+  if (nconf.get('AUTHENTICATION') === 'FORM') {
     app.get('/wsfed', 
       function (req, res, next) {
-        if (req.session.user) {
+        if (req.session.user && req.query.wprompt !== 'consent') {
           req.user = req.session.user;
           return wsfederationResponses.token(req, res);
         }
@@ -14,7 +15,7 @@ exports.install = function (app) {
       },
       function (req, res) {
         return res.render('login', {
-          title: process.env.SITE_NAME
+          title: nconf.get('SITE_NAME')
         });
       });
 

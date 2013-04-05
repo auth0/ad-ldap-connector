@@ -16,7 +16,7 @@ if (process.env.LDAP_URL) {
 } else {  
   //LDAP connectivity is not yet setup, use a fake user.
   var LocalStrategy = require('passport-local').Strategy;
-  passport.use('WindowsStrategy', new LocalStrategy(function (username, password, done) {
+  passport.use('WindowsAuthentication', new LocalStrategy(function (username, password, done) {
     if (username === 'test' && password === '123') {
       return done(null, {
                           id:           123,

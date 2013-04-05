@@ -27,7 +27,7 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
     function (cb) {
       provisioningTicket = nconf.get('PROVISIONING_TICKET');
 
-      if(provisioningTicket) return;
+      if(provisioningTicket) return cb();
 
       program.prompt('Please enter the ticket number: ', function (pt) {
         provisioningTicket = pt;
