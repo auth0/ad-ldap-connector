@@ -23,11 +23,11 @@
     "express": "~3.1.0",
     "passport": "~0.1.16",
     "ejs": "~0.8.3",
-    "cookie-sessions": "0.0.2",
+    "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/master",
     "passport-windowsauth": "~0.1.1",
     "wsfed": "~0.3.0",
-    "nconf": "~0.6.7",
-    "connector-setup": "git+https://github.com/auth0/connector-setup.git",
+    "nconf":           "https://github.com/jfromaniello/nconf/tarball/master",
+    "connector-setup": "https://github.com/auth0/connector-setup/tarball/master",
     "passport-local": "~0.1.6"
   }
 }
