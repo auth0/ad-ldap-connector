@@ -15,16 +15,19 @@ exports.install = function (app) {
       },
       function (req, res) {
         return res.render('login', {
-          title: nconf.get('SITE_NAME')
+          title: nconf.get('SITE_NAME'),
+          errors: (req.session.messages || []).join('<br />')
         });
       });
 
     app.post('/wsfed', function (req, res, next) {
-        passport.authenticate('WindowsAuthentication', { 
+        passport.authenticate('WindowsAuthentication', {
           failureRedirect: req.url,
+          failureMessage: "The username or password you entered is incorrect.",
           session: false
         })(req, res, next);
       }, function (req, res, next) {
+        delete req.session.messages;
         req.session.user = req.user;
         next();
       }, wsfederationResponses.token);

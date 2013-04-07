@@ -24,14 +24,12 @@
 	
 </head>
 <body>
-<!-- 
-	<div class="notice">
-		<a href="" class="close">close</a>
-		<p class="warn">Whoops! We didn't recognise your username or password. Please try again.</p>
-	</div>
- -->
-
-
+	<% if (errors && errors.length > 0) { %>
+		<div class="notice">
+			<p class="warn"><%= errors %></p>
+		</div>
+	<% } %>
+	
 	<!-- Primary Page Layout -->
 
 	<div class="container">
