@@ -1,13 +1,14 @@
 var passport = require('passport');
 var WindowsStrategy = require('passport-windowsauth');
+var nconf = require('nconf');
 
-if (process.env.LDAP_URL) {
+if (nconf.get('LDAP_URL')) {
   passport.use(new WindowsStrategy({ 
     ldap: {
-      url:             process.env.LDAP_URL,
-      base:            process.env.LDAP_BASE,
-      bindDN:          process.env.LDAP_BIND_USER,
-      bindCredentials: process.env.LDAP_BIND_PASSWORD
+      url:             nconf.get("LDAP_URL"),
+      base:            nconf.get("LDAP_BASE"),
+      bindDN:          nconf.get("LDAP_BIND_USER"),
+      bindCredentials: nconf.get("LDAP_BIND_PASSWORD")
     },
     integrated:      false
   }, function(user, done){
