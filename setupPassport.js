@@ -27,10 +27,7 @@ if (nconf.get('LDAP_URL')) {
                             familyName: 'user',
                             givenName:  'test'
                           }, 
-                          emails:   [ { value: 'foo@bar.com'} ],
-                          validPassword: function (pwd) {
-                            return pwd === '123';
-                          }
+                          emails:   [ { value: 'foo@bar.com'} ]
                         });
     }
     done(null, false);
