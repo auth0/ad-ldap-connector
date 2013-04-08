@@ -1,3 +1,5 @@
+require('colors');
+
 var nconf = require('nconf');
 var connectorSetup = require('connector-setup');
 

@@ -31,11 +31,13 @@ exports.install = function (app) {
           session: false
         })(req, res, next);
       }, function (req, res, next) {
+        console.log('user ' + req.user.displayName.green + ' authenticated');
         req.session.user = req.user;
         next();
       }, wsfederationResponses.token);
 
     app.get('/logout', function (req, res) {
+      console.log('user ' + req.session.user.displayName.green + ' logged out');
       delete req.session;
       res.send('bye');
     });
