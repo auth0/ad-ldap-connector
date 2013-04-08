@@ -14,9 +14,13 @@ exports.install = function (app) {
         next();
       },
       function (req, res) {
+        var messages = (req.session.messages || []).join('<br />');
+
+        delete req.session.messages;
+
         return res.render('login', {
           title: nconf.get('SITE_NAME'),
-          errors: (req.session.messages || []).join('<br />')
+          errors: messages
         });
       });
 
@@ -27,7 +31,6 @@ exports.install = function (app) {
           session: false
         })(req, res, next);
       }, function (req, res, next) {
-        delete req.session.messages;
         req.session.user = req.user;
         next();
       }, wsfederationResponses.token);
