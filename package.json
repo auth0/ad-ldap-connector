@@ -25,7 +25,7 @@
     "ejs": "~0.8.3",
     "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/master",
     "passport-windowsauth": "~0.1.1",
-    "wsfed": "~0.3.0",
+    "wsfed": "~0.3.4",
     "nconf":           "https://github.com/jfromaniello/nconf/tarball/master",
     "connector-setup": "https://github.com/auth0/connector-setup/tarball/master",
     "passport-local": "~0.1.6"

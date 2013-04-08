@@ -44,10 +44,10 @@ PassportProfileMapper.prototype.getClaims = function () {
   claims[fm.givenname]  = this._pu.name.givenName;
   claims[fm.surname]    = this._pu.name.familyName;
   
-  var mappedAttributes = ['emails', 'displayName', 'name', 'id'];
+  var dontRemapAttributes = ['emails', 'displayName', 'name', 'id', '_json'];
 
   Object.keys(this._pu).filter(function (k) {
-      return !~mappedAttributes.indexOf(k);
+      return !~dontRemapAttributes.indexOf(k);
     }).forEach(function (k) {
       claims['http://schemas.passportjs.com/' + k] = this._pu[k];
     }.bind(this));
