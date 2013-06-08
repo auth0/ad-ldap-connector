@@ -51,7 +51,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   });
 
 
-  require('./endpoints').install(app);
+  require('./lib/endpoints').install(app);
 
   http.createServer(app)
       .listen(nconf.get('PORT'), function () {
