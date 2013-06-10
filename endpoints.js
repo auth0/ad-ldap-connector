@@ -3,10 +3,9 @@ var wsfederationResponses = require('./lib/wsfederation-responses');
 var nconf                 = require('nconf');
 
 exports.install = function (app) {
-
   app.get('/wsfed',
     function (req, res, next) {
-      passport.authenticate({
+      passport.authenticate(['IISIntegrated', 'ApacheKerberos', 'WindowsAuthentication'], {
         failureRedirect: req.url,
         failureMessage: "The username or password you entered is incorrect.",
         session: false
@@ -18,7 +17,7 @@ exports.install = function (app) {
       })(req, res, next);
     },
     function (req, res, next) {
-      if (req.session.user && req.query.wprompt !== 'consent') {
+      if (req.session.user) {
         req.user = req.session.user;
         return wsfederationResponses.token(req, res);
       }

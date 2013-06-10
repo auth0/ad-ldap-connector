@@ -27,7 +27,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   var passport = require('passport');
 
 
-  require('./setupPassport');
+  require('./lib/setupPassport');
 
   var cookieSessions = require('cookie-sessions');
   var app = express();
@@ -51,7 +51,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   });
 
 
-  require('./lib/endpoints').install(app);
+  require('./endpoints').install(app);
 
   http.createServer(app)
       .listen(nconf.get('PORT'), function () {
