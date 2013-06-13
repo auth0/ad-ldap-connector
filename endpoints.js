@@ -3,6 +3,10 @@ var wsfederationResponses = require('./lib/wsfederation-responses');
 var nconf                 = require('nconf');
 
 exports.install = function (app) {
+  app.get('/test-iis', function (req, res) {
+    res.send(200, 'worked! your iis user is: ' + req.headers['x-iisnode-logon_user']);
+  });
+
   app.get('/wsfed',
     function (req, res, next) {
       var strategies = nconf.get('LDAP_URL') ?
