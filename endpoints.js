@@ -5,7 +5,11 @@ var nconf                 = require('nconf');
 exports.install = function (app) {
   app.get('/wsfed',
     function (req, res, next) {
-      passport.authenticate(['IISIntegrated', 'ApacheKerberos', 'WindowsAuthentication'], {
+      var strategies = nconf.get('LDAP_URL') ?
+                          ['IISIntegrated', 'ApacheKerberos', 'WindowsAuthentication'] :
+                          ['WindowsAuthentication'];
+
+      passport.authenticate(strategies, {
         failureRedirect: req.url,
         failureMessage: "The username or password you entered is incorrect.",
         session: false
