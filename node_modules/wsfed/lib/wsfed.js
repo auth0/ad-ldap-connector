@@ -61,7 +61,7 @@ module.exports = function(options) {
       cert:                 options.cert,
       key:                  options.key,
       issuer:               asResource(options.issuer),
-      lifetimeInSeconds:    3600,
+      lifetimeInSeconds:    options.lifetime || (60 * 60 * 8),
       audiences:            audience,
       attributes:           claims,
       nameIdentifier:       ni.nameIdentifier,

@@ -47,7 +47,7 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
     function (cb) {
       nconf.set('PROVISIONING_TICKET', provisioningTicket);
       nconf.set('WSFED_ISSUER', info.connectionDomain);
-      nconf.set('SITE_NAME', info.connectionDomain);
+      nconf.set('SITE_NAME', nconf.get('SITE_NAME') || info.connectionDomain);
       nconf.set(info.realm.name, info.realm.postTokenUrl);
       extraEmptyVars.forEach(function (ev) {
         if (!nconf.get(ev)) nconf.set(ev, '');
