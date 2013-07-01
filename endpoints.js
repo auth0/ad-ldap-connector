@@ -1,8 +1,18 @@
 var passport              = require('passport');
 var wsfederationResponses = require('./lib/wsfederation-responses');
 var nconf                 = require('nconf');
+var Users                 = require('./lib/users');
 
 exports.install = function (app) {
+  var users = new Users();
+
+  app.get('/users', function (req, res) {
+    users.list(req.query.criteria, function (err, users) {
+      if (err) return res.send(500);
+      res.json(users);
+    });
+  });
+
   app.get('/test-iis', function (req, res) {
     res.send(200, 'worked! your iis user is: ' + req.headers['x-iisnode-logon_user']);
   });
