@@ -1,15 +1,7 @@
 require('colors');
+require('./lib/initConf');
 
-var nconf = require('nconf');
 var connectorSetup = require('connector-setup');
-
-nconf.env('||')
-     .file({ file: __dirname + '/config.json', logicalSeparator: '||' })
-     .defaults({
-        PORT:           4000,
-        SESSION_SECRET: 'a1b2c3d4567',
-        AUTHENTICATION: 'FORM'
-     });
 
 var emptyVars = [ 'LDAP_URL',
                   'LDAP_BASE',
