@@ -7,7 +7,11 @@ exports.install = function (app) {
   var users = new Users();
 
   app.get('/users', function (req, res) {
-    users.list(req.query.criteria, function (err, users) {
+    var options = {
+      limit: req.query.limit
+    };
+
+    users.list(req.query.criteria, options, function (err, users) {
       if (err) return res.send(500);
       res.json(users);
     });
