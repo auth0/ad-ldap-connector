@@ -43,6 +43,7 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
     
     nconf.set('SERVER_URL', serverUrl);
     nconf.set('LAST_SENT_THUMBPRINT', getCurrentThumbprint(workingPath));
+    nconf.set('APP_SIGNING_KEY', response.body.appSigningKey || '');
 
     console.log(('Connection to ' + connectionInfo.appName + ' configured.').green);
     cb();
