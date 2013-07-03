@@ -11,7 +11,7 @@ exports.install = function (app) {
   var validateAccessToken = function (req, res, next) {
     if (!req.headers.token) res.send(403);
 
-    jwt.verify(req.headers.token, nconf.get('APP_SIGNING_KEY'), function (err) {
+    jwt.verify(req.headers.token, nconf.get('TENANT_SIGNING_KEY'), function (err) {
       if (err) {
         console.log('Validate Access Token Error', err);
         return res.send(401);
