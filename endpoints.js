@@ -1,12 +1,27 @@
 var passport              = require('passport');
-var wsfederationResponses = require('./lib/wsfederation-responses');
 var nconf                 = require('nconf');
+var jwt                   = require('jsonwebtoken');
+
+var wsfederationResponses = require('./lib/wsfederation-responses');
 var Users                 = require('./lib/users');
 
 exports.install = function (app) {
   var users = new Users();
 
-  app.get('/users', function (req, res) {
+  var validateAccessToken = function (req, res, next) {
+    if (!req.headers.token) res.send(403);
+
+    jwt.verify(req.headers.token, nconf.get('APP_SIGNING_KEY'), function (err) {
+      if (err) {
+        console.log('Validate Access Token Error', err);
+        return res.send(401);
+      }
+
+      next();
+    });
+  };
+
+  app.get('/users', validateAccessToken, function (req, res) {
     var options = {
       limit: req.query.limit
     };
