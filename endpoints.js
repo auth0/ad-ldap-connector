@@ -9,9 +9,11 @@ exports.install = function (app) {
   var users = new Users();
 
   var validateAccessToken = function (req, res, next) {
-    if (!req.headers.token) res.send(403);
+    if (!req.headers.authorization) return res.send(403);
 
-    jwt.verify(req.headers.token, nconf.get('TENANT_SIGNING_KEY'), function (err) {
+    var token = req.headers.authorization.replace('Bearer ', '');
+
+    jwt.verify(token, nconf.get('TENANT_SIGNING_KEY'), function (err) {
       if (err) {
         console.log('Validate Access Token Error', err);
         return res.send(401);
