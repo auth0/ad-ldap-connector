@@ -1,4 +1,5 @@
 iisnode/*
+certs/cert.*
 server.js.debug/*
 npm-debug.log
 /wa/iisnode/*
