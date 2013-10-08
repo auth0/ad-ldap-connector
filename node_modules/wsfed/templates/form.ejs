@@ -7,7 +7,7 @@
         <input type="hidden" name="wa" value="wsignin1.0">
         <input type="hidden" 
                name="wresult" 
-               value="<%= '<t:RequestSecurityTokenResponse Context="'+ wctx + '" xmlns:t="http://schemas.xmlsoap.org/ws/2005/02/trust"><t:RequestedSecurityToken>' + signedAssertion + '</t:RequestedSecurityToken></t:RequestSecurityTokenResponse>' %>">
+               value="<%= '<t:RequestSecurityTokenResponse Context="'+ escapedWctx + '" xmlns:t="http://schemas.xmlsoap.org/ws/2005/02/trust"><t:RequestedSecurityToken>' + signedAssertion + '</t:RequestedSecurityToken></t:RequestSecurityTokenResponse>' %>">
         <input type="hidden" name="wctx" value="<%= wctx %>">
         <noscript>
             <p>

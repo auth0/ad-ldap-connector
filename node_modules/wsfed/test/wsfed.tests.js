@@ -112,6 +112,27 @@ describe('wsfed', function () {
     });
   });
 
+  describe('when the wctx has ampersand(&)', function (){
+    it('should return escaped Context value', function (done) {
+      var wctx = encodeURIComponent('rm=0&id=passive&ru=%2f');
+
+      request.get({
+        jar: request.jar(), 
+        uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=' + wctx + '&wtrealm=urn:auth0:superclient'
+      }, function (err, response, b){
+        if(err) return done(err);
+        var body = b;
+        var $ = cheerio.load(body);
+        var wresult = $('input[name="wresult"]').attr('value');
+
+        expect(wresult.indexOf(' Context="rm=0&amp;id=passive&amp;ru=%2f" '))
+          .to.be.above(-1);
+
+        done();
+      });
+    });
+  });
+
   describe('when using an invalid callback url', function () {
     it('should return error', function(done){
       request.get({

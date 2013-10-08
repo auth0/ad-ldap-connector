@@ -115,6 +115,11 @@ exports.create = function(options) {
     nameID.setAttribute('Format', options.nameIdentifierFormat);
   }
   
+  if( options.authnContextClassRef ) {
+    var authnCtxClassRef = doc.getElementsByTagName('saml:AuthnContextClassRef')[0];
+    authnCtxClassRef.textContent = options.authnContextClassRef;
+  }
+
   var token = doc.toString()
                 .replace(/\r\n/g, '')
                 .replace(/\n/g,'')
