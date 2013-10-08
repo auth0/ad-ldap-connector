@@ -59,7 +59,7 @@ exports.install = function (app) {
       })(req, res, next);
     },
     function (req, res, next) {
-      if (req.session.user) {
+      if (req.session.user && req.query.wprompt !== 'consent') {
         req.user = req.session.user;
         return wsfederationResponses.token(req, res);
       }
