@@ -6,7 +6,6 @@ var wsfederationResponses = require('./lib/wsfederation-responses');
 var Users                 = require('./lib/users');
 
 exports.install = function (app) {
-  var users = new Users();
 
   var validateAccessToken = function (req, res, next) {
     if (!req.headers.authorization) return res.send(403);
@@ -23,16 +22,20 @@ exports.install = function (app) {
     });
   };
 
-  app.get('/users', validateAccessToken, function (req, res) {
-    var options = {
-      limit: req.query.limit
-    };
+  if (nconf.get('LDAP_URL')) {
+    var users = new Users();
 
-    users.list(req.query.criteria, options, function (err, users) {
-      if (err) return res.send(500);
-      res.json(users);
+    app.get('/users', validateAccessToken, function (req, res) {
+      var options = {
+        limit: req.query.limit
+      };
+
+      users.list(req.query.criteria, options, function (err, users) {
+        if (err) return res.send(500);
+        res.json(users);
+      });
     });
-  });
+  }
 
   app.get('/test-iis', function (req, res) {
     res.send(200, 'worked! your iis user is: ' + req.headers['x-iisnode-logon_user']);
