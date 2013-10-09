@@ -31,7 +31,8 @@
     "colors": "~0.6.0-1",
     "passport-windowsauth": "~0.1.5",
     "ldapjs": "https://github.com/auth0/node-ldapjs/tarball/master",
-    "jsonwebtoken": "~0.1.0"
+    "jsonwebtoken": "~0.1.0",
+    "xtend": "~2.1.1"
   },
   "devDependencies": {
     "chai": "~1.7.2",
