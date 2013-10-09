@@ -28,6 +28,7 @@ function getEndpointAddress (req, endpointPath) {
  * - cert the public certificate
  * - profileMapper a function that given a user returns a claim based identity, also contains the metadata. By default maps from Passport.js user schema (PassportProfile).
  * - endpointPath optional, defaults to the root of the fed metadata document.
+ * - mexEndpoint optional, url of the wsfederation MEX endpoint metadata document.
  * 
  * @param  {[type]} options [description]
  * @return {[type]}         [description]
@@ -47,17 +48,19 @@ function metadataMiddleware (options) {
   var claimTypes = (options.profileMapper || PassportProfileMapper).prototype.metadata;
   var issuer = options.issuer;
   var pem = encoders.removeHeaders(options.cert);
-
+  
   return function (req, res) {
     var endpoint = getEndpointAddress(req, options.endpointPath);
+    var mexEndpoint = options.mexEndpoint ? getEndpointAddress(req, options.mexEndpoint) : '';
 
     res.set('Content-Type', 'application/xml');
 
     res.send(templates.metadata({
-      claimTypes: claimTypes,
-      pem:        pem,
-      issuer:     issuer,
-      endpoint:   endpoint
+      claimTypes:   claimTypes,
+      pem:          pem,
+      issuer:       issuer,
+      endpoint:     endpoint,
+      mexEndpoint:  mexEndpoint
     }).replace(/\n/g, ''));
   };
 }
