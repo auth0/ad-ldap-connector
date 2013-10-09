@@ -94,10 +94,9 @@ exports.install = function (app) {
       })(req, res, next);
     }, function (req, res, next) {
       console.log('user ' + (req.user.displayName || 'unknown').green + ' authenticated');
-      req.session.user = req.user;
       req.query.wtrealm = nconf.get('REALM');
       next();
-    }, wsfederationResponses.token);
+    }, wsfederationResponses.tokenDirect);
 
   app.get('/logout', function (req, res) {
     console.log('user ' + (req.session.user.displayName || 'unknown').green + ' logged out');
