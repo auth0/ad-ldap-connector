@@ -85,6 +85,21 @@ openssl crl2pkcs7 -nocrl \
     -out contoso1.p7b
 ~~~ 
 
+## JWT
+
+By default the signed assertion is a SAML token, you can use JWT tokens as follows:
+
+~~~javascript
+app.get('/wsfed', wsfed.auth({
+  jwt:        true,
+  issuer:     'the-issuer',
+  key:        fs.readFileSync(path.join(__dirname, 'some-cert.key')),
+  getPostUrl: function (wtrealm, wreply, req, callback) { 
+                return cb( null, 'http://someurl.com')
+              }
+}));
+~~~~
+
 ## License
 
 MIT - AUTH0 2013!

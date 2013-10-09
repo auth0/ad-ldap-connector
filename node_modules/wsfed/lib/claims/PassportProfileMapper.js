@@ -58,7 +58,6 @@ PassportProfileMapper.prototype.getClaims = function () {
     }).forEach(function (k) {
       claims['http://schemas.passportjs.com/' + k] = this._pu[k];
     }.bind(this));
-
   return claims;
 };
 

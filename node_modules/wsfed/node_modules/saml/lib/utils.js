@@ -29,6 +29,15 @@ exports.uid = function(len) {
   return buf.join('');
 };
 
+exports.removeWhitespace = function(xml) {
+  var trimmed = xml
+                .replace(/\r\n/g, '')
+                .replace(/\n/g,'')
+                .replace(/>(\s*)</g, '><') //unindent
+                .trim();
+  return trimmed;
+};
+
 /**
  * Retrun a random int, used by `utils.uid()`
  *

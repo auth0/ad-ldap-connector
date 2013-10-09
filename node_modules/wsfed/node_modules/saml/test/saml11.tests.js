@@ -4,6 +4,7 @@ var assert = require('assert'),
     moment = require('moment'),
     should = require('should'),
     xmldom = require('xmldom'),
+    xmlenc = require('xml-encryption'),
     saml11 = require('../lib/saml11');
 
 describe('saml 1.1', function () {
@@ -310,6 +311,26 @@ it('should override AttirubteStatement NameFormat', function () {
     var lifetime = Math.round((moment(notOnOrAfter).utc() - moment(notBefore).utc()) / 1000);
     assert.equal(600, lifetime);
 
+  });
+
+  it('should create a saml 1.1 signed and encrypted assertion', function (done) {
+    var options = {
+      cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
+      key: fs.readFileSync(__dirname + '/test-auth0.key'),
+      encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
+      encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem')
+    };
+
+    saml11.create(options, function(err, encrypted) {
+      if (err) return done(err);
+      
+      xmlenc.decrypt(encrypted, { key: fs.readFileSync(__dirname + '/test-auth0.key')}, function(err, decrypted) {
+        if (err) return done(err);
+        var isValid = utils.isValidSignature(decrypted, options.cert);
+        assert.equal(true, isValid);
+        done();
+      });
+    });
   });
 
 });

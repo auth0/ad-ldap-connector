@@ -58,9 +58,9 @@ module.exports.start = function(options, callback){
 
   function getPostURL (wtrealm, wreply, req, callback) {
     if(!wreply || wreply == 'http://office.google.com'){
-      callback(null, 'http://office.google.com');
+      return callback(null, 'http://office.google.com');
     }
-    callback();
+    return callback();
   }
 
   //configure wsfed middleware
@@ -71,7 +71,7 @@ module.exports.start = function(options, callback){
         cert:               credentials.cert,
         key:                credentials.key
       }, options)));
-
+  
   var server = http.createServer(app).listen(5050, callback);
   module.exports.close = server.close.bind(server);
 };
