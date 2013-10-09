@@ -92,11 +92,10 @@ exports.install = function (app) {
         failureMessage: "The username or password you entered is incorrect.",
         session: false
       })(req, res, next);
-    }, function (req, res, next) {
+    }, function (req, res) {
       console.log('user ' + (req.user.displayName || 'unknown').green + ' authenticated');
-      req.query.wtrealm = nconf.get('REALM');
-      next();
-    }, wsfederationResponses.tokenDirect);
+      res.json({ profile: req.user });
+    });
 
   app.get('/logout', function (req, res) {
     console.log('user ' + (req.session.user.displayName || 'unknown').green + ' logged out');
