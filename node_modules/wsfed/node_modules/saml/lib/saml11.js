@@ -4,6 +4,8 @@ var utils = require('./utils'),
     SignedXml = require('xml-crypto').SignedXml,
     xmlenc = require('xml-encryption'),
     moment = require('moment');
+    async = require('async');
+    crypto = require('crypto');
 
 var fs = require('fs');
 var path = require('path');
@@ -114,18 +116,65 @@ exports.create = function(options, callback) {
     nameIDs[1].setAttribute('Format', options.nameIdentifierFormat);
   }
 
+  if (!options.encryptionCert) return sign(options, sig, doc, callback);
+
+  // encryption is turned on, 
+  var proofSecret;
+  async.waterfall([
+    function(cb) {
+      if (!options.subjectConfirmationMethod && options.subjectConfirmationMethod !== 'holder-of-key') 
+        return cb();
+      
+      crypto.randomBytes(32, function(err, randomBytes) {
+        proofSecret = randomBytes;
+        addSubjectConfirmation(options, doc, options.holderOfKeyProofSecret || randomBytes, cb);
+      });
+      
+    },
+    function(cb) {
+      sign(options, sig, doc, function(err, signed) {
+        if (err) return cb(err);
+        return encrypt(options, signed, cb);
+      });
+    }
+  ], function(err, result) {
+    if (err) return callback(err);
+    callback(null, result, proofSecret);
+  });
+}; 
+
+function addSubjectConfirmation(options, doc, randomBytes, callback) {
+  var encryptOptions = {
+    rsa_pub: options.encryptionPublicKey,
+    pem: options.encryptionCert,
+    keyEncryptionAlgorighm: options.keyEncryptionAlgorighm || 'http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p'
+  };
+
+  xmlenc.encryptKeyInfo(randomBytes, encryptOptions, function(err, keyinfo) { 
+    if (err) return cb(err);
+    var subjectConfirmationNodes = doc.documentElement.getElementsByTagNameNS(NAMESPACE, 'SubjectConfirmation');
+    for (var i=0; i<subjectConfirmationNodes.length; i++) {
+      var keyinfoDom = new Parser().parseFromString(keyinfo);
+      var method = subjectConfirmationNodes[i].getElementsByTagNameNS(NAMESPACE, 'ConfirmationMethod')[0];
+      method.textContent = 'urn:oasis:names:tc:SAML:1.0:cm:holder-of-key';
+      subjectConfirmationNodes[i].appendChild(keyinfoDom.documentElement);
+    }
+
+    callback();
+  });
+}
+
+function sign(options, sig, doc, callback) {
   var token = utils.removeWhitespace(doc.toString());
   sig.computeSignature(token, options.xpathToNodeBeforeSignature);
   var signed = sig.getSignedXml();
 
-  if (!options.encryptionCert) {
-    if (callback) 
-      return callback(null, signed);
-    else 
-      return signed;
-  }
+  if (!callback) return signed;
+  
+  return callback(null, signed);
+}
 
-
+function encrypt(options, signed, callback) {
   var encryptOptions = {
     rsa_pub: options.encryptionPublicKey,
     pem: options.encryptionCert,
@@ -137,5 +186,4 @@ exports.create = function(options, callback) {
     if (err) return callback(err);
     callback(null, utils.removeWhitespace(encrypted));
   });
-}; 
-
+}

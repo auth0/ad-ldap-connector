@@ -333,4 +333,36 @@ it('should override AttirubteStatement NameFormat', function () {
     });
   });
 
+  it('should support holder-of-key suject confirmationmethod', function (done) {
+    var options = {
+      cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
+      key: fs.readFileSync(__dirname + '/test-auth0.key'),
+      encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
+      encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem'),
+      subjectConfirmationMethod: 'holder-of-key'
+    };
+
+    saml11.create(options, function(err, encrypted, proofSecret) {
+      if (err) return done(err);
+      
+      xmlenc.decrypt(encrypted, { key: fs.readFileSync(__dirname + '/test-auth0.key')}, function(err, decrypted) {
+        if (err) return done(err);
+        
+        var doc = new xmldom.DOMParser().parseFromString(decrypted);
+        var subjectConfirmationNodes = doc.documentElement.getElementsByTagName('saml:SubjectConfirmation');
+        assert.equal(2, subjectConfirmationNodes.length);
+        for (var i=0;i<subjectConfirmationNodes.length;i++) {
+          var method = subjectConfirmationNodes[i].getElementsByTagName('saml:ConfirmationMethod')[0];
+          assert.equal(method.textContent, 'urn:oasis:names:tc:SAML:1.0:cm:holder-of-key');
+
+          var decryptedProofSecret = xmlenc.decryptKeyInfo(subjectConfirmationNodes[i], options);
+          assert.equal(proofSecret.toString('base64'), decryptedProofSecret.toString('base64'));
+        }
+
+        done();
+      });
+    });
+  });
+
+
 });

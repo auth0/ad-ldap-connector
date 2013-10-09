@@ -1,18 +1,6 @@
 <xenc:EncryptedData Type="http://www.w3.org/2001/04/xmlenc#Element" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#">
   <xenc:EncryptionMethod Algorithm="<%= contentEncryptionMethod %>" />
-  <KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
-    <e:EncryptedKey xmlns:e="http://www.w3.org/2001/04/xmlenc#">
-      <e:EncryptionMethod Algorithm="<%= keyEncryptionMethod %>">
-        <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-      </e:EncryptionMethod>
-      <KeyInfo>
-        <%- keyInfo %>
-      </KeyInfo>
-      <e:CipherData>
-        <e:CipherValue><%= encryptedKey %></e:CipherValue>
-      </e:CipherData>
-    </e:EncryptedKey>
-  </KeyInfo>
+  <%- keyInfo %>
   <xenc:CipherData>
     <xenc:CipherValue><%= encryptedContent %></xenc:CipherValue>
   </xenc:CipherData>

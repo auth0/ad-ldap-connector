@@ -24,7 +24,7 @@
     "passport": "~0.1.16",
     "ejs": "~0.8.3",
     "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/master",
-    "wsfed": "~0.5.4",
+    "wsfed": "~0.5.7",
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
     "connector-setup": "https://github.com/auth0/connector-setup/tarball/master",
     "passport-local": "~0.1.6",

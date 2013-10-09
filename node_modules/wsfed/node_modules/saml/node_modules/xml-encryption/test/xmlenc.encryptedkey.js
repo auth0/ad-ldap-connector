@@ -2,6 +2,8 @@ var assert = require('assert'),
     fs = require('fs'),
     xmlenc = require('../lib');
 
+var crypto = require('crypto');
+
 describe('encrypt', function() {
 
   it('should encrypt and decrypt xml', function (done) {
@@ -22,6 +24,25 @@ describe('encrypt', function() {
           assert.equal(decrypted, 'content to encrypt');
           done();
         });
+    });
+  });
+
+  it('should encrypt and decrypt keyinfo', function (done) {
+    var options = {
+      rsa_pub: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
+      pem: fs.readFileSync(__dirname + '/test-auth0.pem'),
+      keyEncryptionAlgorighm: 'http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p'
+    };
+
+    crypto.randomBytes(32, function(err, randomBytes) {
+      if (err) return done(err);
+      xmlenc.encryptKeyInfo(randomBytes, options, function(err, result) { 
+        if (err) return done(err);
+        var decryptedRandomBytes = xmlenc.decryptKeyInfo(result, { key: fs.readFileSync(__dirname + '/test-auth0.key')});
+
+        assert.equal(new Buffer(randomBytes).toString('base64'), new Buffer(decryptedRandomBytes).toString('base64'));
+        done();
+      });
     });
   });
 

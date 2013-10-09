@@ -3,7 +3,8 @@ var ejs = require('ejs'),
     fs = require('fs');
 
 var templates = {
-  'encrypted-key': fs.readFileSync(path.join(__dirname, 'templates', 'encrypted-key.tpl.xml'), 'utf8')
+  'encrypted-key': fs.readFileSync(path.join(__dirname, 'templates', 'encrypted-key.tpl.xml'), 'utf8'),
+  'keyinfo': fs.readFileSync(path.join(__dirname, 'templates', 'keyinfo.tpl.xml'), 'utf8')
 };
 
 function renderTemplate (file, data) {
