@@ -88,14 +88,15 @@ exports.install = function (app) {
 
   app.post('/wsfed/direct', function (req, res, next) {
       passport.authenticate('WindowsAuthentication', {
+        failureRedirect: req.url,
+        failureMessage: "The username or password you entered is incorrect.",
         session: false
       })(req, res, next);
-    }, function (req, res) {
-      if (!req.user) return res.send(401, 'The username or password you entered is incorrect.');
-      
+    }, function (req, res, next) {
       console.log('user ' + (req.user.displayName || 'unknown').green + ' authenticated');
-      return res.json({ profile: req.user });
-    });
+      req.session.user = req.user;
+      next();
+    }, wsfederationResponses.tokenDirect);
 
   app.get('/logout', function (req, res) {
     console.log('user ' + (req.session.user.displayName || 'unknown').green + ' logged out');
