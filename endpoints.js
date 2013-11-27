@@ -88,9 +88,16 @@ exports.install = function (app) {
 
   app.post('/wsfed/direct', function (req, res, next) {
       passport.authenticate('WindowsAuthentication', {
-        failureRedirect: req.url,
-        failureMessage: "The username or password you entered is incorrect.",
         session: false
+      }, function (err, profile, info) {
+        if (err) return next(err);
+
+        if (!profile) {
+          return res.json(401, { invalid_user_password: info && info.message ? info.message : 'Wrong email or password.' });
+        }
+
+        req.user = profile;
+        next();
       })(req, res, next);
     }, function (req, res, next) {
       console.log('user ' + (req.user.displayName || 'unknown').green + ' authenticated');
