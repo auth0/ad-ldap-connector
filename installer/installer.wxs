@@ -5,14 +5,23 @@
           UpgradeCode="1072AB9E-1842-4AFA-9CF2-545462CD60E2"
           Language='1033' Codepage='1252' Version='1.0.0'
           Name="Auth0 AD-Ldap Connector"
-          Manufacturer='Auth0 Ltd.'>
-
+          Manufacturer='Auth10 LLC'>
 
     <Package Id='*' Keywords='Installer' Description="Auth0 LDAP Connector"
-          Comments='Auth0 is a registered trademark of Auth0 Ltd.' Manufacturer='Auth0 Ltd.'
+          Comments='Auth0 is a registered trademark of Auth10 LLC' Manufacturer='Auth10 LLC'
           InstallerVersion='100' Languages='1033' Compressed='yes' SummaryCodepage='1252' />
 
     <Media Id='1' EmbedCab='yes' Cabinet="main.cab" />
+
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.SourceDir)\LICENSE.rtf" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.SourceDir)\public\images\msi-banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.SourceDir)\public\images\msi-welcome.bmp" />
+
+    <Icon Id="icon.ico" SourceFile="$(var.SourceDir)\public\images\logo-small.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+
+
+    <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
 
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='ProgramFilesFolder' Name='PFiles'>
@@ -26,6 +35,9 @@
 
     <Feature Id='Complete' Level='1'>
       <ComponentGroupRef Id='MainComponentGroup' />
+      <Component Id="node_component" Guid="{07D39FFF-C0C2-4D3F-BC22-EC7AE4963FFF}" Directory="INSTALLDIR">
+        <File Id="node" KeyPath="yes" Source="C:\Program Files (x86)\nodejs\node.exe" />
+      </Component>
     </Feature>
 
     <Property Id="WIXUI_TICKETURL" Secure="yes" />
