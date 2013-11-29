@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Auth0 | AD LDAP Configuration</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/main.min.css">
+  <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800">
+  <script src="/jquery.min.js"></script>
+</head>
+  <body>
+    <div id="header">
+      <h1>Auth0</h1>
+    </div>
+    <div id="sidebar" style="display: none;"></div>
+    <div class="wrapper">
+      <div id="tmp-dialogs">
+      </div>
+      <div id="content" style="margin-left: 0;">
+
+        <section id="configuration-section" class="content-page current">
+          <div id="content-header">
+              <h1>AD LDAP Configuration</h1>
+          </div>
+          <div class="container-fluid flat">
+            <div class="widget-box">
+              <div class="widget-title">
+                  <h5>Settings</h5>
+              </div>
+              <div class="widget-content">
+              <% if (locals.PROVISIONING_TICKET) { %>
+              <% include form %>
+              <% } else { %>
+              <% include form_ticket %>
+              <% } %>
+              </div>
+            </div>
+            <% if (locals.PROVISIONING_TICKET && locals.LDAP_URL) { %>
+            <% include tester %>
+            <% } %>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

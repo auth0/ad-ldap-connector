@@ -32,7 +32,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     this.set('views', __dirname + '/views');
 
     this.use(express.static(__dirname + '/public'));
-    
+
     this.use(express.cookieParser());
     this.use(express.bodyParser());
     this.use(cookieSessions({

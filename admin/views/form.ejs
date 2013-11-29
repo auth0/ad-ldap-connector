@@ -1,0 +1,67 @@
+<form class="form-horizontal ldap" method="post" action="/ldap">
+  <p>
+    Please enter the settings to connect to your LDAP.
+    This will be saved locally and never send to Auth0.
+  </p>
+  <div>
+    <% if (locals.ERROR) { %>
+      <p style="color: red;"><%= locals.ERROR %> Your changes were not saved.</p>
+    <% } %>
+    <% if (locals.SUCCESS) { %>
+      <p style="color: green;">Success! You can now restart the <strong>Auth0 Ad/LDAP Service</strong></p>
+    <% } %>
+  </div>
+  <div class="control-group">
+    <label class="control-label" for="LDAP_URL">AD/LDAP URL:</label>
+    <div class="controls">
+      <input type="text"
+          name="LDAP_URL"
+          id="LDAP_URL"
+          value="<%= locals.LDAP_URL || '' %>"
+          placeholder="ldap://mycompany.com/"
+          pattern="ldaps?://.+"
+          oninvalid="setCustomValidity('Please enter a LDAP url')"
+          required>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label" for="LDAP_BASE">Base distinguished name:</label>
+    <div class="controls">
+      <input type="text"
+          name="LDAP_BASE"
+          id="LDAP_BASE"
+          value="<%= locals.LDAP_BASE || '' %>"
+          placeholder="DC=mycompany,DC=com"
+          required>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label" for="LDAP_BIND_USER">Service domain username:</label>
+    <div class="controls">
+      <input type="text"
+          name="LDAP_BIND_USER"
+          id="LDAP_BIND_USER"
+          value="<%= locals.LDAP_BIND_USER || '' %>"
+          placeholder="domain\username"
+          required>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label" for="LDAP_BIND_PASSWORD">Service domain user password:</label>
+    <div class="controls">
+      <input type="password"
+          name="LDAP_BIND_PASSWORD"
+          id="LDAP_BIND_PASSWORD"
+          required>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</form>
