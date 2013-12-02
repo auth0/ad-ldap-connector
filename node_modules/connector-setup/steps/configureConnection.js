@@ -20,8 +20,8 @@ var getCurrentThumbprint = function (workingPath) {
 };
 
 module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
-  if (nconf.get('LAST_SENT_THUMBPRINT')          === getCurrentThumbprint(workingPath) && 
-      urlJoin(nconf.get('SERVER_URL'), '/wsfed') === connectionInfo.signInEndpoint ) return cb();
+  // if (nconf.get('LAST_SENT_THUMBPRINT')          === getCurrentThumbprint(workingPath) &&
+  //     urlJoin(nconf.get('SERVER_URL'), '/wsfed') === connectionInfo.signInEndpoint ) return cb();
 
   var serverUrl = nconf.get('SERVER_URL') || ('http://localhost:' + (nconf.get('PORT') || 4000));
 
@@ -35,12 +35,13 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
     url: ticket,
     json: {
       certs:          [cert],
-      signInEndpoint: signInEndpoint
+      signInEndpoint: signInEndpoint,
+      agentMode:      nconf.get('AGENT_MODE')
     }
   }, function (err, response, body) {
     if (err) return cb(err);
     if (response.statusCode !== 200) return cb(new Error(body));
-    
+
     nconf.set('SERVER_URL', serverUrl);
     nconf.set('LAST_SENT_THUMBPRINT', getCurrentThumbprint(workingPath));
     nconf.set('TENANT_SIGNING_KEY', response.body.signingKey || '');

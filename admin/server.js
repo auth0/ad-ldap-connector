@@ -23,6 +23,9 @@ function set_current_config (req, res, next) {
   try {
     var content = fs.readFileSync(__dirname + '/../config.json', 'utf8');
     current_config = JSON.parse(content);
+    if (!('AGENT_MODE' in current_config)) {
+      current_config.AGENT_MODE = true;
+    }
   }catch(err){}
   req.current_config = current_config;
   next();

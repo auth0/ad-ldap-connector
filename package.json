@@ -35,7 +35,9 @@
     "xtend": "~2.1.1",
     "request": "~2.16.6",
     "url-join": "0.0.1",
-    "freeport": "~1.0.2"
+    "freeport": "~1.0.2",
+    "ws": "~0.4.31",
+    "async": "~0.2.9"
   },
   "devDependencies": {
     "chai": "~1.7.2",

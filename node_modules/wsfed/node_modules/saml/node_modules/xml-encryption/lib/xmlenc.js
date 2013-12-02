@@ -26,9 +26,9 @@ function encryptKeyInfo(symmetricKey, options, callback) {
       // var base64EncodedEncryptedKey = encryptedKey: encryptedKey.toString('base64');
 
       var rsa_pub = pki.publicKeyFromPem(options.rsa_pub);
-      var encryptedKey = rsa_pub.encrypt(symmetricKey.toString('base64'), 'RSA-OAEP'); 
-      var base64EncodedEncryptedKey = new Buffer(encryptedKey, 'binary').toString('base64');
-
+      var encrypted = rsa_pub.encrypt(symmetricKey.toString('binary'), 'RSA-OAEP'); 
+      var base64EncodedEncryptedKey = new Buffer(encrypted, 'binary').toString('base64');
+      
       var params = {
         encryptedKey:  base64EncodedEncryptedKey, 
         encryptionPublicCert: '<X509Data><X509Certificate>' + utils.pemToCert(options.pem.toString()) + '</X509Certificate></X509Data>', 
@@ -137,8 +137,9 @@ function decryptKeyInfo(doc, options) {
       // return pk.decrypt(key);
       
       var key = new Buffer(encryptedKey.textContent, 'base64').toString('binary');
-      var privateKey = pki.privateKeyFromPem(options.key);
-      return new Buffer(privateKey.decrypt(key, 'RSA-OAEP'), 'base64');
+      var private_key = pki.privateKeyFromPem(options.key);
+      var decrypted = private_key.decrypt(key, 'RSA-OAEP');
+      return new Buffer(decrypted, 'binary');
     default:
       throw new Error('key encryption algorithm ' + keyEncryptionAlgorighm + ' not supported');
   }

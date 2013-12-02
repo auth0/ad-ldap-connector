@@ -1,0 +1,91 @@
+var WebSocket = require('ws');
+
+var jwt = require('jsonwebtoken');
+var nconf = require('nconf');
+var fs = require('fs');
+var Users = require('./lib/users');
+var users = new Users();
+
+var cert = {
+  key:  fs.readFileSync(__dirname + '/certs/cert.key'),
+  cert: fs.readFileSync(__dirname + '/certs/cert.pem')
+};
+
+var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
+var ws = new WebSocket(socket_server_address);
+console.log('connecting to ' + socket_server_address.green);
+
+
+ws.sendEvent = function (name, payload) {
+  this.send(JSON.stringify({
+    n: name,
+    p: payload
+  }));
+};
+
+ws.on('open', function () {
+  authenticate_connector();
+}).on('message', function (msg) {
+  console.log(m);
+  var m;
+  try {
+    m = JSON.parse(msg);
+  } catch (er) {
+    return;
+  }
+  if (!m || !m.n) return;
+  this.emit(m.n, m.p);
+}).on('error', function (err) {
+  console.error('socket error: ' + err);
+  process.exit(1);
+}).on('authenticated', function () {
+  console.log('authenticated!');
+}).on('authentication_failure', function () {
+  console.error('authentication failure');
+  process.exit(0);
+}).on('close', function () {
+  console.error('server closed the connection');
+  process.exit(1);
+}).on('authenticate_user', function (msg) {
+  jwt.verify(msg.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {
+    if (err) {
+      console.error('unauthorized attemp of authentication');
+      return;
+    }
+    users.validate(payload.username, payload.password, function (err, user) {
+      if (err) return ws.sendEvent(payload.pid + '_result', {err: err});
+
+      if (!user) {
+        return ws.sendEvent(payload.pid + '_result', {
+          err: new Error('wrong username or password')
+        });
+      }
+
+      console.log('user ' + user.displayName.green + ' authenticated');
+
+      var mapped = {
+        id:          user.objectGUID,
+        displayName: user.displayName,
+        name: {
+          familyName: user.sn,
+          givenName: user.givenName
+        },
+        emails: (user.mail ? [{value: user.mail }] : undefined),
+        _json: user
+      };
+      ws.sendEvent(payload.pid + '_result', {
+        profile: mapped
+      });
+    });
+  });
+});
+
+function authenticate_connector() {
+  var token = jwt.sign({}, cert.key, {
+    algorithm: 'RS256',
+    expiresInMinutes: 1,
+    issuer: nconf.get('CONNECTION'),
+    audience: nconf.get('REALM')
+  });
+  ws.sendEvent('authenticate', { jwt: token });
+}

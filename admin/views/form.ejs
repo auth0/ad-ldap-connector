@@ -11,6 +11,15 @@
   <% if (locals.SERVER_URL) { %>
   <strong>Server Settings</strong>
   <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input type="checkbox" <%= locals.AGENT_MODE ? 'checked' : ''%>>
+        Agent Mode
+      </label>
+    </div>
+  </div>
+  <% if (!locals.AGENT_MODE) { %>
+  <div class="control-group">
     <label class="control-label" for="SERVER_URL">Front Facing URL:</label>
     <div class="controls">
       <input type="text"
@@ -33,7 +42,7 @@
           required>
     </div>
   </div>
-  <% } %>
+  <% } } %>
 
 
   <strong>LDAP Settings</strong>
@@ -42,7 +51,7 @@
     Please enter the settings to connect to your LDAP.
     This will be saved locally and never send exposed.
   </p>
-  
+
   <div class="control-group">
     <label class="control-label" for="LDAP_URL">AD/LDAP URL:</label>
     <div class="controls">

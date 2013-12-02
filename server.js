@@ -16,6 +16,14 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     process.exit(2);
   }
 
+  if (nconf.get('AGENT_MODE')) {
+    if(!nconf.get('LDAP_URL')) {
+      console.error('edit config.json and add your LDAP settings');
+      return process.exit(1);
+    }
+    return require('./ws_validator');
+  }
+
   var http     = require('http');
   var express  = require('express');
   var passport = require('passport');
@@ -46,6 +54,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
 
   require('./endpoints').install(app);
+
 
   http.createServer(app)
       .listen(nconf.get('PORT'), function () {
