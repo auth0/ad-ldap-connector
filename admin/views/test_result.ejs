@@ -1,0 +1,10 @@
+<strong>Configuration log:</strong>
+<ul>
+<% locals.LDAP_RESULTS.forEach(function (entry) { %>
+  <li><%= entry.proof %>: 
+    <span style="color: <%= entry.result === 'OK' ? 'green' : 'red' %>">
+      <%= entry.result %>
+    </span>
+  </li>
+<% }); %>
+</ul>

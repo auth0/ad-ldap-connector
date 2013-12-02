@@ -45,6 +45,7 @@ module.exports = function(options, callback){
                           .filter(function (k) {
                             return !options[k];
                           });
+  var result = [];
 
   if (missing_required.length > 0) {
     return callback(new Error(missing_required[0] + ' is required.'));
@@ -55,7 +56,10 @@ module.exports = function(options, callback){
   }
 
   try_tcp(options, function (err) {
-    if (err) return callback(err);
+    result.push({proof: 'TCP Connectivity', result: err ? 'Not OK' : 'OK' });
+    if (err){
+      return callback(err, result);
+    }
 
     var client = ldap.createClient({
       url:            options.LDAP_URL,
@@ -65,8 +69,16 @@ module.exports = function(options, callback){
     });
 
     try_connect(client, options, function (err) {
-      if (err) return callback(err);
-      try_search(client, options, callback);
+      result.push({proof: 'LDAP Connection',  result: err ? 'Not OK' : 'OK' });
+      if (err) return callback(err, result);
+
+      try_search(client, options, function (err) {
+        result.push({proof: 'TCP Queries', result: err ? 'Not OK' : 'OK' });
+        
+        if (err) return callback(err, result);
+        
+        callback(null, result);
+      });
     });
   });
 };

@@ -1,7 +1,7 @@
 {
   "name": "sql-fs",
   "version": "0.0.3",
-  "description": "ADLDAP Federation Connector",
+  "description": "SQL Server Ws-Federation server example.",
   "main": "server.js",
   "scripts": {
     "test": "mocha --timeout 50000",
@@ -32,10 +32,13 @@
     "passport-windowsauth": "~0.1.10",
     "ldapjs": "https://github.com/auth0/node-ldapjs/tarball/master",
     "jsonwebtoken": "~0.1.0",
-    "xtend": "~2.1.1",
-    "request": "~2.16.6",
-    "url-join": "0.0.1",
-    "freeport": "~1.0.2"
+<<<<<<< HEAD
+    "xtend": "~2.1.1"
+=======
+    "rimraf": "~2.2.2",
+    "fs-walk": "0.0.1",
+    "randomstring": "~1.0.2"
+>>>>>>> add initial version of installer
   },
   "devDependencies": {
     "chai": "~1.7.2",

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Fragment>
+    <CustomAction
+      Id='RegisterAdminService'
+      Impersonate="no"  
+      Execute="deferred" 
+      FileKey='nssm'
+      ExeCommand='install "Auth0 ADLDAP Admin" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\admin\server.js\""'
+      Return='asyncWait' />
+
+    <CustomAction
+      Id='RegisterConnectorService'
+      Impersonate="no"  
+      Execute="deferred" 
+      FileKey='nssm'
+      ExeCommand='install "Auth0 ADLDAP" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\server.js\""'
+      Return='asyncWait' />
+
+  </Fragment>
+</Wix>

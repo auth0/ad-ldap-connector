@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
   <Product Id="CD441FF9-E5FA-4EA1-AA8C-CC82AFEDAE30"
           UpgradeCode="1072AB9E-1842-4AFA-9CF2-545462CD60E2"
           Language='1033' Codepage='1252' Version='1.0.0'
-          Name="Auth0 AD-Ldap Connector"
+          Name="Auth0 AD LDAP Connector"
           Manufacturer='Auth10 LLC'>
 
     <Package Id='*' Keywords='Installer' Description="Auth0 LDAP Connector"
@@ -17,7 +18,7 @@
     <WixVariable Id="WixUIBannerBmp" Value="$(var.SourceDir)\public\images\msi-banner.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="$(var.SourceDir)\public\images\msi-welcome.bmp" />
 
-    <Icon Id="icon.ico" SourceFile="$(var.SourceDir)\public\images\logo-small.ico"/>
+    <Icon Id="icon.ico" SourceFile="$(var.SourceDir)\public\images\logo.ico"/>
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
 
 
@@ -26,18 +27,56 @@
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='ProgramFilesFolder' Name='PFiles'>
         <Directory Id='Auth0_Folder' Name='Auth0'>
-          <Directory Id='INSTALLDIR' Name='AdLDAP Connector'>
+          <Directory Id='INSTALLDIR' Name='AD LDAP Connector'>
           </Directory>
         </Directory>
       </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" 
+                    Name="Auth0"/>
+      </Directory>
     </Directory>
 
+    <CustomAction Id="LaunchBrowser"
+          ExeCommand="explorer.exe &quot;http://localhost:8357/&quot;"
+          Directory="INSTALLDIR"
+          Return="asyncNoWait" >
+    </CustomAction>
+
+    <InstallExecuteSequence>
+      <Custom Action='RegisterAdminService'
+              Before='StartServices'>NOT Installed</Custom>
+      <Custom Action='RegisterConnectorService'
+              Before='StartServices'>NOT Installed</Custom>
+      <Custom Action="LaunchBrowser"
+              OnExit="success">NOT Installed</Custom>
+    </InstallExecuteSequence>
 
     <Feature Id='Complete' Level='1'>
       <ComponentGroupRef Id='MainComponentGroup' />
+      <ComponentRef Id="ApplicationShortcut" />
       <Component Id="node_component" Guid="{07D39FFF-C0C2-4D3F-BC22-EC7AE4963FFF}" Directory="INSTALLDIR">
         <File Id="node" KeyPath="yes" Source="C:\Program Files (x86)\nodejs\node.exe" />
       </Component>
+      
+      <Component Id="nssm_component" Guid="{07D39AAA-CBB2-4F3F-BC22-EC7AE4963FFF}" Directory="INSTALLDIR">
+        <File Id="nssm" KeyPath="yes" Source="C:\Program Files (x86)\nssm-2.21\win32\nssm.exe" />
+        <RemoveFile Id="RemoveConfigJson" 
+                 Name="config.json" 
+                 On="uninstall" />
+
+        <ServiceControl Id="ControlAdminService"
+                 Name="Auth0 ADLDAP Admin"
+                 Remove="uninstall"
+                 Start="install"
+                 Stop="uninstall" />
+
+        <ServiceControl Id="ControlConnectorService"
+                 Name="Auth0 ADLDAP"
+                 Remove="uninstall"
+                 Stop="uninstall" />
+      </Component>
+   
     </Feature>
 
     <Property Id="WIXUI_TICKETURL" Secure="yes" />

@@ -1,16 +1,48 @@
 <form class="form-horizontal ldap" method="post" action="/ldap">
-  <p>
-    Please enter the settings to connect to your LDAP.
-    This will be saved locally and never send to Auth0.
-  </p>
   <div>
     <% if (locals.ERROR) { %>
       <p style="color: red;"><%= locals.ERROR %> Your changes were not saved.</p>
     <% } %>
     <% if (locals.SUCCESS) { %>
-      <p style="color: green;">Success! You can now restart the <strong>Auth0 Ad/LDAP Service</strong></p>
+      <p style="color: green;">Success!</p>
     <% } %>
   </div>
+
+  <% if (locals.SERVER_URL) { %>
+  <strong>Server Settings</strong>
+  <div class="control-group">
+    <label class="control-label" for="SERVER_URL">Front Facing URL:</label>
+    <div class="controls">
+      <input type="text"
+          name="SERVER_URL"
+          id="SERVER_URL"
+          value="<%= locals.SERVER_URL || '' %>"
+          placeholder="http://login.mycompany.com/"
+          pattern="https?://.+"
+          oninvalid="setCustomValidity('Please enter a url')"
+          required>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label" for="PORT">Connector PORT:</label>
+    <div class="controls">
+      <input type="text"
+          name="PORT"
+          id="PORT"
+          value="<%= locals.PORT || '' %>"
+          required>
+    </div>
+  </div>
+  <% } %>
+
+
+  <strong>LDAP Settings</strong>
+
+  <p>
+    Please enter the settings to connect to your LDAP.
+    This will be saved locally and never send exposed.
+  </p>
+  
   <div class="control-group">
     <label class="control-label" for="LDAP_URL">AD/LDAP URL:</label>
     <div class="controls">

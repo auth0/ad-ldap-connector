@@ -28,6 +28,10 @@
                   <h5>Settings</h5>
               </div>
               <div class="widget-content">
+              <% if (locals.LDAP_RESULTS) { %>
+              <% include test_result %>
+              <% } %>
+
               <% if (locals.PROVISIONING_TICKET) { %>
               <% include form %>
               <% } else { %>
@@ -35,9 +39,6 @@
               <% } %>
               </div>
             </div>
-            <% if (locals.PROVISIONING_TICKET && locals.LDAP_URL) { %>
-            <% include tester %>
-            <% } %>
           </div>
         </section>
       </div>
