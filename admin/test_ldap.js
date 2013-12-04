@@ -11,7 +11,7 @@ function try_tcp (options, callback) {
     port: port,
     host: parsed.hostname
   }, function () {
-    return callback();
+    return callback(null , port);
   }).on('error', function (err) {
     console.log(err);
     return callback(new Error('Cannot connect to ' + parsed.hostname + ':' + port + '. Verify the hostname, port and your firewall settings.'));
@@ -55,8 +55,11 @@ module.exports = function(options, callback){
     return callback(new Error('LDAP url must start with ldap:// or ldaps://'));
   }
 
-  try_tcp(options, function (err) {
-    result.push({proof: 'TCP Connectivity', result: err ? 'Not OK' : 'OK' });
+  try_tcp(options, function (err, port) {
+    result.push({
+      proof: 'Connecting to Outbound TCP PORT ' + port, 
+      result: err ? 'Not OK' : 'OK'
+    });
     if (err){
       return callback(err, result);
     }
@@ -69,11 +72,17 @@ module.exports = function(options, callback){
     });
 
     try_connect(client, options, function (err) {
-      result.push({proof: 'LDAP Connection',  result: err ? 'Not OK' : 'OK' });
+      result.push({
+        proof: 'Connecting to LDAP',
+        result: err ? 'Not OK' : 'OK'
+      });
       if (err) return callback(err, result);
 
       try_search(client, options, function (err) {
-        result.push({proof: 'TCP Queries', result: err ? 'Not OK' : 'OK' });
+        result.push({
+          proof: 'Querying LDAP',
+          result: err ? 'Not OK' : 'OK'
+        });
         
         if (err) return callback(err, result);
         

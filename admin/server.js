@@ -18,6 +18,22 @@ app.configure(function () {
   this.use(express.session({ secret: 'sojo sut ed oterces le' }));
 });
 
+var detected_settings = {};
+
+exec('"' + __dirname + '//settings_detector.exe"', function (err, stdout, stderr) {
+  console.log(arguments);
+  try {
+    var parsed = JSON.parse(stdout);
+    console.log(parsed);
+    if (parsed.error) {
+      parsed = {};
+      return;
+    }
+    detected_settings.LDAP_BASE = parsed.baseDN;
+    detected_settings.LDAP_URL =  'ldap://' + parsed.domainController;
+  }catch(er) {}
+});
+
 function set_current_config (req, res, next) {
   var current_config = {};
   try {
@@ -54,7 +70,7 @@ app.get('/', set_current_config, function (req, res) {
   res.render('index', xtend(req.current_config, {
     SUCCESS: req.query && req.query.s === '1',
     LDAP_RESULTS: req.session.LDAP_RESULTS
-  }));
+  }, { detected: detected_settings }));
   delete req.session.LDAP_RESULTS;
 });
 
@@ -77,6 +93,14 @@ app.post('/ldap', set_current_config, function (req, res, next) {
     next();
   });
 } , merge_config);
+
+app.post('/server', set_current_config, function (req, res, next) {
+  if (req.body.PORT || req.current_config.PORT) return next();
+  freeport(function (er, port) {
+    req.body.PORT = port;
+    next();
+  });
+}, merge_config);
 
 app.post('/ticket', set_current_config, function (req, res, next) {
   if (!req.body.PROVISIONING_TICKET) {

@@ -28,18 +28,33 @@
                   <h5>Settings</h5>
               </div>
               <div class="widget-content">
-              <% if (locals.LDAP_RESULTS) { %>
-              <% include test_result %>
-              <% } %>
-
               <% if (locals.PROVISIONING_TICKET) { %>
               <% include form %>
               <% } else { %>
               <% include form_ticket %>
               <% } %>
+
+              <% if (locals.LDAP_RESULTS) { %>
+              <% include test_result %>
+              <% } %>
+
               </div>
             </div>
           </div>
+
+          <% if (locals.SERVER_URL) { %>
+          <div class="container-fluid flat">
+            <div class="widget-box">
+              <div class="widget-title">
+                  <h5>Advanced Settings</h5>
+              </div>
+              <div class="widget-content">
+              <% include form_server %>
+              </div>
+            </div>
+          </div>
+          <% } %>
+          
         </section>
       </div>
     </div>

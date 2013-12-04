@@ -1,0 +1,41 @@
+<form class="form-horizontal" method="post" action="/server">
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input type="checkbox" <%= locals.AGENT_MODE ? 'checked' : ''%>>
+        Agent Mode
+      </label>
+    </div>
+  </div>
+  <% if (!locals.AGENT_MODE) { %>
+  <div class="control-group">
+    <label class="control-label" for="SERVER_URL">Front Facing URL:</label>
+    <div class="controls">
+      <input type="text"
+          name="SERVER_URL"
+          id="SERVER_URL"
+          value="<%= locals.SERVER_URL || '' %>"
+          placeholder="http://login.mycompany.com/"
+          pattern="https?://.+"
+          oninvalid="setCustomValidity('Please enter a url')"
+          required>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label" for="PORT">Connector PORT:</label>
+    <div class="controls">
+      <input type="text"
+          name="PORT"
+          id="PORT"
+          value="<%= locals.PORT || '' %>"
+          required>
+    </div>
+  </div>
+  <% } %>
+
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</form>
