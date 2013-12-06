@@ -4,10 +4,11 @@ var express = require('express');
 var xtend   = require('xtend');
 var request = require('request');
 var urlJoin = require('url-join');
-var test_ldap = require('./test_ldap');
 var exec    = require('child_process').exec;
 var app     = express();
 var freeport = require('freeport');
+
+var test_config = require('./test_config');
 
 app.configure(function () {
   this.set('views', __dirname + '/views');
@@ -75,7 +76,8 @@ app.get('/', set_current_config, function (req, res) {
 });
 
 app.post('/ldap', set_current_config, function (req, res, next) {
-  test_ldap(req.body, function (err, result) {
+  var config = xtend({}, req.body, req.current_config);
+  test_config(config, function (err, result) {
     if (err) {
       return res.render('index', xtend(req.current_config, req.body, {
         ERROR: err.message,
@@ -119,6 +121,8 @@ app.post('/ticket', set_current_config, function (req, res, next) {
         ERROR: 'The ticket url ' + req.body.PROVISIONING_TICKET + ' is not vaild.'
       }));
     }
+
+    req.body.AD_HUB = payload.adHub;
 
     next();
   });
