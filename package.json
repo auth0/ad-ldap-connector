@@ -37,7 +37,10 @@
     "url-join": "0.0.1",
     "freeport": "~1.0.2",
     "ws": "~0.4.31",
-    "async": "~0.2.9"
+    "async": "~0.2.9",
+    "selfsigned": "~1.2.0",
+    "commander": "~1.1.1",
+    "thumbprint": "0.0.1"
   },
   "devDependencies": {
     "chai": "~1.7.2",

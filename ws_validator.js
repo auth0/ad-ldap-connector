@@ -23,6 +23,19 @@ ws.sendEvent = function (name, payload) {
   }));
 };
 
+function ping (client) {
+  client.ping();
+
+  var check = setTimeout(function () {
+    console.log("server didn't respond ping command");
+    process.exit(1);
+  }, 5000);
+
+  client.once('pong', function () {
+    clearTimeout(check);
+  });
+}
+
 ws.on('open', function () {
   authenticate_connector();
 }).on('message', function (msg) {
@@ -40,11 +53,15 @@ ws.on('open', function () {
   process.exit(1);
 }).on('authenticated', function () {
   console.log('authenticated!');
+  var client = this;
+  setInterval(function () {
+    ping(client);
+  }, 10000);
 }).on('authentication_failure', function () {
   console.error('authentication failure');
   process.exit(0);
 }).on('close', function () {
-  console.error('server closed the connection');
+  console.error('connection closed');
   process.exit(1);
 }).on('authenticate_user', function (msg) {
   jwt.verify(msg.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {

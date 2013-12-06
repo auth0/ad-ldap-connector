@@ -3,7 +3,7 @@ require('./lib/initConf');
 
 var nconf = require('nconf');
 
-var connectorSetup = require('connector-setup');
+var connectorSetup = require('./connector-setup');
 
 var emptyVars = [ 'LDAP_URL',
                   'LDAP_BASE',
