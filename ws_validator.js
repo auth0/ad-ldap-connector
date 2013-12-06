@@ -78,7 +78,7 @@ ws.on('open', function () {
         });
       }
 
-      console.log('user ' + user.displayName.green + ' authenticated');
+      console.log('user ' + (user.displayName || '').green + ' authenticated');
 
       var mapped = {
         id:          user.objectGUID,

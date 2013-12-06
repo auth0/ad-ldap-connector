@@ -8,3 +8,4 @@ installer/output/*
 installer/adldap.msi
 installer/directory.wxs
 installer/sign.ps1
+node_modules/*

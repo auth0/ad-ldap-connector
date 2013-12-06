@@ -40,7 +40,8 @@
     "async": "~0.2.9",
     "selfsigned": "~1.2.0",
     "commander": "~1.1.1",
-    "thumbprint": "0.0.1"
+    "thumbprint": "0.0.1",
+    "base64url": "https://github.com/jfromaniello/base64url/tarball/master"
   },
   "devDependencies": {
     "chai": "~1.7.2",
