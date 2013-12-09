@@ -1,4 +1,5 @@
 $ErrorActionPreference = "Stop"
+. "npm" install windows-eventlog
 
 # remember to manually remove this after npm install... it fails because the path is too long.
 # Remove-Item -Recurse -Force "..\node_modules\jsonwebtoken\node_modules\jws\node_modules\base64url\node_modules\tap"
