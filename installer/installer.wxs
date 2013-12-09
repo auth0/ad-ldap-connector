@@ -70,7 +70,7 @@
               OnExit="success">NOT Installed</Custom>
       <Custom Action="PreventDowngrading"
           After="FindRelatedProducts">NEWPRODUCTFOUND</Custom>
-      <RemoveExistingProducts After="InstallFinalize" />
+      <RemoveExistingProducts After="InstallInitialize" />
     </InstallExecuteSequence>
 
     <Feature Id='Complete' Level='1'>
