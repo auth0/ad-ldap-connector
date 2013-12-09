@@ -41,7 +41,8 @@
     "selfsigned": "~1.2.0",
     "commander": "~1.1.1",
     "thumbprint": "0.0.1",
-    "base64url": "https://github.com/jfromaniello/base64url/tarball/master"
+    "base64url": "https://github.com/jfromaniello/base64url/tarball/master",
+    "winston": "~0.7.2"
   },
   "devDependencies": {
     "chai": "~1.7.2",

@@ -1,16 +1,30 @@
 if (process.platform !== 'win32') return;
 
+
+
+var winston = require("winston");
+
+winston.setLevels(winston.config.syslog.levels);
+winston.remove(winston.transports.Console);
+winston.add(winston.transports.File, { 
+  maxsize: 40000, 
+  maxFiles: 10,
+  level: "debug", 
+  filename: __dirname + '/logs.log',
+  json: false,
+  handleExceptions: true
+});
+
+
 var old_log = console.log;
 var old_error = console.error;
-var EventLog = require('windows-eventlog').EventLog;
-var eventlog = new EventLog("Auth0 ADLDAP");
 
 console.log = function () {
   var message = Array.prototype.slice.call(arguments)
                      .join(' ')
                      .stripColors; //remove colors
   if (!message) return;
-  eventlog.log(message);
+  winston.debug(message);
   old_log.apply(console, arguments);
 };
 
@@ -19,6 +33,6 @@ console.error = function () {
                      .join(' ')
                      .stripColors; //remove colors
   if (!message) return;
-  eventlog.log(message, 'Error');
+  winston.error(message);
   old_error.apply(console, arguments);
 };
