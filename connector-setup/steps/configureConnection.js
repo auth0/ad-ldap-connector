@@ -36,7 +36,8 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
     json: {
       certs:          [cert],
       signInEndpoint: signInEndpoint,
-      agentMode:      nconf.get('AGENT_MODE')
+      agentMode:      nconf.get('AGENT_MODE'),
+      agentVersion:   require('../../package').version
     }
   }, function (err, response, body) {
     if (err) return cb(err);
