@@ -4,7 +4,7 @@
 
   <Product Id="CD441FF9-E5FA-4EA1-AA8C-CC82AFEDAE30"
           UpgradeCode="1072AB9E-1842-4AFA-9CF2-545462CD60E2"
-          Language='1033' Codepage='1252' Version='1.0.0'
+          Language='1033' Codepage='1252' Version="$(var.Vers)"
           Name="Auth0 AD LDAP Connector"
           Manufacturer='Auth10 LLC'>
 

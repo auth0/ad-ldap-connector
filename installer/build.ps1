@@ -28,11 +28,15 @@ If (Test-Path $tmp_dir\config.json){
     Remove-Item $tmp_dir\config.json
 }
 
+$version = (. "node" -e "console.log(require('../package.json').version);") | Out-String
+
+$version = $version.Trim()
+
 #Generate the installer
 $wix_dir="c:\Program Files (x86)\WiX Toolset v3.8\bin"
 
 . "$wix_dir\heat.exe" dir $tmp_dir -srd -dr INSTALLDIR -cg MainComponentGroup -out directory.wxs -ke -sfrag -gg -var var.SourceDir -sreg -scom 
-. "$wix_dir\candle.exe" -dSourceDir="$tmp_dir" *.wxs -o output\ -ext WiXUtilExtension
+. "$wix_dir\candle.exe" -dSourceDir="$tmp_dir" -dVers="$version" *.wxs -o output\ -ext WiXUtilExtension
 . "$wix_dir\light.exe" -o output\adldap.msi output\*.wixobj -cultures:en-US -ext WixUIExtension.dll -ext WiXUtilExtension
 . "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe" sign /n "Auth10" .\output\adldap.msi
 
