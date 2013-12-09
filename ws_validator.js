@@ -13,6 +13,8 @@ var cert = {
 
 var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
 var ws = new WebSocket(socket_server_address);
+var profileMapper = require('./lib/profileMapper');
+
 console.log('connecting to ' + socket_server_address.green);
 
 
@@ -78,20 +80,12 @@ ws.on('open', function () {
         });
       }
 
-      console.log('user ' + (user.displayName || '').green + ' authenticated');
+      var profile = profileMapper(user);
 
-      var mapped = {
-        id:          user.objectGUID,
-        displayName: user.displayName,
-        name: {
-          familyName: user.sn,
-          givenName: user.givenName
-        },
-        emails: (user.mail ? [{value: user.mail }] : undefined),
-        _json: user
-      };
+      console.log('user ' + (profile.nickname || profile.displayName || '').green + ' authenticated');
+
       ws.sendEvent(payload.pid + '_result', {
-        profile: mapped
+        profile: profile
       });
     });
   });
