@@ -27,6 +27,9 @@ Copy-Item "C:\Program Files (x86)\nodejs\node.exe" $tmp_dir\bin
 If (Test-Path $tmp_dir\config.json){
     Remove-Item $tmp_dir\config.json
 }
+If (Test-Path $tmp_dir\logs.log){
+    Remove-Item $tmp_dir\logs.log
+}
 
 $version = (. "node" -e "console.log(require('../package.json').version);") | Out-String
 
