@@ -2,9 +2,9 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-  <Product Id="CD441FF9-E5FA-4EA1-AA8C-CC82AFEDAE30"
-          UpgradeCode="1072AB9E-1842-4AFA-9CF2-545462CD60E2"
-          Language='1033' Codepage='1252' Version="$(var.Vers)"
+  <Product Id="*"
+          UpgradeCode="$(var.UpgradeCode)"
+          Language='1033' Codepage='1252' Version="$(var.ProductVersion)"
           Name="Auth0 AD LDAP Connector"
           Manufacturer='Auth10 LLC'>
 
@@ -19,10 +19,25 @@
     <WixVariable Id="WixUIDialogBmp" Value="$(var.SourceDir)\public\images\msi-welcome.bmp" />
 
     <Icon Id="icon.ico" SourceFile="$(var.SourceDir)\public\images\logo.ico"/>
+    
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
 
-
     <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
+
+    <Upgrade Id="$(var.UpgradeCode)">
+      <UpgradeVersion Minimum="$(var.ProductVersion)"
+                      IncludeMinimum="no"
+                      OnlyDetect="yes"
+                      Language="1033"
+                      Property="NEWPRODUCTFOUND" />
+      
+      <UpgradeVersion Minimum="$(var.RTMProductVersion)"
+                      IncludeMinimum="yes"
+                      Maximum="$(var.ProductVersion)"
+                      IncludeMaximum="no"
+                      Language="1033"
+                      Property="UPGRADEFOUND" />
+    </Upgrade>
 
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='ProgramFilesFolder' Name='PFiles'>
@@ -36,6 +51,9 @@
                     Name="Auth0"/>
       </Directory>
     </Directory>
+    
+    <CustomAction Id="PreventDowngrading"
+              Error="Newer version already installed." />
 
     <CustomAction Id="LaunchBrowser"
           ExeCommand="explorer.exe &quot;http://localhost:8357/&quot;"
@@ -50,6 +68,9 @@
               Before='StartServices'>NOT Installed</Custom>
       <Custom Action="LaunchBrowser"
               OnExit="success">NOT Installed</Custom>
+      <Custom Action="PreventDowngrading"
+          After="FindRelatedProducts">NEWPRODUCTFOUND</Custom>
+      <RemoveExistingProducts After="InstallFinalize" />
     </InstallExecuteSequence>
 
     <Feature Id='Complete' Level='1'>
