@@ -22,7 +22,7 @@ $ npm i --production
 $ node server.js
 ```
 
-Add your connector ticket when requested.
++  Add your connector ticket when requested.
 
 +  Add your LDAP settings to `config.json` file and then run the connector again:
 
@@ -33,7 +33,7 @@ $ node server.js
 
 +  Verify with the __Try__ button in the dashboard if your connector is working.
 
-+  Once a your service is working on the dashboard, we are going to configure it as a upstar daemon:
++  Once a your service is working with the Try button, we are going to configure it as an upstar daemon:
 
 ```
 # Create a system account:
