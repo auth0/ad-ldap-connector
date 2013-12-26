@@ -1,3 +1,11 @@
++  Install Node 0.8.26 with nave:
+
+```
+$ curl -o /opt/nave https://raw.github.com/isaacs/nave/master/nave.sh
+$ chmod +x /opt/nave
+$ /opt/nave usemain 0.8.26
+```
+
 +  Download the repository:
 
 ```
