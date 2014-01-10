@@ -42,7 +42,7 @@
     "thumbprint": "0.0.1",
     "base64url": "https://github.com/jfromaniello/base64url/tarball/master",
     "winston": "~0.7.2",
-    "express-kerberos": "0.0.3"
+    "express-kerberos": "0.0.4"
   },
   "devDependencies": {
     "chai": "~1.7.2",

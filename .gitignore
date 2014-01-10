@@ -7,6 +7,6 @@ config.json
 installer/output/*
 installer/adldap.msi
 installer/directory.wxs
-installer/sign.ps1
+installer/log.log
 node_modules/*
 logs.log

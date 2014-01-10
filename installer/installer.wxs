@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
-     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
 
   <Product Id="*"
           UpgradeCode="$(var.UpgradeCode)"
@@ -10,7 +11,8 @@
 
     <Package Id='*' Keywords='Installer' Description="Auth0 LDAP Connector"
           Comments='Auth0 is a registered trademark of Auth10 LLC' Manufacturer='Auth10 LLC'
-          InstallerVersion='100' Languages='1033' Compressed='yes' SummaryCodepage='1252' />
+          InstallerVersion='100' Languages='1033' Compressed='yes' SummaryCodepage='1252'
+          InstallScope="perMachine"/>
 
     <Media Id='1' EmbedCab='yes' Cabinet="main.cab" />
 
@@ -19,10 +21,16 @@
     <WixVariable Id="WixUIDialogBmp" Value="$(var.SourceDir)\public\images\msi-welcome.bmp" />
 
     <Icon Id="icon.ico" SourceFile="$(var.SourceDir)\public\images\logo.ico"/>
-    
+
+    <PropertyRef Id="NETFRAMEWORK45" />
+
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
 
     <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
+
+    <Condition Message="This application requires .NET Framework 4.5. Please install the .NET Framework then run this installer again.">
+        <![CDATA[Installed OR NETFRAMEWORK45]]>
+    </Condition>
 
     <Upgrade Id="$(var.UpgradeCode)">
       <UpgradeVersion Minimum="$(var.ProductVersion)"
@@ -30,7 +38,7 @@
                       OnlyDetect="yes"
                       Language="1033"
                       Property="NEWPRODUCTFOUND" />
-      
+
       <UpgradeVersion Minimum="$(var.RTMProductVersion)"
                       IncludeMinimum="yes"
                       Maximum="$(var.ProductVersion)"
@@ -47,11 +55,11 @@
         </Directory>
       </Directory>
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder" 
+        <Directory Id="ApplicationProgramsFolder"
                     Name="Auth0"/>
       </Directory>
     </Directory>
-    
+
     <CustomAction Id="PreventDowngrading"
               Error="Newer version already installed." />
 
@@ -80,9 +88,9 @@
         <File Id="node" KeyPath="yes" Source="C:\Program Files (x86)\nodejs\node.exe" />
       </Component>
       <Component Id="nssm_component" Guid="{07D39AAA-CBB2-4F3F-BC22-EC7AE4963FFF}" Directory="INSTALLDIR">
-        <File Id="nssm" KeyPath="yes" Source="C:\Program Files (x86)\nssm-2.21\win32\nssm.exe" />
-<!--         <RemoveFile Id="RemoveConfigJson" 
-                 Name="config.json" 
+        <File Id="nssm" KeyPath="yes" Source="C:\Program Files (x86)\nssm-2.21.1\win32\nssm.exe" />
+<!--         <RemoveFile Id="RemoveConfigJson"
+                 Name="config.json"
                  On="uninstall" /> -->
 
         <ServiceControl Id="ControlAdminService"
@@ -96,7 +104,7 @@
                  Remove="uninstall"
                  Stop="uninstall" />
       </Component>
-   
+
     </Feature>
 
     <Property Id="WIXUI_TICKETURL" Secure="yes" />
