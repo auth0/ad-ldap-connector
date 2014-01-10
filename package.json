@@ -26,10 +26,9 @@
     "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/master",
     "wsfed": "~0.5.7",
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
-    "connector-setup": "https://github.com/auth0/connector-setup/tarball/master",
     "passport-local": "~0.1.6",
     "colors": "~0.6.0-1",
-    "passport-windowsauth": "~0.1.10",
+    "passport-windowsauth": "~0.1.11",
     "ldapjs": "https://github.com/auth0/node-ldapjs/tarball/master",
     "jsonwebtoken": "~0.1.0",
     "xtend": "~2.1.1",
@@ -42,7 +41,8 @@
     "commander": "~1.1.1",
     "thumbprint": "0.0.1",
     "base64url": "https://github.com/jfromaniello/base64url/tarball/master",
-    "winston": "~0.7.2"
+    "winston": "~0.7.2",
+    "express-kerberos": "0.0.3"
   },
   "devDependencies": {
     "chai": "~1.7.2",

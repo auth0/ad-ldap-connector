@@ -20,9 +20,6 @@ var getCurrentThumbprint = function (workingPath) {
 };
 
 module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
-  // if (nconf.get('LAST_SENT_THUMBPRINT')          === getCurrentThumbprint(workingPath) &&
-  //     urlJoin(nconf.get('SERVER_URL'), '/wsfed') === connectionInfo.signInEndpoint ) return cb();
-
   var serverUrl = nconf.get('SERVER_URL') || ('http://localhost:' + (nconf.get('PORT') || 4000));
 
   var signInEndpoint = urlJoin(serverUrl, '/wsfed');

@@ -42,7 +42,7 @@
             </div>
           </div>
 
-          <% if (locals.SERVER_URL) { %>
+          <% if (locals.SERVER_URL && locals.KERBEROS_AUTH) { %>
           <div class="container-fluid flat">
             <div class="widget-box">
               <div class="widget-title">
@@ -54,7 +54,7 @@
             </div>
           </div>
           <% } %>
-          
+
         </section>
       </div>
     </div>

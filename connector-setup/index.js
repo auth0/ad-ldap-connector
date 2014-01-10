@@ -49,6 +49,7 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
       nconf.set('PROVISIONING_TICKET', provisioningTicket);
       nconf.set('WSFED_ISSUER', info.connectionDomain);
       nconf.set('CONNECTION', info.connectionName);
+      nconf.set('KERBEROS_AUTH', info.kerberos);
       nconf.set('REALM', info.realm.name);
       nconf.set('SITE_NAME', nconf.get('SITE_NAME') || info.connectionDomain);
       nconf.set(info.realm.name, info.realm.postTokenUrl);

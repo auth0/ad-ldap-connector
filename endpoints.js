@@ -5,6 +5,13 @@ var jwt                   = require('jsonwebtoken');
 var wsfederationResponses = require('./lib/wsfederation-responses');
 var Users                 = require('./lib/users');
 
+var integrated_headers = ['x-forwarded-user', 'x-iisnode-logon_user'];
+
+
+var kerberos_middleware;
+
+
+
 exports.install = function (app) {
 
   var validateAccessToken = function (req, res, next) {
@@ -57,15 +64,16 @@ exports.install = function (app) {
         req.session.user = profile;
         next();
       })(req, res, next);
-    },
-    function (req, res, next) {
-      if (req.session.user && req.query.wprompt !== 'consent') {
+    }, function (req, res, next) {
+      var is_integrated =  integrated_headers.some(function (h) {
+        return !!req.headers[h];
+      });
+      if (req.session.user && (req.query.wprompt !== 'consent' || is_integrated)) {
         req.user = req.session.user;
         return wsfederationResponses.token(req, res);
       }
       next();
-    },
-    function (req, res) {
+    }, function (req, res) {
       var messages = (req.session.messages || []).join('<br />');
       delete req.session.messages;
       return res.render('login', {

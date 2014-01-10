@@ -1,14 +1,5 @@
 <form class="form-horizontal" method="post" action="/server">
   <div class="control-group">
-    <div class="controls">
-      <label class="checkbox">
-        <input type="checkbox" <%= locals.AGENT_MODE ? 'checked' : ''%>>
-        Agent Mode
-      </label>
-    </div>
-  </div>
-  <% if (!locals.AGENT_MODE) { %>
-  <div class="control-group">
     <label class="control-label" for="SERVER_URL">Front Facing URL:</label>
     <div class="controls">
       <input type="text"
@@ -31,8 +22,6 @@
           required>
     </div>
   </div>
-  <% } %>
-
   <div class="control-group">
     <div class="controls">
       <button type="submit" class="btn btn-primary">Save</button>

@@ -16,20 +16,17 @@ var emptyVars = [ 'LDAP_URL',
                   'LDAP_BIND_USER',
                   'LDAP_BIND_PASSWORD' ];
 
-
 connectorSetup.run(__dirname, emptyVars, function(err) {
   if(err) {
     console.log(err.message);
     process.exit(2);
   }
 
-  if (nconf.get('AGENT_MODE')) {
-    if(!nconf.get('LDAP_URL')) {
-      console.error('edit config.json and add your LDAP settings');
-      return process.exit(1);
-    }
-    return require('./ws_validator');
+  if(!nconf.get('LDAP_URL')) {
+    console.error('edit config.json and add your LDAP settings');
+    return process.exit(1);
   }
+  require('./ws_validator');
 
   var http     = require('http');
   var express  = require('express');
@@ -46,12 +43,27 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     this.set('view engine', 'ejs');
     this.set('views', __dirname + '/views');
 
+
+    if (nconf.get('KERBEROS_AUTH') && process.platform === 'win32') {
+      var kerberos = require('express-kerberos');
+
+      var kerberos_middleware = kerberos({
+        proxy_to:  'http://localhost:' + nconf.get('PORT'),
+        check_ip:  true,
+        header:    'X-Forwarded-User'
+      });
+
+      this.use('/wsfed', kerberos_middleware);
+    }
+
+
     this.use(express.static(__dirname + '/public'));
+    this.use(express.logger());
 
     this.use(express.cookieParser());
     this.use(express.bodyParser());
     this.use(cookieSessions({
-      session_key:    'adsad',
+      session_key:    'auth0-ad-conn',
       secret:         nconf.get('SESSION_SECRET')
     }));
 
@@ -61,7 +73,6 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
 
   require('./endpoints').install(app);
-
 
   http.createServer(app)
       .listen(nconf.get('PORT'), function () {
