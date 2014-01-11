@@ -26,9 +26,15 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     console.error('edit config.json and add your LDAP settings');
     return process.exit(1);
   }
+
+
   require('./ws_validator');
 
-  var http     = require('http');
+  if (!nconf.get('KERBEROS_AUTH') || process.platform !== 'win32') {
+    return;
+  }
+
+  var kerberosServer = require('kerberos-server');
   var express  = require('express');
   var passport = require('passport');
 
@@ -43,19 +49,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     this.set('view engine', 'ejs');
     this.set('views', __dirname + '/views');
 
-
-    if (nconf.get('KERBEROS_AUTH') && process.platform === 'win32') {
-      var kerberos = require('express-kerberos');
-
-      var kerberos_middleware = kerberos({
-        proxy_to:  'http://localhost:' + nconf.get('PORT'),
-        check_ip:  true,
-        header:    'X-Forwarded-User'
-      });
-
-      this.use('/wsfed', kerberos_middleware);
-    }
-
+    this.use('/wsfed', kerberos_middleware);
 
     this.use(express.static(__dirname + '/public'));
     this.use(express.logger());
@@ -74,8 +68,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
   require('./endpoints').install(app);
 
-  http.createServer(app)
-      .listen(nconf.get('PORT'), function () {
-        console.log('listening on http://localhost:' + nconf.get('PORT'));
-      });
+  kerberosServer.listen(nconf.get('PORT'), app);
+
+  console.log('listening on http://localhost:' + nconf.get('PORT'));
 });
