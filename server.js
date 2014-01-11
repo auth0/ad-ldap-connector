@@ -49,8 +49,6 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     this.set('view engine', 'ejs');
     this.set('views', __dirname + '/views');
 
-    this.use('/wsfed', kerberos_middleware);
-
     this.use(express.static(__dirname + '/public'));
     this.use(express.logger());
 
@@ -68,7 +66,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
   require('./endpoints').install(app);
 
-  kerberosServer.listen(nconf.get('PORT'), app);
+  kerberosServer.createServer(nconf.get('PORT'), app);
 
   console.log('listening on http://localhost:' + nconf.get('PORT'));
 });
