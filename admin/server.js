@@ -51,7 +51,7 @@ function merge_config (req, res) {
   fs.writeFileSync(__dirname + '/../config.json',
       JSON.stringify(new_config, null, 2));
 
-  if(req.body.LDAP_URL) {
+  if(req.body.LDAP_URL || req.body.PORT || req.body.SERVER_URL) {
     return exec('net stop "Auth0 ADLDAP"', function () {
       exec('net start "Auth0 ADLDAP"', function () {
         setTimeout(function () {
