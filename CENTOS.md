@@ -90,5 +90,5 @@ $ initctl start ad-ldap-connector
 +  You can check the application logs as follows:
 
 ~~~
-$  tail -f /var/log/ad-ldap-connector.conf
+$  tail -f /var/log/ad-ldap-connector.log
 ~~~
