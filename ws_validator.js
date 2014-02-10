@@ -40,7 +40,7 @@ function ping (client) {
 ws.on('open', function () {
   authenticate_connector();
 }).on('message', function (msg) {
-  console.log(m);
+  console.log(msg);
   var m;
   try {
     m = JSON.parse(msg);
