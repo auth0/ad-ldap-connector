@@ -89,6 +89,27 @@ ws.on('open', function () {
       });
     });
   });
+}).on('search_users', function (msg) {
+  jwt.verify(msg.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {
+    if (err) {
+      console.error('unauthorized attemp of search_users');
+      return;
+    }
+
+    var options = {
+      limit: payload.limit
+    };
+
+    users.list(payload.search, options, function (err, users) {
+      if (err) return ws.sendEvent(payload.pid + '_search_users_result', {err: err});
+
+      ws.sendEvent(payload.pid + '_search_users_result', {
+        users: (users || []).map(function (user) {
+          return profileMapper(user);
+        })
+      });
+    });
+  });
 });
 
 function authenticate_connector() {
