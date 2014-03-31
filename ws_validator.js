@@ -71,16 +71,21 @@ ws.on('open', function () {
       return;
     }
     users.validate(payload.username, payload.password, function (err, user) {
-      if (err) return ws.sendEvent(payload.pid + '_result', {err: err});
+      var profile = user ? profileMapper(user) : null;
+
+      if (err) {
+        if (user) {
+          console.log("wrong password: " + payload.username);
+        }
+        return ws.sendEvent(payload.pid + '_result', {err: err, profile: profile});
+      }
 
       if (!user) {
-        console.log("wrong username or password: " + payload.username);
+        console.log("wrong username: " + payload.username);
         return ws.sendEvent(payload.pid + '_result', {
           err: new Error('wrong username or password')
         });
       }
-
-      var profile = profileMapper(user);
 
       console.log('user ' + (profile.nickname || profile.displayName || '').green + ' authenticated');
 
