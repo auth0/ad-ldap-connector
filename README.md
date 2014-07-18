@@ -92,6 +92,8 @@ By default the connector search using this query LDAP `(sAMAccountName={0})`, yo
 	"LDAP_USER_BY_NAME": "(cn={0})",
 ```
 
+If you get "Invalid Ticket" when configuring the connector for the first time, the most likely cause is a network issue (e.g. connector behind a proxy). Try connecting to `https://{your tenant}.auth0.com/testall` with a browser other than IE.
+
 ## License
 
 MIT - Auth0 Inc 2013
