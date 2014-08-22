@@ -1,9 +1,10 @@
-var urlJoin = require('url-join');
-var request = require('request');
-var fs = require('fs');
-var path = require('path');
+var urlJoin    = require('url-join');
+var request    = require('request');
+var fs         = require('fs');
+var path       = require('path');
 var thumbprint = require('thumbprint');
-var nconf = require('nconf');
+var nconf      = require('nconf');
+var os         = require('os');
 
 var pemToCert = function(pem) {
   var cert = /-----BEGIN CERTIFICATE-----([^-]*)-----END CERTIFICATE-----/g.exec(pem.toString());
@@ -20,7 +21,8 @@ var getCurrentThumbprint = function (workingPath) {
 };
 
 module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
-  var serverUrl = nconf.get('SERVER_URL') || ('http://localhost:' + (nconf.get('PORT') || 4000));
+  var serverUrl = nconf.get('SERVER_URL') ||
+                  ('http://' + os.hostname() + ':' + (nconf.get('PORT') || 4000));
 
   var signInEndpoint = urlJoin(serverUrl, '/wsfed');
   var cert = pemToCert(fs.readFileSync(path.join(workingPath, 'certs', 'cert.pem')).toString());
