@@ -7,10 +7,10 @@
           UpgradeCode="$(var.UpgradeCode)"
           Language='1033' Codepage='1252' Version="$(var.ProductVersion)"
           Name="Auth0 AD LDAP Connector"
-          Manufacturer='Auth10 LLC'>
+          Manufacturer='Auth0 INC'>
 
     <Package Id='*' Keywords='Installer' Description="Auth0 LDAP Connector"
-          Comments='Auth0 is a registered trademark of Auth10 LLC' Manufacturer='Auth10 LLC'
+          Comments='Auth0 is a registered trademark of Auth0 INC' Manufacturer='Auth0 INC'
           InstallerVersion='100' Languages='1033' Compressed='yes' SummaryCodepage='1252'
           InstallScope="perMachine"/>
 
