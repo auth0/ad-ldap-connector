@@ -30,8 +30,12 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
   require('./ws_validator');
 
-  if (!nconf.get('KERBEROS_AUTH') || process.platform !== 'win32') {
+  if (!nconf.get('KERBEROS_AUTH')) {
     return;
+  }
+
+  if (process.platform !== 'win32') {
+    return console.log('Detected KERBEROS_AUTH in config, but this platform doesn\'t support it.');
   }
 
   var kerberosServer = require('kerberos-server');
