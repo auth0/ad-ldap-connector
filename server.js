@@ -28,6 +28,8 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   }
 
 
+  require('./lib/clock_skew_detector');
+
   require('./ws_validator');
 
   if (!nconf.get('KERBEROS_AUTH')) {
