@@ -7,6 +7,9 @@ var async = require('async');
 var request = require('request');
 var urlJoin = require('url-join');
 
+var firewall = require('../lib/firewall');
+var path = require('path');
+
 //steps
 var certificate = require('./steps/certificate');
 var configureConnection = require('./steps/configureConnection');
@@ -45,11 +48,31 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
       });
     },
     function (cb) {
+
+      var do_not_configure_firewall = nconf.get('FIREWALL_RULE_CREATED') ||
+                                      !info.kerberos ||
+                                      process.platform !== 'win32';
+
+      if (do_not_configure_firewall) {
+        return cb();
+      }
+
+      //add a firewall rule the first time
+      firewall.add_rule({
+        name:    'Auth0ConnectorKerberos',
+        program: path.resolve(path.join(__dirname, '/../node_modules/kerberos-server/kerberosproxy.net/KerberosProxy/bin/Debug/KerberosProxy.exe')),
+        profile: 'private'
+      });
+
+      cb();
+    },
+    function (cb) {
       nconf.set('AD_HUB', info.adHub);
       nconf.set('PROVISIONING_TICKET', provisioningTicket);
       nconf.set('WSFED_ISSUER', info.connectionDomain);
       nconf.set('CONNECTION', info.connectionName);
       nconf.set('KERBEROS_AUTH', info.kerberos);
+      nconf.set('FIREWALL_RULE_CREATED', info.kerberos);
       nconf.set('REALM', info.realm.name);
       nconf.set('SITE_NAME', nconf.get('SITE_NAME') || info.connectionDomain);
       nconf.set(info.realm.name, info.realm.postTokenUrl);
