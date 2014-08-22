@@ -42,6 +42,14 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   var express  = require('express');
   var passport = require('passport');
 
+  var firewall = require('./lib/firewall');
+  var path = require('path');
+
+  firewall.add_rule({
+    name:    'Auth0ConnectorKerberos',
+    program: path.join(__dirname, '/node_modules/kerberos-server/kerberosproxy.net/KerberosProxy/bin/Debug/KerberosProxy.exe'),
+    profile: 'private'
+  });
 
   require('./lib/setupPassport');
 
@@ -66,7 +74,6 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     this.use(passport.initialize());
     this.use(this.router);
   });
-
 
   require('./endpoints').install(app);
 
