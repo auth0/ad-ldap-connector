@@ -84,20 +84,13 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   if (nconf.get('CLIENT_CERT_AUTH')) {
     console.log('Using client certificate-based authentication');
 
-    // Validate SSL settings
-    if (!nconf.get('SSL_KEY')) { return console.log('Please update your config.json file to include the path of your SSL private key (SSL_KEY).'); }
-    if (!nconf.get('SSL_CERT')) { return console.log('Please update your config.json file to include the path of your SSL certificate (SSL_CERT).'); }
-    if (!nconf.get('CA_CERT')) { return console.log('Please update your config.json file to include the path(s) of your CA public key(s) (CA_CERT). A certificate that is not signed by the provided CA will be rejected at the protocol layer.'); }
-
-    var fs = require('fs');
+    // SSL settings
     var options = {
-      key: fs.readFileSync(nconf.get('SSL_KEY')),
-      cert: fs.readFileSync(nconf.get('SSL_CERT')),
-      ca: nconf.get('CA_CERT').split(',').map(function (cert) {
-        return cert && fs.readFileSync(cert.trim());
-      }),
+      ca: nconf.get('CA_CERT'), // An authority certificate or a set of authority certificates to check the remote host against
+      key: nconf.get('SSL_PFX'), // Private key to use for SSL
+      passphrase: nconf.get('SSL_KEY_PASSWORD'), // A string of passphrase for the private key or pfx
       requestCert: true,
-      rejectUnauthorized: false
+      //rejectUnauthorized: false
     };
 
     var https = require('https');

@@ -44,7 +44,8 @@
     "winston": "~0.7.2",
     "ws": "~0.4.31",
     "wsfed": "~0.5.7",
-    "xtend": "~2.1.1"
+    "xtend": "~2.1.1",
+    "connect-multiparty": "~1.2.4"
   },
   "devDependencies": {
     "chai": "~1.7.2",
