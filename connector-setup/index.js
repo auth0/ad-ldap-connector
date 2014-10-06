@@ -71,6 +71,7 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
       nconf.set('PROVISIONING_TICKET', provisioningTicket);
       nconf.set('WSFED_ISSUER', info.connectionDomain);
       nconf.set('CONNECTION', info.connectionName);
+      nconf.set('CLIENT_CERT_AUTH', info.certAuth);
       nconf.set('KERBEROS_AUTH', info.kerberos);
       nconf.set('FIREWALL_RULE_CREATED', info.kerberos);
       nconf.set('REALM', info.realm.name);

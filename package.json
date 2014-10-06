@@ -35,6 +35,7 @@
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
     "passport": "~0.1.16",
     "passport-local": "~0.1.6",
+    "passport-ssl-certificate": "git://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
     "passport-windowsauth": "~0.1.11",
     "request": "~2.16.6",
     "selfsigned": "~1.2.0",

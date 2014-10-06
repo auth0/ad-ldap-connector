@@ -113,6 +113,23 @@ exports.install = function (app) {
       next();
     }, wsfederationResponses.tokenDirect);
 
+  app.get('/certauth', function (req, res, next) {
+    passport.authenticate('ClientCertAuthentication', {
+      session: false
+    }, function (err, profile, info) {
+      if (err) { return next(err); }
+      if (!profile) {
+        return res.json(401, { invalid_user_password: (info && info.message) || 'Wrong username.' });
+      }
+      req.user = profile;
+      next();
+    })(req, res, next);
+  }, function (req, res, next) {
+    console.log('user ' + (req.user.displayName || 'unknown').green + ' authenticated with client certificate', req.session.cert);
+    req.session.user = req.user;
+    next();
+  }, wsfederationResponses.token);
+
   app.get('/logout', function (req, res) {
     console.log('user ' + (req.session.user.displayName || 'unknown').green + ' logged out');
     delete req.session;
