@@ -51,7 +51,9 @@ exports.install = function (app) {
   app.get('/wsfed',
     function (req, res, next) {
       var strategies = nconf.get('LDAP_URL') ?
-                          ['IISIntegrated', 'ApacheKerberos', 'WindowsAuthentication'] :
+                          (nconf.get('CLIENT_CERT_AUTH') ?
+                            ['ClientCertAuthentication'] :
+                            ['IISIntegrated', 'ApacheKerberos', 'WindowsAuthentication']) :
                           ['WindowsAuthentication'];
 
       passport.authenticate(strategies, {
@@ -68,7 +70,7 @@ exports.install = function (app) {
       var is_integrated =  integrated_headers.some(function (h) {
         return !!req.headers[h];
       });
-      if (req.session.user && (req.query.wprompt !== 'consent' || is_integrated)) {
+      if (req.session.user && (req.query.wprompt !== 'consent' || is_integrated || nconf.get('CLIENT_CERT_AUTH'))) {
         req.user = req.session.user;
         return wsfederationResponses.token(req, res);
       }
@@ -112,23 +114,6 @@ exports.install = function (app) {
       req.session.user = req.user;
       next();
     }, wsfederationResponses.tokenDirect);
-
-  app.get('/certauth', function (req, res, next) {
-    passport.authenticate('ClientCertAuthentication', {
-      session: false
-    }, function (err, profile, info) {
-      if (err) { return next(err); }
-      if (!profile) {
-        return res.json(401, { invalid_user_password: (info && info.message) || 'Wrong username.' });
-      }
-      req.user = profile;
-      next();
-    })(req, res, next);
-  }, function (req, res, next) {
-    console.log('user ' + (req.user.displayName || 'unknown').green + ' authenticated with client certificate', req.session.cert);
-    req.session.user = req.user;
-    next();
-  }, wsfederationResponses.token);
 
   app.get('/logout', function (req, res) {
     console.log('user ' + (req.session.user.displayName || 'unknown').green + ' logged out');

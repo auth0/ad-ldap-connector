@@ -27,47 +27,61 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     return process.exit(1);
   }
 
-
   require('./lib/clock_skew_detector');
-
   require('./ws_validator');
 
-  var configure_server = function (server) {
-    var express  = require('express');
-    var passport = require('passport');
+  if (!nconf.get('KERBEROS_AUTH') && !nconf.get('CLIENT_CERT_AUTH')) {
+    return;
+  }
 
-    require('./lib/setupPassport');
+  var express  = require('express');
+  var passport = require('passport');
 
-    var cookieSessions = require('cookie-sessions');
-    var app = express();
+  require('./lib/setupPassport');
 
-    //configure the webserver
-    app.configure(function(){
-      this.set('view engine', 'ejs');
-      this.set('views', __dirname + '/views');
+  var cookieSessions = require('cookie-sessions');
+  var app = express();
 
-      this.use(express.static(__dirname + '/public'));
-      this.use(express.logger());
+  // configure the webserver
+  app.configure(function(){
+    this.set('view engine', 'ejs');
+    this.set('views', __dirname + '/views');
 
-      this.use(express.cookieParser());
-      this.use(express.bodyParser());
-      this.use(cookieSessions({
-        session_key:    'auth0-ad-conn',
-        secret:         nconf.get('SESSION_SECRET')
-      }));
+    this.use(express.static(__dirname + '/public'));
+    this.use(express.logger());
 
-      this.use(passport.initialize());
-      this.use(this.router);
-    });
+    this.use(express.cookieParser());
+    this.use(express.bodyParser());
+    this.use(cookieSessions({
+      session_key:    'auth0-ad-conn',
+      secret:         nconf.get('SESSION_SECRET')
+    }));
 
-    require('./endpoints').install(app);
+    this.use(passport.initialize());
+    this.use(this.router);
+  });
 
-    if (options) { server.createServer(options, app).listen(nconf.get('PORT')); }
-    else { server.createServer(nconf.get('PORT'), app); }
-    
-    console.log('listening on port: ' + nconf.get('PORT'));
+  require('./endpoints').install(app);
+
+  var server = require('https');
+  var options = {
+    port: nconf.get('PORT')
   };
 
+  // client certificate-based authentication
+  if (nconf.get('CLIENT_CERT_AUTH')) {
+    console.log('Using client certificate-based authentication');
+
+    // SSL settings
+    options.ca = nconf.get('CA_CERT');
+    options.pfx = new Buffer(nconf.get('SSL_PFX'));
+    options.passphrase = nconf.get('SSL_KEY_PASSWORD');
+    //options.key = require('fs').readFileSync('./certs/localhost.key.pem');
+    //options.cert = require('fs').readFileSync('./certs/localhost.cert.pem');
+    options.requestCert = true;
+    //options.rejectUnauthorized = false;
+  }
+  
   // kerberos authentication
   if (nconf.get('KERBEROS_AUTH')) {
     console.log('Using kerberos authentication');
@@ -76,24 +90,9 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
       return console.log('Detected KERBEROS_AUTH in config, but this platform doesn\'t support it.');
     }
 
-    var kerberosServer = require('kerberos-server');
-    return configure_server(kerberosServer);
+    server = require('kerberos-server'); // TODO: add support for HTTPS
   }
 
-  // client certificate-based authentication
-  if (nconf.get('CLIENT_CERT_AUTH')) {
-    console.log('Using client certificate-based authentication');
-
-    // SSL settings
-    var options = {
-      ca: nconf.get('CA_CERT'), // An authority certificate or a set of authority certificates to check the remote host against
-      key: nconf.get('SSL_PFX'), // Private key to use for SSL
-      passphrase: nconf.get('SSL_KEY_PASSWORD'), // A string of passphrase for the private key or pfx
-      requestCert: true,
-      //rejectUnauthorized: false
-    };
-
-    var https = require('https');
-    return configure_server(https, options);
-  }
+  server.createServer(options, app).listen(options.port);
+  console.log('listening on port: ' + nconf.get('PORT'));
 });
