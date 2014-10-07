@@ -63,7 +63,6 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
   require('./endpoints').install(app);
 
-  var server = require('https');
   var options = {
     port: nconf.get('PORT')
   };
@@ -80,8 +79,11 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     //options.cert = require('fs').readFileSync('./certs/localhost.cert.pem');
     options.requestCert = true;
     //options.rejectUnauthorized = false;
+
+    var https = require('https');
+    https.createServer(options, app).listen(options.port);
   }
-  
+
   // kerberos authentication
   if (nconf.get('KERBEROS_AUTH')) {
     console.log('Using kerberos authentication');
@@ -90,9 +92,9 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
       return console.log('Detected KERBEROS_AUTH in config, but this platform doesn\'t support it.');
     }
 
-    server = require('kerberos-server'); // TODO: add support for HTTPS
+    var kerberos_server = require('kerberos-server');
+    kerberos_server.createServer(options, app);
   }
 
-  server.createServer(options, app).listen(options.port);
   console.log('listening on port: ' + nconf.get('PORT'));
 });
