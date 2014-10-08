@@ -80,10 +80,12 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     options.requestCert = true;
     //options.rejectUnauthorized = false;
 
-    var https = require('https');
-    https.createServer(options, app).listen(options.port);
+    if (!nconf.get('KERBEROS_AUTH')) {
+      var https = require('https'); // use https server
+      https.createServer(options, app).listen(options.port);
+    }
   }
-
+  
   // kerberos authentication
   if (nconf.get('KERBEROS_AUTH')) {
     console.log('Using kerberos authentication');
