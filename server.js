@@ -27,20 +27,13 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
     return process.exit(1);
   }
 
-
   require('./lib/clock_skew_detector');
-
   require('./ws_validator');
 
-  if (!nconf.get('KERBEROS_AUTH')) {
+  if (!nconf.get('KERBEROS_AUTH') && !nconf.get('CLIENT_CERT_AUTH')) {
     return;
   }
 
-  if (process.platform !== 'win32') {
-    return console.log('Detected KERBEROS_AUTH in config, but this platform doesn\'t support it.');
-  }
-
-  var kerberosServer = require('kerberos-server');
   var express  = require('express');
   var passport = require('passport');
 
@@ -49,7 +42,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   var cookieSessions = require('cookie-sessions');
   var app = express();
 
-  //configure the webserver
+  // configure the webserver
   app.configure(function(){
     this.set('view engine', 'ejs');
     this.set('views', __dirname + '/views');
@@ -70,7 +63,40 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
   require('./endpoints').install(app);
 
-  kerberosServer.createServer(nconf.get('PORT'), app);
+  var options = {
+    port: nconf.get('PORT')
+  };
 
-  console.log('listening on http://localhost:' + nconf.get('PORT'));
+  // client certificate-based authentication
+  if (nconf.get('CLIENT_CERT_AUTH')) {
+    console.log('Using client certificate-based authentication');
+
+    // SSL settings
+    options.ca = nconf.get('CA_CERT');
+    options.pfx = new Buffer(nconf.get('SSL_PFX'));
+    options.passphrase = nconf.get('SSL_KEY_PASSWORD');
+    //options.key = require('fs').readFileSync('./certs/localhost.key.pem');
+    //options.cert = require('fs').readFileSync('./certs/localhost.cert.pem');
+    options.requestCert = true;
+    //options.rejectUnauthorized = false;
+
+    if (!nconf.get('KERBEROS_AUTH')) {
+      var https = require('https'); // use https server
+      https.createServer(options, app).listen(options.port);
+    }
+  }
+  
+  // kerberos authentication
+  if (nconf.get('KERBEROS_AUTH')) {
+    console.log('Using kerberos authentication');
+
+    if (process.platform !== 'win32') {
+      return console.log('Detected KERBEROS_AUTH in config, but this platform doesn\'t support it.');
+    }
+
+    var kerberos_server = require('kerberos-server');
+    kerberos_server.createServer(options, app);
+  }
+
+  console.log('listening on port: ' + nconf.get('PORT'));
 });

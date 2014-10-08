@@ -51,7 +51,9 @@ exports.install = function (app) {
   app.get('/wsfed',
     function (req, res, next) {
       var strategies = nconf.get('LDAP_URL') ?
-                          ['IISIntegrated', 'ApacheKerberos', 'WindowsAuthentication'] :
+                          (nconf.get('CLIENT_CERT_AUTH') ?
+                            ['ClientCertAuthentication'] :
+                            ['IISIntegrated', 'ApacheKerberos', 'WindowsAuthentication']) :
                           ['WindowsAuthentication'];
 
       passport.authenticate(strategies, {
@@ -68,7 +70,7 @@ exports.install = function (app) {
       var is_integrated =  integrated_headers.some(function (h) {
         return !!req.headers[h];
       });
-      if (req.session.user && (req.query.wprompt !== 'consent' || is_integrated)) {
+      if (req.session.user && (req.query.wprompt !== 'consent' || is_integrated || nconf.get('CLIENT_CERT_AUTH'))) {
         req.user = req.session.user;
         return wsfederationResponses.token(req, res);
       }

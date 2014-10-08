@@ -7,7 +7,7 @@ var urlJoin = require('url-join');
 var exec    = require('child_process').exec;
 var app     = express();
 var freeport = require('freeport');
-
+var multipart = require('connect-multiparty');
 
 var test_config = require('./test_config');
 
@@ -94,10 +94,18 @@ app.post('/ldap', set_current_config, function (req, res, next) {
   });
 } , merge_config);
 
-app.post('/server', set_current_config, function (req, res, next) {
+app.post('/server', multipart(), set_current_config, function (req, res, next) {
   if (req.body.PORT || req.current_config.PORT) return next();
   freeport(function (er, port) {
     req.body.PORT = port;
+    next();
+  });
+}, function (req, res, next) {
+  if (!req.files || !req.files.SSL_PFX || req.files.SSL_PFX.size === 0) return next();
+  // upload pfx
+  fs.readFile(req.files.SSL_PFX.path, 'utf8', function (err, pfxContent) {
+    req.body.SSL_PFX = pfxContent;
+    delete req.files;
     next();
   });
 }, merge_config);

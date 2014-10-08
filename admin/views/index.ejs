@@ -42,7 +42,7 @@
             </div>
           </div>
 
-          <% if (locals.SERVER_URL && locals.KERBEROS_AUTH) { %>
+          <% if (locals.SERVER_URL && (locals.KERBEROS_AUTH || locals.CLIENT_CERT_AUTH)) { %>
           <div class="container-fluid flat">
             <div class="widget-box">
               <div class="widget-title">
