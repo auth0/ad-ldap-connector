@@ -1,13 +1,27 @@
 require('colors');
 require('./eventlog');
 
+function end () {
+  console.log('Got SIGTERM, exiting now.');
+  if (ws_client) {
+    process.exiting = true;
+    ws_client.close();
+    return ws_client.on('close', function () {
+      process.exit(0);
+    });
+  }
+  process.exit(0);
+}
+
 process.on('uncaughtException', function(err) {
   console.error(err.stack);
-});
+}).once('SIGTERM', end)
+  .once('SIGINT', end);
 
 require('./lib/initConf');
 
 var nconf = require('nconf');
+var ws_client;
 
 var connectorSetup = require('./connector-setup');
 
@@ -15,6 +29,9 @@ var emptyVars = [ 'LDAP_URL',
                   'LDAP_BASE',
                   'LDAP_BIND_USER',
                   'LDAP_BIND_PASSWORD' ];
+
+var latency_test = require('./latency_test');
+
 
 connectorSetup.run(__dirname, emptyVars, function(err) {
   if(err) {
@@ -28,7 +45,9 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   }
 
   require('./lib/clock_skew_detector');
-  require('./ws_validator');
+  ws_client = require('./ws_validator');
+
+  latency_test.run_many(10);
 
   if (!nconf.get('KERBEROS_AUTH') && !nconf.get('CLIENT_CERT_AUTH')) {
     return;
@@ -85,7 +104,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
       https.createServer(options, app).listen(options.port);
     }
   }
-  
+
   // kerberos authentication
   if (nconf.get('KERBEROS_AUTH')) {
     console.log('Using kerberos authentication');

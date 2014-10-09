@@ -12,7 +12,7 @@ var cert = {
 };
 
 var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
-var ws = new WebSocket(socket_server_address);
+var ws = module.exports = new WebSocket(socket_server_address);
 var profileMapper = require('./lib/profileMapper');
 
 console.log('Connecting to ' + socket_server_address.green);
@@ -29,7 +29,9 @@ function ping (client) {
 
   var check = setTimeout(function () {
     console.error("Server didn't respond ping command");
-    process.exit(1);
+    setTimeout(function () {
+      process.exit(1);
+    }, 100);
   }, 5000);
 
   client.once('pong', function () {
@@ -40,7 +42,6 @@ function ping (client) {
 ws.on('open', function () {
   authenticate_connector();
 }).on('message', function (msg) {
-  console.log(msg);
   var m;
   try {
     m = JSON.parse(msg);
@@ -48,6 +49,7 @@ ws.on('open', function () {
     return;
   }
   if (!m || !m.n) return;
+  console.log('Event: ' + m.n);
   this.emit(m.n, m.p);
 }).on('error', function (err) {
   console.error('Socket error: ' + err);
@@ -63,7 +65,9 @@ ws.on('open', function () {
   process.exit(0);
 }).on('close', function () {
   console.error('connection closed');
-  process.exit(1);
+  if (!process.exiting) {
+    process.exit(1);
+  }
 }).on('authenticate_user', function (msg) {
   jwt.verify(msg.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {
     if (err) {
