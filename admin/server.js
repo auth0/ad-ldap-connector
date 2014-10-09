@@ -103,8 +103,8 @@ app.post('/server', multipart(), set_current_config, function (req, res, next) {
 }, function (req, res, next) {
   if (!req.files || !req.files.SSL_PFX || req.files.SSL_PFX.size === 0) return next();
   // upload pfx
-  fs.readFile(req.files.SSL_PFX.path, 'utf8', function (err, pfxContent) {
-    req.body.SSL_PFX = pfxContent;
+  fs.readFile(req.files.SSL_PFX.path, function (err, pfxContent) {
+    req.body.SSL_PFX = new Buffer(pfxContent).toString('base64');
     delete req.files;
     next();
   });

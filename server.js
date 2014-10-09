@@ -2,7 +2,7 @@ require('colors');
 require('./eventlog');
 
 process.on('uncaughtException', function(err) {
-  console.error(err);
+  console.error(err.stack);
 });
 
 require('./lib/initConf');
@@ -73,7 +73,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
     // SSL settings
     options.ca = nconf.get('CA_CERT');
-    options.pfx = new Buffer(nconf.get('SSL_PFX'));
+    options.pfx = new Buffer(nconf.get('SSL_PFX'), 'base64');
     options.passphrase = nconf.get('SSL_KEY_PASSWORD');
     //options.key = require('fs').readFileSync('./certs/localhost.key.pem');
     //options.cert = require('fs').readFileSync('./certs/localhost.cert.pem');
