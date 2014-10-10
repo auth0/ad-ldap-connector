@@ -75,7 +75,7 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
       nconf.set('KERBEROS_AUTH', info.kerberos);
       nconf.set('FIREWALL_RULE_CREATED', info.kerberos);
       nconf.set('REALM', info.realm.name);
-      nconf.set('SITE_NAME', nconf.get('SITE_NAME') || info.connectionDomain);
+      nconf.set('SITE_NAME', nconf.get('SITE_NAME') || info.connectionName);
       nconf.set(info.realm.name, info.realm.postTokenUrl);
       extraEmptyVars.forEach(function (ev) {
         if (!nconf.get(ev)) nconf.set(ev, '');
