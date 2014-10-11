@@ -50,6 +50,8 @@ exports.install = function (app) {
 
   app.get('/wsfed',
     function (req, res, next) {
+      if (req.session.messages) return next();
+      
       var strategies = nconf.get('LDAP_URL') ?
                           (nconf.get('CLIENT_CERT_AUTH') ?
                             ['ClientCertAuthentication'] :
