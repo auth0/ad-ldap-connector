@@ -45,7 +45,8 @@
     "winston": "~0.7.2",
     "ws": "~0.4.31",
     "wsfed": "~0.5.7",
-    "xtend": "~2.1.1"
+    "xtend": "~2.1.1",
+    "express-passport-logout": "~0.1.0"
   },
   "devDependencies": {
     "chai": "~1.7.2",

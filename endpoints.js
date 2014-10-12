@@ -1,16 +1,13 @@
-var passport              = require('passport');
-var nconf                 = require('nconf');
-var jwt                   = require('jsonwebtoken');
+var passport  = require('passport');
+var nconf     = require('nconf');
+var jwt       = require('jsonwebtoken');
+var logout    = require('express-passport-logout');
 
 var wsfederationResponses = require('./lib/wsfederation-responses');
 var Users                 = require('./lib/users');
 
 var integrated_headers = ['x-forwarded-user', 'x-iisnode-logon_user'];
-
-
 var kerberos_middleware;
-
-
 
 exports.install = function (app) {
 
@@ -117,11 +114,12 @@ exports.install = function (app) {
       next();
     }, wsfederationResponses.tokenDirect);
 
-  app.get('/logout', function (req, res) {
-    console.log('user ' + (req.session.user.displayName || 'unknown').green + ' logged out');
-    delete req.session;
-    res.send('bye');
-  });
+  app.get('/logout', function (req, res, next) {
+    if (req.session.user) {
+      console.log('user ' + (req.session.user.displayName || 'unknown').green + ' logged out');
+    }
+    next();
+  }, logout());
 
   app.get('/wsfed/FederationMetadata/2007-06/FederationMetadata.xml',
     wsfederationResponses.metadata());
