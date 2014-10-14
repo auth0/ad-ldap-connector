@@ -7,8 +7,7 @@ This directory contains the scripts to generate an MSI installer.
 3.  Microsoft SDK v7.1A. Verify you have `C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe`
 4.  You need to install Auth0's certificate to sign components and installer in your local certificate storage. Just double click on it.
 5.  Your [node-gyp](https://github.com/TooTallNate/node-gyp/#installation) should be able to build native dependencies.
-6.  Not sure about this step, but I think you need `C:\Program Files (x86)\msxml.exe`
-7.  Download [nssm](http://nssm.cc/ci/nssm-2.21-136-ga8cb477.zip) and copy the content to `c:\Program Files (x86)\nssm-2.21.1\` folder.
+6.  Download [nssm](http://nssm.cc/ci/nssm-2.21-136-ga8cb477.zip) and copy the content to `c:\Program Files (x86)\nssm-2.21.1\` folder.
 
 ## How to build
 
