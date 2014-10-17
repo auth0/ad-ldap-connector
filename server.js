@@ -30,9 +30,6 @@ var emptyVars = [ 'LDAP_URL',
                   'LDAP_BIND_USER',
                   'LDAP_BIND_PASSWORD' ];
 
-var latency_test = require('./latency_test');
-
-
 connectorSetup.run(__dirname, emptyVars, function(err) {
   if(err) {
     console.log(err.message);
@@ -47,8 +44,9 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
   require('./lib/clock_skew_detector');
   ws_client = require('./ws_validator');
 
+  var latency_test = require('./latency_test');
   latency_test.run_many(10);
-
+  
   if (!nconf.get('KERBEROS_AUTH') && !nconf.get('CLIENT_CERT_AUTH')) {
     return;
   }

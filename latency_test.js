@@ -1,9 +1,10 @@
-var latency_test = module.exports;
-var request = require('request');
-var _ = require('lodash');
-var async = require('async');
-var url = 'https://login.auth0.com/test';
-
+var latency_test  = module.exports;
+var request       = require('request');
+var _             = require('lodash');
+var async         = require('async');
+var nconf         = require('nconf');
+var url           = require('url');
+var test_url      = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
 
 /**
  * test the url and return the ns
@@ -13,7 +14,7 @@ var url = 'https://login.auth0.com/test';
  */
 latency_test.run = function (done) {
   var start = process.hrtime();
-  request.get(url, function(err){
+  request.get(test_url, function(err){
     if (err) return done(err);
     var took = process.hrtime(start);
     done(null, took[0] * 1e9 + took[1]);
