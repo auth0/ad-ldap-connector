@@ -111,13 +111,6 @@ exports.install = function (app) {
     }, function (req, res, next) {
       console.log('user ' + (req.user.displayName || 'unknown').green + ' authenticated');
       req.session.user = req.user;
-
-      if (req.query.includeProfile) {
-        return res.json(200, {
-          profile: req.user
-        });
-      }
-
       next();
     }, wsfederationResponses.tokenDirect);
 
