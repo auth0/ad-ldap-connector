@@ -102,7 +102,7 @@ exports.install = function (app) {
         if (err) return next(err);
 
         if (!profile) {
-          return res.json(401, { invalid_user_password: info && info.message ? info.message : 'Wrong email or password.' });
+          return res.json(401, { invalid_user_password: info && info.message ? info.message : 'Wrong email or password.' });
         }
 
         req.user = profile;
@@ -111,6 +111,13 @@ exports.install = function (app) {
     }, function (req, res, next) {
       console.log('user ' + (req.user.displayName || 'unknown').green + ' authenticated');
       req.session.user = req.user;
+
+      if (req.query.includeProfile) {
+        return res.json(200, {
+          profile: req.user
+        });
+      }
+
       next();
     }, wsfederationResponses.tokenDirect);
 
