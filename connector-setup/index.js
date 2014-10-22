@@ -42,8 +42,25 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
         url: urlJoin(provisioningTicket, '/info')
       }, function (err, response, body) {
         if (err) return cb(err);
-        if (response.statusCode == 404) return cb (new Error('wrong ticket'));
-        info = JSON.parse(body);
+        if (response.statusCode == 404) {
+          return cb (new Error('wrong ticket'));
+        }
+
+        var unexpected_response =
+          response.statusCode !== 200 ||
+          !~(response.headers['content-type'] || '').indexOf('application/json');
+
+        if (unexpected_response) {
+          return cb (new Error('Unexpected response from ticket information endpoint. \n\n Body is ' + response.body));
+        }
+
+        try {
+          info = JSON.parse(body);
+        } catch (parsing_error) {
+          console.log(parsing_error);
+          return callback(new Error('Unexpected response from ticket information endpoint. \n\n Body is ' + response.body));
+        }
+
         cb();
       });
     },
