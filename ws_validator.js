@@ -1,4 +1,5 @@
 var WebSocket = require('ws');
+var exit = require('./lib/exit');
 
 var jwt = require('jsonwebtoken');
 var nconf = require('nconf');
@@ -29,9 +30,7 @@ function ping (client) {
 
   var check = setTimeout(function () {
     console.error("Server didn't respond ping command");
-    setTimeout(function () {
-      process.exit(1);
-    }, 100);
+    exit(1);
   }, 5000);
 
   client.once('pong', function () {
@@ -53,7 +52,7 @@ ws.on('open', function () {
   this.emit(m.n, m.p);
 }).on('error', function (err) {
   console.error('Socket error: ' + err);
-  process.exit(1);
+  exit(1);
 }).on('authenticated', function () {
   console.log('Authenticated connector to Auth0');
   var client = this;
@@ -62,11 +61,13 @@ ws.on('open', function () {
   }, 10000);
 }).on('authentication_failure', function () {
   console.error('authentication failure');
-  process.exit(0);
+  exit(0);
 }).on('close', function () {
-  console.error('connection closed');
-  if (!process.exiting) {
-    process.exit(1);
+  if (process.exiting) {
+    console.log('connection closed as requested');
+  } else {
+    console.error('connection closed');
+    exit(1);
   }
 }).on('authenticate_user', function (msg) {
   jwt.verify(msg.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {

@@ -1,10 +1,7 @@
 if (process.platform !== 'win32') return;
 
-
-
 var winston = require("winston");
 
-winston.setLevels(winston.config.syslog.levels);
 winston.remove(winston.transports.Console);
 winston.add(winston.transports.File, {
   maxsize: 40000,

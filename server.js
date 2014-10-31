@@ -1,17 +1,17 @@
 require('colors');
 require('./eventlog');
 require('./lib/setupProxy');
+var exit = require('./lib/exit');
 
 function end () {
   console.log('Got SIGTERM, exiting now.');
   if (ws_client) {
     process.exiting = true;
-    ws_client.close();
-    return ws_client.on('close', function () {
-      process.exit(0);
-    });
+    return ws_client.once('close', function () {
+      exit(0);
+    }).close();
   }
-  process.exit(0);
+  exit(0);
 }
 
 process.on('uncaughtException', function(err) {
@@ -34,12 +34,12 @@ var emptyVars = [ 'LDAP_URL',
 connectorSetup.run(__dirname, emptyVars, function(err) {
   if(err) {
     console.log(err.message);
-    process.exit(2);
+    return exit(2);
   }
 
   if(!nconf.get('LDAP_URL')) {
     console.error('edit config.json and add your LDAP settings');
-    return process.exit(1);
+    return exit(1);
   }
 
   require('./lib/clock_skew_detector');

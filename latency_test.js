@@ -5,6 +5,7 @@ var async         = require('async');
 var nconf         = require('nconf');
 var url           = require('url');
 var test_url      = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
+var exit          = require('./lib/exit');
 
 /**
  * test the url and return the ns
@@ -27,7 +28,7 @@ latency_test.run_many = function (n, done) {
   }, function (err, times){
     if (err) {
       console.log('Error when doing the latency test, exiting.');
-      process.exit(1);
+      exit(1);
     }
 
     var sum = times.reduce(function (prev, curr) {

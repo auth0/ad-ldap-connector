@@ -40,7 +40,8 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
     function (cb) {
       var info_url = urlJoin(provisioningTicket, '/info');
       request.get({
-        url: info_url
+        url:  info_url,
+        json: true
       }, function (err, response, body) {
         if (err) {
           if (err.code === 'ECONNREFUSED') {
@@ -57,15 +58,12 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
           !~(response.headers['content-type'] || '').indexOf('application/json');
 
         if (unexpected_response) {
-          return cb (new Error('Unexpected response from ticket information endpoint. \n\n Body is ' + response.body));
+          var message = 'Unexpected response from ticket information endpoint. ' +
+                        'Status code: ' + response.statusCode + ' Content-Type: ' + response.headers['content-type'] + '.';
+          return cb (new Error(message));
         }
 
-        try {
-          info = JSON.parse(body);
-        } catch (parsing_error) {
-          console.log(parsing_error);
-          return callback(new Error('Unexpected response from ticket information endpoint. \n\n Body is ' + response.body));
-        }
+        info = body;
 
         cb();
       });

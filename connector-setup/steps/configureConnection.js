@@ -27,7 +27,7 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
   var signInEndpoint = urlJoin(serverUrl, '/wsfed');
   var cert = pemToCert(fs.readFileSync(path.join(workingPath, 'certs', 'cert.pem')).toString());
 
-  console.log(('Configuring connection to ' + connectionInfo.appName + '.').yellow);
+  console.log(('Configuring connection ' + connectionInfo.connectionName + '.').yellow);
 
 
   request.post({
@@ -51,7 +51,7 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
     nconf.set('LAST_SENT_THUMBPRINT', getCurrentThumbprint(workingPath));
     nconf.set('TENANT_SIGNING_KEY', response.body.signingKey || '');
 
-    console.log(('Connection to ' + connectionInfo.appName + ' configured.').green);
+    console.log(('Connection ' + connectionInfo.connectionName + ' configured.').green);
     cb();
   });
 };
