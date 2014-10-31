@@ -28,6 +28,7 @@
     "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/master",
     "ejs": "~0.8.3",
     "express": "~3.1.0",
+    "express-passport-logout": "~0.1.0",
     "freeport": "~1.0.2",
     "jsonwebtoken": "~0.1.0",
     "kerberos-server": "*",
@@ -41,12 +42,12 @@
     "request": "~2.16.6",
     "selfsigned": "~1.2.0",
     "thumbprint": "0.0.1",
+    "tunnel": "~0.0.3",
     "url-join": "0.0.1",
     "winston": "~0.7.2",
     "ws": "~0.4.31",
     "wsfed": "~0.5.7",
-    "xtend": "~2.1.1",
-    "express-passport-logout": "~0.1.0"
+    "xtend": "~2.1.1"
   },
   "devDependencies": {
     "chai": "~1.7.2",

@@ -76,13 +76,19 @@ If you didn't configure `Kerberos` or you are outside your intranet you will be 
 
 ##4. High availability
 
-High availability is achieved through multiple instances of the connector running simultaneously. 
+High availability is achieved through multiple instances of the connector running simultaneously.
 
 1.  Install the connector on the first machine and follow all the steps. Once you have the connection running with only one agent move to the next step.
 2.  Install the connector on the second machine, when the browser opens and requests entering the __Ticket URL__, close the window.
 3.  Copy the `certs` folder and `config.json` from `c:\Program Files(x86)\Auth0\ADLDAP Connector` on the first machine to the same location on the second machine.
 4.  Start the Auth0 ADLDAP agent on the second machine.
 5.  Repeat from step 2 to 5 for every node you want to configure.
+
+## Running behind a proxy
+
+We discourage running the connector behind an http proxy.
+
+If you still want to try it out behind a proxy you need an environment variable `http_proxy` or `HTTP_PROXY` set to `http://my-proxy:8080`.
 
 ## Throubleshooting
 

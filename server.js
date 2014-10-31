@@ -1,5 +1,6 @@
 require('colors');
 require('./eventlog');
+require('./lib/setupProxy');
 
 function end () {
   console.log('Got SIGTERM, exiting now.');
@@ -46,7 +47,7 @@ connectorSetup.run(__dirname, emptyVars, function(err) {
 
   var latency_test = require('./latency_test');
   latency_test.run_many(10);
-  
+
   if (!nconf.get('KERBEROS_AUTH') && !nconf.get('CLIENT_CERT_AUTH')) {
     return;
   }

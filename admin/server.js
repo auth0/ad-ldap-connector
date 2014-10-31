@@ -8,8 +8,9 @@ var exec    = require('child_process').exec;
 var app     = express();
 var freeport = require('freeport');
 var multipart = require('connect-multiparty');
-
 var test_config = require('./test_config');
+
+require('../lib/setupProxy');
 
 app.configure(function () {
   this.set('views', __dirname + '/views');
