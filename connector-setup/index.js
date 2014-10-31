@@ -38,10 +38,16 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
       });
     },
     function (cb) {
+      var info_url = urlJoin(provisioningTicket, '/info');
       request.get({
-        url: urlJoin(provisioningTicket, '/info')
+        url: info_url
       }, function (err, response, body) {
-        if (err) return cb(err);
+        if (err) {
+          if (err.code === 'ECONNREFUSED') {
+            console.error('Unable to reach auth0 at: ' + info_url);
+          }
+          return cb(err);
+        }
         if (response.statusCode == 404) {
           return cb (new Error('wrong ticket'));
         }

@@ -118,18 +118,32 @@ app.post('/ticket', set_current_config, function (req, res, next) {
     }));
   }
 
-  request(urlJoin(req.body.PROVISIONING_TICKET, '/info'), function (err, resp, body) {
-    var payload = {};
-    try{
-      payload = JSON.parse(body);
-    } catch(ex){}
-    if (err || resp.statusCode !== 200 || !payload.realm) {
+  var info_url = urlJoin(req.body.PROVISIONING_TICKET, '/info');
+
+  request.get({
+    url:  info_url,
+    json: true
+  }, function (err, resp, body) {
+    if (err && err.code === 'ECONNREFUSED') {
+      console.error('Unable to reach auth0 at: ' + info_url);
       return res.render('index', xtend(req.current_config, {
-        ERROR: 'The ticket url ' + req.body.PROVISIONING_TICKET + ' is not vaild.'
+        ERROR: 'Unable to connect to Auth0, verify internet connectivity.'
       }));
     }
 
-    req.body.AD_HUB = payload.adHub;
+    if (err) {
+      return res.render('index', xtend(req.current_config, {
+        ERROR: 'Network error: ' + err.message
+      }));
+    }
+
+    if (resp.statusCode !== 200 || !body || !body.adHub) {
+      return res.render('index', xtend(req.current_config, {
+        ERROR: 'Wrong ticket url.'
+      }));
+    }
+
+    req.body.AD_HUB = body.adHub;
 
     next();
   });

@@ -39,7 +39,12 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
       agentVersion:   require('../../package').version
     }
   }, function (err, response, body) {
-    if (err) return cb(err);
+    if (err) {
+      if (err.code === 'ECONNREFUSED') {
+        console.log('Unable to reach auth0 at: ' + ticket);
+      }
+      return cb(err);
+    }
     if (response.statusCode !== 200) return cb(new Error(body));
 
     nconf.set('SERVER_URL', serverUrl);
