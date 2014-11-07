@@ -114,7 +114,7 @@ ws.on('open', function () {
       if (err) return ws.sendEvent(payload.pid + '_search_users_result', {err: err});
 
       ws.sendEvent(payload.pid + '_search_users_result', {
-        users: (users || []).map(function (user) {
+        users: (users || []).map(function (user) {
           return profileMapper(user);
         })
       });
