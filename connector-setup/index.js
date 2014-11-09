@@ -1,7 +1,7 @@
 require('colors');
 
 var nconf = require('nconf');
-
+var crypto = require('../lib/crypto');
 var program = require('commander');
 var async = require('async');
 var request = require('request');
@@ -18,12 +18,15 @@ program
   .version(require('../package.json').version)
   .parse(process.argv);
 
-exports.run = function (workingPath, extraEmptyVars, callback) {
+exports.run = function (workingPath, callback) {
   var provisioningTicket, info;
 
-  if (typeof extraEmptyVars === 'function') {
-    callback = extraEmptyVars;
-    extraEmptyVars = [];
+  var emptyVars = [ 'LDAP_URL',
+                    'LDAP_BASE',
+                    'LDAP_BIND_USER' ];
+
+  if(!nconf.get('LDAP_BIND_CREDENTIALS')) {
+    emptyVars.concat(['LDAP_BIND_PASSWORD']);
   }
 
   async.series([
@@ -98,13 +101,21 @@ exports.run = function (workingPath, extraEmptyVars, callback) {
       nconf.set('REALM', info.realm.name);
       nconf.set('SITE_NAME', nconf.get('SITE_NAME') || info.connectionName);
       nconf.set(info.realm.name, info.realm.postTokenUrl);
-      extraEmptyVars.forEach(function (ev) {
+      emptyVars.forEach(function (ev) {
         if (!nconf.get(ev)) nconf.set(ev, '');
       });
       nconf.save(cb);
     },
     function (cb) {
       certificate(workingPath, info, cb);
+    },
+    function (cb) {
+      var password = nconf.get('LDAP_BIND_PASSWORD');
+      if (password) {
+        nconf.clear('LDAP_BIND_PASSWORD');
+        nconf.set('LDAP_BIND_CREDENTIALS', crypto.encrypt(password));
+      }
+      cb();
     },
     function (cb) {
       configureConnection(program, workingPath,
