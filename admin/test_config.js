@@ -71,7 +71,7 @@ module.exports = function(config, callback){
 
   try_tcp(config, function (err, port) {
     result.push({
-      proof: 'Connecting to LDAP port ' + port, 
+      proof: 'Connecting to LDAP port ' + port,
       result: err ? 'Not OK' : 'OK'
     });
     if (err){
@@ -97,7 +97,7 @@ module.exports = function(config, callback){
           proof: 'Querying LDAP',
           result: err ? 'Not OK' : 'OK'
         });
-        
+
         if (err) return callback(err, result);
 
         try_socket(config.AD_HUB, function (err, port) {

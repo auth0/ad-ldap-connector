@@ -26,12 +26,7 @@ var ws_client;
 
 var connectorSetup = require('./connector-setup');
 
-var emptyVars = [ 'LDAP_URL',
-                  'LDAP_BASE',
-                  'LDAP_BIND_USER',
-                  'LDAP_BIND_PASSWORD' ];
-
-connectorSetup.run(__dirname, emptyVars, function(err) {
+connectorSetup.run(__dirname, function(err) {
   if(err) {
     console.log(err.message);
     return exit(2);
