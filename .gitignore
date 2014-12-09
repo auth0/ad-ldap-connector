@@ -9,4 +9,4 @@ installer/adldap.msi
 installer/directory.wxs
 installer/log.log
 node_modules/*
-logs.log
+logs*

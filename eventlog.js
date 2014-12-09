@@ -1,17 +1,23 @@
 if (process.platform !== 'win32') return;
 
-var winston = require("winston");
+var winston = require('winston');
+var rotator = require('stream-rotate');
+
+var log_stream = rotator({
+  path: __dirname,
+  name: 'logs',
+  size: '1m',
+  retention: 5
+});
 
 winston.remove(winston.transports.Console);
 winston.add(winston.transports.File, {
-  maxsize: 40000,
-  maxFiles: 10,
+  stream: log_stream,
   level: "debug",
-  filename: __dirname + '/logs.log',
   json: false,
-  handleExceptions: true
+  handleExceptions: true,
+  eol: require('os').EOL
 });
-
 
 var old_log = console.log;
 var old_error = console.error;
