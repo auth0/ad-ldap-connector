@@ -22,6 +22,7 @@
   "dependencies": {
     "async": "~0.2.9",
     "base64url": "https://github.com/jfromaniello/base64url/tarball/master",
+    "cb": "~0.1.0",
     "colors": "~0.6.0-1",
     "commander": "~1.1.1",
     "connect-multiparty": "~1.2.4",

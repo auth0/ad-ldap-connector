@@ -16,6 +16,10 @@ var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
 var ws = module.exports = new WebSocket(socket_server_address);
 var profileMapper = require('./lib/profileMapper');
 
+var UnexpectedError = require('./lib/errors/UnexpectedError');
+var WrongPassword = require('./lib/errors/WrongPassword');
+var WrongUsername = require('./lib/errors/WrongUsername');
+
 console.log('Connecting to ' + socket_server_address.green);
 
 ws.sendEvent = function (name, payload) {
@@ -23,6 +27,10 @@ ws.sendEvent = function (name, payload) {
     n: name,
     p: payload
   }));
+};
+
+ws.reply = function (pid, response) {
+  return this.sendEvent(pid + '_result', response);
 };
 
 function ping (client) {
@@ -49,6 +57,8 @@ ws.on('open', function () {
   }
   if (!m || !m.n) return;
   console.log('Event: ' + m.n);
+
+
   this.emit(m.n, m.p);
 }).on('error', function (err) {
   console.error('Socket error: ' + err);
@@ -76,21 +86,24 @@ ws.on('open', function () {
       return;
     }
     users.validate(payload.username, payload.password, function (err, user) {
-      var profile = user ? profileMapper(user) : null;
-
       if (err) {
-        if (user) {
-          console.log("wrong password: " + payload.username);
+        if (err instanceof WrongPassword) {
+          console.log("Wrong password for user: " + payload.username);
+          return ws.reply(payload.pid, { err: err, profile: profileMapper(err.profile) });
         }
-        return ws.sendEvent(payload.pid + '_result', {err: err, profile: profile});
+        if (err instanceof WrongUsername) {
+          console.log("Wrong username: " + payload.username);
+          return ws.reply(payload.pid, { err: err, profile: { username: payload.username } });
+        }
+        if (err instanceof UnexpectedError) {
+          console.log("Unexpected error validating: " + payload.username);
+          console.error(err.stack);
+          ws.reply(payload.pid, { err: err });
+          return exit(1);
+        }
       }
 
-      if (!user) {
-        console.log("wrong username: " + payload.username);
-        return ws.sendEvent(payload.pid + '_result', {
-          err: new Error('wrong username or password')
-        });
-      }
+      var profile = profileMapper(user);
 
       console.log('user ' + (profile.nickname || profile.displayName || '').green + ' authenticated');
 
