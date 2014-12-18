@@ -16,11 +16,8 @@ var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
 var ws = module.exports = new WebSocket(socket_server_address);
 var profileMapper = require('./lib/profileMapper');
 
-var UnexpectedError = require('./lib/errors/UnexpectedError');
 var WrongPassword = require('./lib/errors/WrongPassword');
 var WrongUsername = require('./lib/errors/WrongUsername');
-
-console.log('Connecting to ' + socket_server_address.green);
 
 ws.sendEvent = function (name, payload) {
   this.send(JSON.stringify({
@@ -46,6 +43,10 @@ function ping (client) {
   });
 }
 
+var log_from_auth0 = console.log.bind(console, 'auth0'.blue + ':');
+
+console.log('Connecting to ' + socket_server_address.green + '.');
+
 ws.on('open', function () {
   authenticate_connector();
 }).on('message', function (msg) {
@@ -56,57 +57,70 @@ ws.on('open', function () {
     return;
   }
   if (!m || !m.n) return;
-  console.log('Event: ' + m.n);
-
-
   this.emit(m.n, m.p);
 }).on('error', function (err) {
   console.error('Socket error: ' + err);
   exit(1);
 }).on('authenticated', function () {
-  console.log('Authenticated connector to Auth0');
+  log_from_auth0('Agent accepted.');
   var client = this;
   setInterval(function () {
     ping(client);
   }, 10000);
 }).on('authentication_failure', function () {
-  console.error('authentication failure');
+  log_from_auth0('Agent ' + 'rejected'.red + '.');
   exit(0);
 }).on('close', function () {
   if (process.exiting) {
-    console.log('connection closed as requested');
+    log_from_auth0('Connection closed as requested.');
   } else {
-    console.error('connection closed');
+    log_from_auth0('Connection closed.');
     exit(1);
   }
 }).on('authenticate_user', function (msg) {
   jwt.verify(msg.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {
     if (err) {
-      console.error('unauthorized attemp of authentication');
+      console.error('Unauthorized attemp of authentication.');
       return;
     }
+
+    var log_prepend = 'user ' + payload.username + ':';
+
+    var log = console.log.bind(console, log_prepend.blue);
+
+    log('Starting authentication attempt.');
+
     users.validate(payload.username, payload.password, function (err, user) {
       if (err) {
         if (err instanceof WrongPassword) {
-          console.log("Wrong password for user: " + payload.username);
+          log("Authentication attempt failed. Reason: " + "wrong password".red);
           return ws.reply(payload.pid, { err: err, profile: profileMapper(err.profile) });
         }
         if (err instanceof WrongUsername) {
-          console.log("Wrong username: " + payload.username);
+          log("Authentication attempt failed. Reason: " + "wrong username".red);
           return ws.reply(payload.pid, { err: err, profile: { username: payload.username } });
         }
-        if (err instanceof UnexpectedError) {
-          console.log("Unexpected error validating: " + payload.username);
-          console.error(err.stack);
-          ws.reply(payload.pid, { err: err });
-          return exit(1);
-        }
+        log("Authentication attempt failed. Reason: " + "unexpected error".red);
+
+        console.error('Inner error:', err.inner.stack);
+
+        ws.reply(payload.pid, { err: err });
+        return exit(1);
       }
 
-      var profile = profileMapper(user);
+      log('Mapping profile.');
 
-      console.log('user ' + (profile.nickname || profile.displayName || '').green + ' authenticated');
+      var profile;
 
+      try {
+        profile = profileMapper(user);
+      } catch (er) {
+        log('Authentication attempt failed. Reason: ' + 'unexpected error mapping the profile'.red);
+        console.error(er.stack);
+        return ws.reply(payload.pid, { err: err });
+      }
+
+      log('Authentication succeeded.');
       ws.sendEvent(payload.pid + '_result', {
         profile: profile
       });
@@ -115,9 +129,11 @@ ws.on('open', function () {
 }).on('search_users', function (msg) {
   jwt.verify(msg.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {
     if (err) {
-      console.error('unauthorized attemp of search_users');
+      console.error('Unauthorized attemp of search_users.');
       return;
     }
+
+    console.log('Searching users.');
 
     var options = {
       limit: payload.limit
@@ -125,7 +141,7 @@ ws.on('open', function () {
 
     users.list(payload.search, options, function (err, users) {
       if (err) return ws.sendEvent(payload.pid + '_search_users_result', {err: err});
-
+      console.log('Search succeeded.');
       ws.sendEvent(payload.pid + '_search_users_result', {
         users: (users || []).map(function (user) {
           return profileMapper(user);
