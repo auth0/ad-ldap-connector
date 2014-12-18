@@ -1,6 +1,6 @@
 {
   "name": "sql-fs",
-  "version": "2.9.2",
+  "version": "2.9.3",
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
