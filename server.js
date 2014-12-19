@@ -20,6 +20,7 @@ process.on('uncaughtException', function(err) {
   .once('SIGINT', end);
 
 require('./lib/initConf');
+require('./drwatson');
 
 var nconf = require('nconf');
 var ws_client;
