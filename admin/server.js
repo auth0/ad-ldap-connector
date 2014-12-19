@@ -75,7 +75,7 @@ app.get('/', set_current_config, function (req, res) {
 });
 
 app.post('/ldap', set_current_config, function (req, res, next) {
-  var config = xtend({}, req.body, req.current_config);
+  var config = xtend({}, req.current_config, req.body);
   test_config(config, function (err, result) {
     if (err) {
       return res.render('index', xtend(req.current_config, req.body, {
