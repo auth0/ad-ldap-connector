@@ -14,7 +14,6 @@ var cert = {
 
 var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
 var ws = module.exports = new WebSocket(socket_server_address);
-var profileMapper = require('./lib/profileMapper');
 
 var WrongPassword = require('./lib/errors/WrongPassword');
 var WrongUsername = require('./lib/errors/WrongUsername');
@@ -94,7 +93,7 @@ ws.on('open', function () {
       if (err) {
         if (err instanceof WrongPassword) {
           log("Authentication attempt failed. Reason: " + "wrong password".red);
-          return ws.reply(payload.pid, { err: err, profile: profileMapper(err.profile) });
+          return ws.reply(payload.pid, { err: err, profile: err.profile });
         }
         if (err instanceof WrongUsername) {
           log("Authentication attempt failed. Reason: " + "wrong username".red);
@@ -108,22 +107,9 @@ ws.on('open', function () {
         return exit(1);
       }
 
-      log('Mapping profile.');
-
-      var profile;
-
-      try {
-        profile = profileMapper(user);
-      } catch (er) {
-        log('Authentication attempt failed. Reason: ' + 'unexpected error mapping the profile'.red);
-        console.error(er.stack);
-        return ws.reply(payload.pid, { err: err });
-      }
-
       log('Authentication succeeded.');
-      ws.sendEvent(payload.pid + '_result', {
-        profile: profile
-      });
+
+      ws.sendEvent(payload.pid + '_result', { profile: user });
     });
   });
 }).on('search_users', function (msg) {
@@ -143,9 +129,7 @@ ws.on('open', function () {
       if (err) return ws.sendEvent(payload.pid + '_search_users_result', {err: err});
       console.log('Search succeeded.');
       ws.sendEvent(payload.pid + '_search_users_result', {
-        users: (users || []).map(function (user) {
-          return profileMapper(user);
-        })
+        users: users
       });
     });
   });

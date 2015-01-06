@@ -4,7 +4,7 @@
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
-    "test": "mocha --timeout 50000",
+    "test": "NODE_ENV=test mocha --timeout 50000 --reporter spec",
     "start": "node server.js"
   },
   "repository": {
@@ -53,6 +53,6 @@
   },
   "devDependencies": {
     "chai": "~1.7.2",
-    "mocha": "~1.11.0"
+    "mocha": "~2.1.0"
   }
 }
