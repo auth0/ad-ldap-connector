@@ -12,8 +12,8 @@ if [ ! -z "$CDN_EXISTS" ]; then
     echo "There is already a version $VERSION in the CDN. Skiping cdn publish."
 else
     echo "Deploying $VERSION to cdn"
-    aws cp $PROJECT_DIR/adldap.msi s3://assets.auth0.com/connector/adldap-$VERSION.msi
-    aws cp $PROJECT_DIR/adldap.msi s3://assets.auth0.com/connector/adldap-latest.msi
+    aws s3 cp $PROJECT_DIR/adldap.msi s3://assets.auth0.com/connector/adldap-$VERSION.msi
+    aws s3 cp $PROJECT_DIR/adldap.msi s3://assets.auth0.com/connector/adldap-latest.msi
 fi
 
 TAG_NAME="v$VERSION"
