@@ -6,6 +6,8 @@ var Users  = require('../lib/users');
 var users  = new Users();
 var crypto = require('../lib/crypto');
 
+var password = nconf.get('LDAP_BIND_PASSWORD') || crypto.decrypt(nconf.get('LDAP_BIND_CREDENTIALS'));
+
 /*
  * These tests needs a config.json file in place pointing to our test-AD
  */
@@ -44,7 +46,7 @@ describe('users', function () {
     var profile;
 
     before(function (done) {
-      users.validate('john', crypto.decrypt(nconf.get('LDAP_BIND_CREDENTIALS')), function (err, p) {
+      users.validate('john', password, function (err, p) {
         if (err) return done(err);
         profile = p;
         done();
