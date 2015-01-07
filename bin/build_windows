@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIR="$DIR/../"
+REMOTE_DIR="C:\\\Users\\\Administrator\\\Projects\\\ad-ldap-connector"
+REMOTE_DIR_UNIX=$(echo $REMOTE_DIR | sed 's/C\:/\/cygdrive\/c\//g'  | sed 's/\\/\//g')
+
+echo "Generating Windows Installer"
+echo "Copying content to windows"
+
+ssh windows-integrations "Remove-Item -recurse -force $REMOTE_DIR ; mkdir $REMOTE_DIR"
+rsync -ra -e ssh --exclude '.git' --exclude 'node_modules' $PROJECT_DIR/ windows-integrations:$REMOTE_DIR_UNIX
+
+echo "Generating installer"
+ssh windows-integrations "cd C:\Users\Administrator\Projects\ad-ldap-connector\ ; npm i ; installer\build.ps1"
+
+echo "Downloading installer"
+rsync -ra -e ssh windows-integrations:$REMOTE_DIR_UNIX/installer/output/adldap.msi $PROJECT_DIR/adldap.msi
+
+ls -lah adldap.msi

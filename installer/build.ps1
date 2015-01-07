@@ -28,7 +28,7 @@ Remove-Item $tmp_dir
 mkdir $tmp_dir
 
 #Copy excluding .git and installer
-robocopy $ProjectPath\ $tmp_dir /COPYALL /S /NFL /NDL /NS /NC /NJH /NJS /XD .git installer
+robocopy $ProjectPath\ $tmp_dir /COPYALL /S /NFL /NDL /NS /NC /NJH /NJS /XD .git installer bin
 
 Copy-Item "C:\Program Files (x86)\nodejs\node.exe" $tmp_dir\bin
 

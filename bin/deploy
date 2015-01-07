@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -e
+
+BIN="./node_modules/.bin"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIR="$DIR/../"
+VERSION=$(node -e "console.log(require('$DIR/../package.json').version)")
+
+CDN_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" https://cdn.auth0.com/connector/adldap-$VERSION.msi | grep 200 || true)
+
+if [ ! -z "$CDN_EXISTS" ]; then
+    echo "There is already a version $VERSION in the CDN. Skiping cdn publish."
+else
+    echo "Deploying $VERSION to cdn"
+    aws cp $PROJECT_DIR/adldap.msi s3://assets.auth0.com/connector/adldap-$VERSION.msi
+    aws cp $PROJECT_DIR/adldap.msi s3://assets.auth0.com/connector/adldap-latest.msi
+fi
+
+TAG_NAME="v$VERSION"
+TAG_EXISTS=$(git tag -l "$TAG_NAME")
+
+if [ ! -z "$TAG_EXISTS" ]; then
+    echo "There is already a tag $TAG_EXISTS in git. Skiping git deploy."
+else
+    echo "Deploying $VERSION to git"
+    LAST_COMMIT=$(git log -1 --pretty=%B)
+    git tag "$TAG_NAME" -m "$LAST_COMMIT"
+    git push origin $TAG_NAME
+fi
