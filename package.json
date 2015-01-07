@@ -33,7 +33,7 @@
     "freeport": "~1.0.2",
     "jsonwebtoken": "~0.1.0",
     "kerberos-server": "*",
-    "ldapjs": "https://github.com/auth0/node-ldapjs/tarball/master",
+    "ldapjs": "~0.7.1",
     "lodash": "~2.4.1",
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
     "passport": "~0.1.16",
