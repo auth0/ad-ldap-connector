@@ -1,6 +1,6 @@
 {
   "name": "sql-fs",
-  "version": "2.10.0",
+  "version": "2.10.1",
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
@@ -52,7 +52,7 @@
     "xtend": "~2.1.1"
   },
   "devDependencies": {
-    "bump": "~0.2.5",
+    "bump": "git://github.com/ianstormtaylor/bump",
     "chai": "~1.7.2",
     "mocha": "~2.1.0"
   }
