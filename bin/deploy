@@ -14,7 +14,7 @@ if [ ! -z "$CDN_EXISTS" ]; then
 else
     echo "Deploying $VERSION to cdn"
 
-    echo "{\"version\":\"3.2.1\", \"url\": \"$URL\", \"checksum\":\"$(shasum $PROJECT_DIR/adldap.msi | cut -d ' ' -f 1)\"}" \
+    echo "{\"version\":\"$VERSION\", \"url\": \"$URL\", \"checksum\":\"$(shasum $PROJECT_DIR/adldap.msi | cut -d ' ' -f 1)\"}" \
         > $PROJECT_DIR/latest.json
 
     aws s3 cp $PROJECT_DIR/latest.json s3://assets.auth0.com/connector/windows/latest.json
