@@ -41,7 +41,6 @@ function ping (client, count, callback) {
 
   var on_pong = function (data) {
     if (data.toString() !== hash) return;
-    console.log('pong');
     clearTimeout(check);
     callback(null, {
       failed_pings: count
