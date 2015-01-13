@@ -6,6 +6,8 @@ var nconf = require('nconf');
 var fs = require('fs');
 var Users = require('./lib/users');
 var users = new Users();
+var async = require('async');
+var randomstring = require('randomstring');
 
 var cert = {
   key:  fs.readFileSync(__dirname + '/certs/cert.key'),
@@ -29,17 +31,33 @@ ws.reply = function (pid, response) {
   return this.sendEvent(pid + '_result', response);
 };
 
-function ping (client) {
-  client.ping();
+function ping (client, count, callback) {
+  if (typeof count === 'undefined') {
+    count = 0;
+    callback = function(){};
+  }
+
+  var hash = randomstring.generate(7);
+
+  var on_pong = function (data) {
+    if (data.toString() !== hash) return;
+    console.log('pong');
+    clearTimeout(check);
+    callback(null, {
+      failed_pings: count
+    });
+  };
 
   var check = setTimeout(function () {
-    console.error("Server didn't respond ping command");
-    exit(1);
-  }, 5000);
+    client.removeListener('pong', on_pong);
+    if (count === 4) {
+      return callback(new Error('server didnt respond to 4 ping commands'));
+    }
+    console.log('Server didnt respond to ' + (count + 1) + ' ping commands. Re-ping.');
+    ping(client, ++count, callback);
+  }, 4000);
 
-  client.once('pong', function () {
-    clearTimeout(check);
-  });
+  client.on('pong', on_pong).ping(hash);
 }
 
 var log_from_auth0 = console.log.bind(console, 'auth0'.blue + ':');
@@ -63,9 +81,26 @@ ws.on('open', function () {
 }).on('authenticated', function () {
   log_from_auth0('Agent accepted.');
   var client = this;
-  setInterval(function () {
-    ping(client);
-  }, 10000);
+
+  async.whilst(
+    function () { return true; },
+    function (done) {
+      setTimeout(function () {
+        ping(client, 0, function (err, result) {
+          if (err) return done(err);
+          if (result.failed_pings > 0) {
+            console.log('Ping success after failed ' + result.failed_pings + ' pings.');
+          }
+          done();
+        });
+      }, 5000);
+    },
+    function (err) {
+      console.log(err.message);
+      return exit(1);
+    }
+  );
+
 }).on('authentication_failure', function () {
   log_from_auth0('Agent ' + 'rejected'.red + '.');
   exit(0);
