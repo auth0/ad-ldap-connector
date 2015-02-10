@@ -11,3 +11,4 @@ installer/directory.wxs
 installer/log.log
 node_modules/*
 logs*
+cache.db/
