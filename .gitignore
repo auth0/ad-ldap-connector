@@ -12,3 +12,4 @@ installer/log.log
 node_modules/*
 logs*
 cache.db/
+.DS_store*
