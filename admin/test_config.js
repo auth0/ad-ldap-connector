@@ -71,7 +71,7 @@ module.exports = function(config, callback){
 
   try_tcp(config, function (err, port) {
     result.push({
-      proof: 'Connecting to LDAP port ' + port,
+      proof: 'Testing TCP connection to LDAP server on port: ' + port,
       result: err ? 'Not OK' : 'OK'
     });
     if (err){
@@ -87,7 +87,7 @@ module.exports = function(config, callback){
 
     try_connect(client, config, function (err) {
       result.push({
-        proof: 'Connecting to LDAP',
+        proof: 'Testing LDAP bind to LDAP server',
         result: err ? 'Not OK' : 'OK'
       });
       if (err) return callback(err, result);
