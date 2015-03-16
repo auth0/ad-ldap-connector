@@ -1,5 +1,6 @@
 require('colors');
 require('./eventlog');
+require('./lib/add_certs');
 require('./lib/setupProxy');
 var exit = require('./lib/exit');
 

@@ -51,6 +51,7 @@
     "thumbprint": "0.0.1",
     "tunnel": "~0.0.3",
     "url-join": "0.0.1",
+    "windows-certs": "^3.0.0",
     "winston": "git://github.com/jfromaniello/winston.git#custom_eol_filetransport",
     "ws": "~0.4.31",
     "wsfed": "~0.5.7",
