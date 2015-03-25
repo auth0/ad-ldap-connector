@@ -78,10 +78,28 @@ module.exports = function(config, callback){
       return callback(err, result);
     }
 
+    var tlsOptions;
+
+    if (process.platform === 'win32' &&
+        config.LDAP_URL.toLowerCase().substr(0, 5) === 'ldaps') {
+
+      var certs = require('windows-certs');
+
+      var cas = certs.get({
+        storeLocation: 'LocalMachine',
+        storeName: ['TrustedPeople', 'CertificateAuthority', 'Root']
+      }).map(function (cert) {
+        return cert.pem;
+      });
+
+      tlsOptions = { ca: cas };
+    }
+
     var client = ldap.createClient({
       url:            config.LDAP_URL,
       bindDN:         config.LDAP_BIND_USER,
-      credentials:    config.LDAP_BIND_PASSWORD
+      credentials:    config.LDAP_BIND_PASSWORD,
+      tlsOptions:     tlsOptions
     });
 
     try_connect(client, config, function (err) {
