@@ -1,3 +1,4 @@
+require('../lib/add_certs');
 var fs      = require('fs');
 var http    = require('http');
 var express = require('express');

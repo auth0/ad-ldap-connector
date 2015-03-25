@@ -80,7 +80,6 @@ module.exports = function(config, callback){
 
     var client = ldap.createClient({
       url:            config.LDAP_URL,
-      maxConnections: 10,
       bindDN:         config.LDAP_BIND_USER,
       credentials:    config.LDAP_BIND_PASSWORD
     });
