@@ -3,11 +3,15 @@ require('./lib/initConf');
 require('./lib/setupProxy');
 
 var _ = require('lodash');
+var fs = require('fs');
+var url = require('url');
+var path = require('path');
 var ldap = require('./lib/ldap');
 var async = require('async');
 var nconf = require('nconf');
 var request = require('request');
 var winston = require('winston');
+var thumbprint = require('thumbprint');
 var WebSocket = require('ws');
 var isWindows = (process.platform == 'win32');
 
@@ -60,8 +64,15 @@ async.series([
     function(callback){
         logger.trying('Testing connectivity to Auth0...');
 
+        var connectivity_url = 'https://login.auth0.com/test';
+        if (nconf.get('PROVISIONING_TICKET')) {
+            connectivity_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
+        }
+
+        logger.info('  > Test endpoint: ' + connectivity_url.green);
+
         request.get({
-            uri: "https://login.auth0.com/test",
+            uri: connectivity_url,
             json: true
         }, function (err, res, body) {
             if (err || res.statusCode !== 200) {
@@ -130,6 +141,82 @@ async.series([
             callback();
         });
     },
+    function(callback){
+        logger.trying('Testing certificates...');
+
+        var certPath = path.join(__dirname, 'certs', 'cert.pem');
+        fs.exists(certPath, function (exists) {
+            var local_thumbprint;
+            var server_thumbprint;
+
+            if (!exists) {
+                logger.warn('  > Local certificate ' + 'certs/cert.pem'.yellow + ' does not exist. Cannot read thumbprint.');
+            }
+            else {
+                var certContents = fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')).toString();
+                var cert = /-----BEGIN CERTIFICATE-----([^-]*)-----END CERTIFICATE-----/g.exec(certContents);
+                if (cert.length > 0) {
+                    cert = cert[1].replace(/[\n|\r\n]/g, '');
+                }
+
+                local_thumbprint = thumbprint.calculate(cert);
+                logger.info('  > Local thumbprint: ' + local_thumbprint);
+            }
+
+            if (!nconf.get("CONNECTIONS_API_V2_KEY")) {
+                logger.warn('  > ' + 'CONNECTIONS_API_V2_KEY'.yellow + ' not set. Cannot compare with connection thumbprint.');
+                return callback();
+            }
+
+
+            var api_url = 'https://login.auth0.com/api/v2/connections?strategy=ad';
+            if (nconf.get('PROVISIONING_TICKET')) {
+                api_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/api/v2/connections?strategy=ad';
+            }
+
+            var connection_name = nconf.get("CONNECTION");
+            if (!connection_name) {
+                logger.warn('  > ' + 'CONNECTION'.yellow + ' not set. Cannot compare with connection thumbprint.');
+                return callback();
+            }
+
+            request.get({
+                uri: api_url,
+                headers: {
+                    'Authorization': 'Bearer ' + nconf.get("CONNECTIONS_API_V2_KEY")
+                },
+                json: true
+            }, function (err, res, body) {
+                if (err || res.statusCode !== 200) {
+                    logger.error(' > Error loading certificate from Auth0: %s', res.statusCode);
+                    logger.warn('  > Cannot compare with connection thumbprint.');
+                } else {
+                    var connection = _.find(body, { 'name': connection_name });
+                    if (!connection) {
+                        logger.error(' > Error loading certificate from Auth0. Could not find connection ' + connection_name.red + '.');
+                    }
+                    else if (!connection.options || !connection.options.certs || connection.options.certs.length != 1) {
+                        logger.error(' > Error loading certificate from Auth0. Certificate missing on the connection.');
+                    }
+                    else {
+                        server_thumbprint = thumbprint.calculate(connection.options.certs[0]);
+                        logger.info('  > Server thumbprint: ' + server_thumbprint);
+                    }
+                }
+
+                if (local_thumbprint && server_thumbprint) {
+                    if (local_thumbprint === server_thumbprint) {
+                        logger.success('Local and server certificates match.');
+                    } 
+                    else {
+                        logger.failed('Local and server certificates ' + 'don\'t match'.red + '.');
+                    }
+                }
+
+                callback();
+            });
+        });
+    },
     function(callback) {
         logger.trying('Running NLTEST...');
 
@@ -157,51 +244,56 @@ async.series([
             callback();
         });
     },
-    function(callback){
+    function(callback) {
         logger.trying('Testing LDAP connectivity.');
         if (!nconf.get("LDAP_BASE")) {
-            logger.warn('  > LDAP_BASE not set. Cannot test connectivity.');
+            logger.warn('  > ' + 'LDAP_BASE'.yellow + 'not set. Cannot test connectivity.');
             return callback();
         }
 
         logger.info('  > LDAP BASE: %s', nconf.get("LDAP_BASE"))
 
         var opts = {
-            scope:  'sub',
+            scope: 'sub',
             sizeLimit: 5,
             filter: nconf.get('LDAP_SEARCH_ALL_QUERY')
         };
-        ldap.client.search(nconf.get("LDAP_BASE"), opts, function(err, res){
-            if (err) {
-                logger.failed('Connection to LDAP %s.', 'failed'.red);
-                if (err && err.message)
-                    logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
-                return callback();
-            }
-
-            var entries = [];
-            res.on('searchEntry', function(entry) {
-                logger.info('  > Found user: %s', entry.object.sAMAccountName || entry.object.mail || entry.object.name);
-                entries.push(entry);
-            });
-            res.on('error', function(err) {
-                if (err.message === 'Size Limit Exceeded' && entries.length > 0) {
-                    logger.success('Connection to LDAP %s.', 'succeeded'.green);
+        try {
+            ldap.client.search(nconf.get("LDAP_BASE"), opts, function(err, res) {
+                if (err) {
+                    logger.failed('Connection to LDAP %s.', 'failed'.red);
+                    if (err && err.message)
+                        logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
                     return callback();
                 }
-                logger.failed('Connection to LDAP %s.', 'failed'.red);
-                if (err && err.message)
-                    logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').trim().red);
-                return callback();
+
+                var entries = [];
+                res.on('searchEntry', function(entry) {
+                    logger.info('  > Found user: %s', entry.object.sAMAccountName || entry.object.mail || entry.object.name);
+                    entries.push(entry);
+                });
+                res.on('error', function(err) {
+                    if (err.message === 'Size Limit Exceeded' && entries.length > 0) {
+                        logger.success('Connection to LDAP %s.', 'succeeded'.green);
+                        return callback();
+                    }
+                    logger.failed('Connection to LDAP %s.', 'failed'.red);
+                    if (err && err.message)
+                        logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').trim().red);
+                    return callback();
+                });
+                res.on('end', function() {
+                    return callback();
+                });
             });
-            res.on('end', function() {
-                return callback();
-            });
-        });
+        } catch (e) {
+            logger.failed('Connection to LDAP %s.', 'failed'.red);
+            return callback();
+        }
     }
 ],
 function(err, results){
-    logger.info('Done!');
+    logger.info('Done!\n');
     process.exit(0);
 });
 
