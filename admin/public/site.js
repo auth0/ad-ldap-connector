@@ -87,7 +87,7 @@
 		$.get('/logs?_=' + new Date().getTime(), function(data) {
 			$('#logs').text(data);
 
-			if (data.length > 1000) {
+			if (data.length > 2500) {
 				$('#log-buttons-bottom').show();
 			} else {
 				$('#log-buttons-bottom').hide();
@@ -98,7 +98,21 @@
 	$('#troubleshoot-run').click(function(e) {
 		e.preventDefault();
 
+		$('#troubleshoot-progress').show();
+		$('#troubleshoot-output').hide();
+		$('#troubleshoot-output').html('');
+
 		$.get('/troubleshooter/run?_=' + new Date().getTime(), function(data) {
+
+			$('#troubleshoot-progress').hide();
+			$('#troubleshoot-output').show();
+			$('#troubleshoot-output').html(data
+				.replace(/\info\:/g, '<span class="troubleshoot-info">info</span>:')
+				.replace(/\warn\:/g, '<span class="troubleshoot-warning">warn</span>:')
+				.replace(/\error\:/g, '<span class="troubleshoot-error">error</span>:')
+				.trim());
+
+			return;
 			var list = $('#troubleshoot-output').html('<ul />').find('ul');
 
 			$.each(data, function(i, item) {

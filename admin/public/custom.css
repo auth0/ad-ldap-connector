@@ -23,3 +23,15 @@
 #logs {
 	min-height: 250px;
 }
+
+.troubleshoot-info {
+	color: #006dcc;
+}
+
+.troubleshoot-warning {
+	color: #ad6704;
+}
+
+.troubleshoot-error {
+	color: #a93f3f;
+}

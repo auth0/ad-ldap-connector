@@ -79,6 +79,21 @@ function merge_config(req, res) {
   res.redirect('/');
 }
 
+function run(cmd, args, callback) {
+  var spawn = require('child_process').spawn;
+  var command = spawn(cmd, args);
+  var result = '';
+  command.stderr.on('data', function(data) {
+    result += data.toString();
+  });
+  command.stdout.on('data', function(data) {
+    result += data.toString();
+  });
+  command.on('close', function(code) {
+    return callback(result);
+  });
+}
+
 app.get('/', set_current_config, function(req, res) {
   console.log(req.session.LDAP_RESULTS);
   res.render('index', xtend(req.current_config, {
@@ -299,9 +314,14 @@ app.post('/profile-mapper', function(req, res) {
 });
 
 app.get('/troubleshooter/run', set_current_config, function(req, res) {
-  var config = xtend({}, req.current_config, req.body);
-  test_config(config, function(err, result) {
-    res.json(result);
+  run('node', [__dirname + '/../troubleshoot.js'], function(data) {
+    data = data.replace(/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]/g, '').trim();
+
+    res.writeHead(200, {
+      "Content-Type": "text/plain"
+    });
+    res.write(data);
+    return res.end();
   });
 });
 
@@ -309,11 +329,10 @@ app.get('/troubleshooter/export', set_current_config,
   function(req, res, next) {
     console.log('Exporting test results.');
 
-    var config = xtend({}, req.current_config, req.body);
-    test_config(config, function(err, result) {
-      console.log(err);
-      console.log(result);
-      req.body.TEST_RESULTS = result;
+    run('node', [__dirname + '/../troubleshoot.js'], function(data) {
+      data = data.replace(/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]/g, '').trim();
+
+      req.body.TEST_RESULTS = data;
       return next();
     });
   },
@@ -321,20 +340,20 @@ app.get('/troubleshooter/export', set_current_config,
     console.log('Exporting files.');
 
     fs.readdir(__dirname + '/../', function(err, list) {
-        if (err) {
-          res.status(500);
-          return res.send({
-            error: err
-          });
-        } else {
-          req.body.LOG_FILES = [];
-          list.forEach(function(item) {
-            if (item.indexOf('.log') >= 0) {
-              req.body.LOG_FILES.push(item);
-            }
-          });
-          return next();
-        }
+      if (err) {
+        res.status(500);
+        return res.send({
+          error: err
+        });
+      } else {
+        req.body.LOG_FILES = [];
+        list.forEach(function(item) {
+          if (item.indexOf('.log') >= 0) {
+            req.body.LOG_FILES.push(item);
+          }
+        });
+        return next();
+      }
     });
   },
   function(req, res, next) {
@@ -342,7 +361,6 @@ app.get('/troubleshooter/export', set_current_config,
       .substring(0, 19)
       .replace(/\:|\-/g, '')
       .replace('T', '-');
-
 
     var exp = new zip();
     if (fs.existsSync(__dirname + '/../config.json')) {
@@ -352,9 +370,9 @@ app.get('/troubleshooter/export', set_current_config,
       exp.addLocalFile(__dirname + '/../lib/profileMapper.js');
     }
 
-    exp.addFile("test-results.json", JSON.stringify(req.body.TEST_RESULTS, null, 2));
+    exp.addFile("test-results.log", req.body.TEST_RESULTS);
 
-    req.body.LOG_FILES.forEach(function (file) {
+    req.body.LOG_FILES.forEach(function(file) {
       exp.addLocalFile(__dirname + '/../' + file);
     });
 
