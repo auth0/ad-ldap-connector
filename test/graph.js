@@ -45,7 +45,10 @@ var fixture = [
       "dn": "CN=Human,OU=Janitorial,DC=fabrikam,DC=local",
       "controls": [],
       "cn": "Human",
-      "memberOf": "CN=Biped,OU=Janitorial,DC=fabrikam,DC=local"
+      "memberOf": [
+        "CN=Biped,OU=Janitorial,DC=fabrikam,DC=local",
+        "CN=G8,OU=Janitorial,DC=fabrikam,DC=local"
+      ]
     }
   ];
 
