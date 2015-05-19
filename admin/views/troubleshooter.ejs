@@ -1,0 +1,13 @@
+<p>Running the troubleshooter will try to detect any issues with your environment (LDAP, network, clock, ...) that might prevent the connector from working correctly. If the test fails, the results can be exported (together with the log files) and should be sent to <a href="mailto:support@auth0.com">support@auth0.com</a></p>
+
+<form method="get" action="/troubleshooter/export">
+  <p>
+  <div class="control-group">
+    <div class="controls">
+    	<button id="troubleshoot-run" type="submit" class="btn btn-primary">Run</button>
+      <button type="submit" class="btn btn-primary">Export</button>
+    </div>
+  </div>
+</form>
+
+<div id="troubleshoot-output"></div>

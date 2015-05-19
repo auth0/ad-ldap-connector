@@ -22,6 +22,18 @@
           required>
     </div>
   </div>
+  <div class="control-group">
+    <label class="control-label" for="HTTP_PROXY">HTTP Proxy:</label>
+    <div class="controls">
+      <input type="text"
+          name="HTTP_PROXY"
+          id="HTTP_PROXY"
+          value="<%= locals.HTTP_PROXY || '' %>"
+          placeholder="http://proxy-server:8080/"
+          pattern="https?://.+"
+          oninvalid="setCustomValidity('Please enter a url')">
+    </div>
+  </div>
 
   <h5>Client Certificate Authentication</h5>
   <p>Complete these settings only if you enabled 'Use client SSL certificate authentication' option from the connection configuration.</p>
