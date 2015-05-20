@@ -1,0 +1,1 @@
+@start Powershell.exe -ExecutionPolicy RemoteSigned -File  .\update-connector.ps1

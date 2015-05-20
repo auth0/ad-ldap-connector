@@ -125,4 +125,47 @@
 		});
 	});
 
+	var update = "None";
+
+	$("#update-run-form").submit(function(e) {
+		e.preventDefault();
+
+		$.post('/updater/run');
+		
+		update = 'Started';
+		$('#update-logs').text('');
+		$('#update-progress').show();
+	});
+
+	function getUpdaterLogs() {
+		$.get('/updater/logs?_=' + new Date().getTime(), function(data) {
+			if (data && data.length > 0) {
+				$('#update-logs').html(data
+					.replace(/\DEBUG\:/g, '<span class="troubleshoot-info">DEBUG</span>:')
+					.replace(/\INFO\:/g, '<span class="troubleshoot-success">INFO</span>:')
+					.replace(/\ERROR\:/g, '<span class="troubleshoot-error">ERROR</span>:'));
+				$('#update-logs-widget').show();
+
+				if (data.indexOf('(Installation-Stop)') >= 0) {
+					update = 'None';
+					$('#update-progress').hide();
+				}
+			}
+		})
+		.done(function() {
+			if (update === 'Busy') {
+				update = 'None';
+				$('#update-progress').hide();
+			}
+		})
+		.fail(function(err) {
+			if (update === 'Started') {
+				update = 'Busy';
+			}
+		});
+	}
+
+	setInterval(getUpdaterLogs, 2500);
+	getUpdaterLogs();
+
 }(jQuery));

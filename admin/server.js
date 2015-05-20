@@ -1,4 +1,5 @@
 require('../lib/add_certs');
+var os = require('os');
 var fs = require('fs');
 var zip = require('adm-zip');
 var http = require('http');
@@ -238,8 +239,6 @@ app.post('/import', set_current_config, multipart(), function(req, res, next) {
 });
 
 app.get('/logs', function(req, res) {
-  console.log('Loading logs...');
-
   res.writeHead(200, {
     "Content-Type": "text/plain"
   });
@@ -329,7 +328,12 @@ app.get('/troubleshooter/export', set_current_config,
   function(req, res, next) {
     console.log('Exporting test results.');
 
-    run('node', [__dirname + '/../troubleshoot.js'], function(data) {
+    var node_process = 'node';
+    if (process.platform === 'win32') {
+      node_process = __dirname + '/../node.exe';
+    }
+
+    run(node_process, [__dirname + '/../troubleshoot.js'], function(data) {
       data = data.replace(/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]/g, '').trim();
 
       req.body.TEST_RESULTS = data;
@@ -369,6 +373,9 @@ app.get('/troubleshooter/export', set_current_config,
     if (fs.existsSync(__dirname + '/../lib/profileMapper.js')) {
       exp.addLocalFile(__dirname + '/../lib/profileMapper.js');
     }
+    if (fs.existsSync(__dirname + '/../package.json')) {
+      exp.addLocalFile(__dirname + '/../package.json');
+    }
 
     exp.addFile("test-results.log", req.body.TEST_RESULTS);
 
@@ -382,6 +389,41 @@ app.get('/troubleshooter/export', set_current_config,
     res.set('Content-Length', data.length);
     res.end(data, 'binary');
   });
+
+app.post('/updater/run', set_current_config, function(req, res) {
+  run(__dirname + '/../update-connector.cmd', [], function(data) {
+    res.writeHead(200, {
+      "Content-Type": "text/plain"
+    });
+    res.write(data);
+    return res.end();
+  });
+});
+
+app.get('/updater/logs', function(req, res) {
+  console.log('Loading ' + os.tmpdir() + '/adldap-update.log');
+
+  res.writeHead(200, {
+    "Content-Type": "text/plain"
+  });
+
+  if (!fs.existsSync(os.tmpdir() + '/adldap-update.log')) {
+    res.write('');
+    return res.end();
+  }
+
+  fs.readFile(os.tmpdir() + '/adldap-update.log', "utf8", function(err, data) {
+    if (err) {
+      res.status(500);
+      res.send({
+        error: err
+      });
+    } else {
+      res.write(data.replace(/\n\r\n/g, "\n"));
+      res.end();
+    }
+  });
+});
 
 http.createServer(app).listen(8357, '127.0.0.1', function() {
   console.log('Listening on http://localhost:8357.');

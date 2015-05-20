@@ -39,6 +39,11 @@
             <li>
               <a href="/#troubleshooting">Troubleshooting</a>
             </li>
+            <% if (process.platform === 'win32') { %>
+            <li>
+              <a href="/#update">Update</a>
+            </li>
+            <% } %>
           </ul>
           <% } %>
 
@@ -123,6 +128,27 @@
                 </div>
               </div>
             </div>
+
+            <% if (process.platform === 'win32') { %>
+            <div class="tab-pane" id="update">
+              <div class="widget-box">
+                <div class="widget-title">
+                  <h5>Updater</h5>
+                </div>
+                <div class="widget-content">
+                  <% include update_run %>
+                </div>
+              </div>
+              <div id="update-logs-widget" class="widget-box" style="display: none">
+                <div class="widget-title">
+                  <h5>Update Logs</h5>
+                </div>
+                <div class="widget-content">
+                  <% include update_logs %>
+                </div>
+              </div>
+            </div>
+            <% } %>
           </div>
         </div>
         <% } %>
