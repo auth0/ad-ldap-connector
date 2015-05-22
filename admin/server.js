@@ -426,7 +426,7 @@ app.get('/updater/logs', function(req, res) {
 });
 
 app.get('/version', function(req, res) {
-  var p = JSON.parse(fs.readFileSync('../package.json', 'utf8'));
+  var p = JSON.parse(fs.readFileSync(__dirname + '/../package.json', 'utf8'));
 
   res.writeHead(200, {
     "Content-Type": "text/plain"
