@@ -27,12 +27,38 @@
 			getLogs();
 		} else if ($(this).prop('hash') === '#profile-mapper') {
 			if (code == null) {
-				code = CodeMirror(document.getElementById('profile-mapper-editor'), {
-					mode: "javascript",
-					lineNumbers: true,
-					styleActiveLine: true,
-					matchBrackets: true
-				});
+
+			    var jsHintOptions = {
+			      options: {
+			      	'sub': 		true,
+			        'noarg':    true,
+			        'undef':    true,
+			        'eqeqeq':   true,
+			        'laxcomma': true,
+			        '-W025':    true,
+			        'predef':   ['module']
+			      }
+			    };
+			    var extra_opts = extra_opts || {}
+			    var editor_opts = {
+			      mode:             'javascript',
+			      lineNumbers:      true,
+			      lineWrapping:     true,
+			      continueComments: 'Enter',
+			      matchBrackets:    true,
+				  styleActiveLine:  true,
+			      closeBrackets:    true,
+			      indentUnit:       2,
+			      smartIndent: 		true,
+			      tabSize:          2,
+			      gutters:          ['CodeMirror-lint-markers'],
+			      lint:             jsHintOptions
+			      }
+
+			    $.extend(editor_opts, extra_opts);
+
+				code = CodeMirror(document.getElementById('profile-mapper-editor'), editor_opts);
+				code.editor_widgets = [];
 
 				$.get('/profile-mapper?_=' + new Date().getTime(), function(data) {
 					code.setValue(data);
