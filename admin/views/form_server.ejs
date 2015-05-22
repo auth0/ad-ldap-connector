@@ -10,6 +10,7 @@
           pattern="https?://.+"
           oninvalid="setCustomValidity('Please enter a url')"
           required>
+      <span class="help-block">The default connector URL will be server-name:port, but this setting allows you to overwrite this (eg: connector.mycompany.com). This is the URL that your users will see when authenticating with Kerberos or Client Certificates.</span>
     </div>
   </div>
   <div class="control-group">
@@ -20,6 +21,7 @@
           id="PORT"
           value="<%= locals.PORT || '' %>"
           required>
+      <span class="help-block">The port on which the server will run when Kerberos or Client Certificate Authentication is enabled.</span>
     </div>
   </div>
   <div class="control-group">

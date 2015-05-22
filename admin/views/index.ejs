@@ -28,7 +28,6 @@
           </div>
           <% include header_alerts %>
 
-          <% if (locals.PROVISIONING_TICKET) { %>
           <ul class="nav nav-tabs">
             <li class="active">
               <a href="/#configuration">Configuration</a>
@@ -48,12 +47,9 @@
             </li>
             <% } %>
           </ul>
-          <% } %>
 
-          <% if (locals.PROVISIONING_TICKET) { %>
           <div class="tab-content">
             <div class="tab-pane active" id="configuration">
-              <% } %>
               <div class="widget-box">
                 <div class="widget-title">
                   <h5>Settings</h5>
@@ -79,8 +75,6 @@
                   <% include form_server %></div>
               </div>
               <% } %>
-
-              <% if (locals.PROVISIONING_TICKET) { %>
             </div>
 
             <div class="tab-pane" id="profile-mapper">
@@ -154,7 +148,6 @@
             <% } %>
           </div>
         </div>
-        <% } %>
         </section>
     </div>
   </div>
