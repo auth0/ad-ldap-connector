@@ -1,0 +1,10 @@
+<% if (locals.ERROR) { %>
+<div class="alert alert-error">
+<%= locals.ERROR %>  
+</div>
+<% } %>
+<% if (locals.SUCCESS) { %>
+<div class="alert alert-success">
+Configuration updated and server restarted.
+</div>
+<% } %>

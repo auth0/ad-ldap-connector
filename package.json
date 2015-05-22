@@ -20,6 +20,7 @@
   "author": "Auth0",
   "license": "MIT",
   "dependencies": {
+    "adm-zip": "^0.4.7",
     "async": "~0.2.9",
     "base64url": "https://github.com/jfromaniello/base64url/tarball/master",
     "cb": "~0.1.0",

@@ -10,6 +10,7 @@
           pattern="https?://.+"
           oninvalid="setCustomValidity('Please enter a url')"
           required>
+      <span class="help-block">The default connector URL will be server-name:port, but this setting allows you to overwrite this (eg: connector.mycompany.com). This is the URL that your users will see when authenticating with Kerberos or Client Certificates.</span>
     </div>
   </div>
   <div class="control-group">
@@ -20,6 +21,19 @@
           id="PORT"
           value="<%= locals.PORT || '' %>"
           required>
+      <span class="help-block">The port on which the server will run when Kerberos or Client Certificate Authentication is enabled.</span>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label" for="HTTP_PROXY">HTTP Proxy:</label>
+    <div class="controls">
+      <input type="text"
+          name="HTTP_PROXY"
+          id="HTTP_PROXY"
+          value="<%= locals.HTTP_PROXY || '' %>"
+          placeholder="http://proxy-server:8080/"
+          pattern="https?://.+"
+          oninvalid="setCustomValidity('Please enter a url')">
     </div>
   </div>
 

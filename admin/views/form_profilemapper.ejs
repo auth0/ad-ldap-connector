@@ -1,0 +1,12 @@
+<form id="profile-mapper">
+  <p>
+  The profile mapper script allows you to control how the user's profile will be sent to Auth0. The script starts with a <strong>raw_data</strong> variable which represents the raw Active Directory user and should return the <strong>profile</strong> variable with the information you want to expose. The <a href="https://auth0.com/docs/connector/modify"><strong>LDAP_USER_BY_NAME</strong></a> setting in the configuration also allows you to specify how users are found during the authentication process.
+  </p>
+  <div id="profile-mapper-editor"></div>
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+  <div id="profile-mapper-alerts"></div>
+</form>

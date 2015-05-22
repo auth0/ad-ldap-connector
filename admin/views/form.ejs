@@ -15,6 +15,7 @@
           pattern="ldaps?://.+"
           oninvalid="setCustomValidity('Please enter a LDAP url')"
           required>
+      <span class="help-block">The path to your directory. Eg: ldap://fabrikam.com or ldap://dc.fabrikam.com</span>
     </div>
   </div>
 
@@ -27,6 +28,7 @@
           value="<%= locals.LDAP_BASE || (locals.detected && locals.detected.LDAP_BASE) || '' %>"
           placeholder="DC=mycompany,DC=com"
           required>
+      <span class="help-block">Defines the location in the directory from which the LDAP search begins. Eg: DC=fabrikam,DC=local</span>
     </div>
   </div>
 
@@ -39,6 +41,7 @@
           value="<%= locals.LDAP_BIND_USER || '' %>"
           placeholder="domain\username"
           required>
+      <span class="help-block">The username of the service account which will be used to connect to LDAP when testing the connection and searching for users/groups.</span>
     </div>
   </div>
 
@@ -49,6 +52,7 @@
           name="LDAP_BIND_PASSWORD"
           id="LDAP_BIND_PASSWORD"
           required>
+      <span class="help-block">The password of the service account. This will be encrypted in the configuration file.</span>
     </div>
   </div>
 
