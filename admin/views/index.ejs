@@ -19,10 +19,13 @@
     <div id="content" style="margin-left: 0;">
       <section id="configuration-section" class="content-page current">
         <div id="content-header">
-          <h1>AD LDAP Configuration</h1>
+        <h1>AD LDAP Connector <span id="connector-version"></span> Configuration</h1>
         </div>
 
         <div class="container-fluid flat">
+          <div id="update-available" class="alert alert-success">
+            A new update for the AD LDAP Connector is available. Go to the <a id="update-show" href="#update">Update tab</a> to install v<span id="update-version"></span>.
+          </div>
           <% include header_alerts %>
 
           <% if (locals.PROVISIONING_TICKET) { %>
@@ -41,7 +44,7 @@
             </li>
             <% if (process.platform === 'win32') { %>
             <li>
-              <a href="/#update">Update</a>
+              <a id="update-tab" href="/#update">Update</a>
             </li>
             <% } %>
           </ul>

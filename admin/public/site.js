@@ -1,6 +1,25 @@
 (function($) {
 	var code = null;
 
+	$.get('/version?_=' + new Date().getTime(), function(p) {
+
+		$('#connector-version').text('v' + p);
+
+		$.get('https://cdn.auth0.com/connector/windows/latest.json?_=' + new Date().getTime(), function(data) {
+			var tab = $('#update-tab');
+			if (tab.length > 0) {
+				tab.show();
+				tab.css('display', 'block');
+
+				// New version available.
+				if (p !== data.version) {
+					$('#update-version').text(data.version);
+					$('#update-available').show();
+				}
+			}
+		});
+	});
+
 	$('.nav-tabs a').on('shown', function(e) {
 		scrollToTop();
 
@@ -20,6 +39,10 @@
 				});
 			}
 		}
+	});
+
+	$('#update-show').click(function (e) {
+		$('.nav-tabs a[href="/#update"]').tab('show');
 	});
 
 	$('.nav-tabs a').click(function(e) {
@@ -135,6 +158,7 @@
 		update = 'Started';
 		$('#update-logs').text('');
 		$('#update-progress').show();
+		$('#update-available').hide();
 	});
 
 	function getUpdaterLogs() {

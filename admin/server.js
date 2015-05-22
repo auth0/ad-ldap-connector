@@ -425,6 +425,16 @@ app.get('/updater/logs', function(req, res) {
   });
 });
 
+app.get('/version', function(req, res) {
+  var p = JSON.parse(fs.readFileSync('../package.json', 'utf8'));
+
+  res.writeHead(200, {
+    "Content-Type": "text/plain"
+  });
+  res.write(p.version);
+  return res.end();
+});
+
 http.createServer(app).listen(8357, '127.0.0.1', function() {
   console.log('Listening on http://localhost:8357.');
 });

@@ -39,3 +39,11 @@
 .troubleshoot-success {
 	color: #51a351;
 }
+
+#update-tab {
+	display: none;
+}
+
+#update-available {
+	display: none;
+}
