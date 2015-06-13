@@ -18,7 +18,7 @@ var isWindows = (process.platform == 'win32');
 var logger = new winston.Logger({
     transports: [
         new winston.transports.Console({
-            timestamp: function() {   
+            timestamp: function() {
                 var date = new Date();
                 var hour = date.getHours();
                 hour = (hour < 10 ? "0" : "") + hour;
@@ -48,6 +48,10 @@ logger.failed = function(message, arg) {
     if (!arg) arg = '';
     logger.error((isWindows ? '\u00D7 ' : '\u2716 ').red + message, arg);
 };
+
+process.on('uncaughtException', function (err) {
+  console.log(err);
+});
 
 console.log('\n Troubleshooting AD LDAP connector\n');
 
@@ -164,7 +168,7 @@ async.series([
             }
 
             if (!nconf.get("CONNECTIONS_API_V2_KEY")) {
-                logger.warn('  > ' + 'CONNECTIONS_API_V2_KEY'.yellow + ' not set. Cannot compare with connection thumbprint.');
+                logger.warn('  > ' + 'CONNECTIONS_API_V2_KEY'.yellow + ' not set. Cannot compare with connection thumbprint (This is optional).');
                 return callback();
             }
 
@@ -207,7 +211,7 @@ async.series([
                 if (local_thumbprint && server_thumbprint) {
                     if (local_thumbprint === server_thumbprint) {
                         logger.success('Local and server certificates match.');
-                    } 
+                    }
                     else {
                         logger.failed('Local and server certificates ' + 'don\'t match'.red + '.');
                     }
@@ -222,27 +226,39 @@ async.series([
 
         if (!isWindows) {
             logger.warn('  > NLTEST can only run on Windows.');
-            callback();
+            return callback();
         }
 
-        var output = '';
-        var errors = '';
-        var spawn = require('child_process').spawn;
-        var nltest = spawn('nltest', ['/dsgetdc:']);
-        nltest.stdout.on('data', function (data) { output += data; });
-        nltest.stderr.on('data', function (data) { output += data; });
-        nltest.on('close', function (code) {
-            if (output) {
-                var lines = output.replace(/^\s+|\s+$/g,'').replace(/\r\n\s+/g,'\r\n').split(/\r\n/g);
-                for (var i=0; i<lines.length; i++) {
-                    if (code === 0)
-                        logger.info('  > ' + lines[i]);
-                    else   
-                        logger.error('  > ' + lines[i]);
-                }
-            }
-            callback();
-        });
+        try {
+          var output = '';
+          var spawn = require('child_process').spawn;
+          var nltest = spawn('nltest', ['/dsgetdc:']);
+          nltest.on('error', function (err) {
+              logger.failed('Running NLTEST %s.', 'failed'.red);
+              if (err && err.message)
+                  logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
+              return callback();
+          });
+          nltest.stdout.on('data', function (data) { output += data; });
+          nltest.stderr.on('data', function (data) { output += data; });
+          nltest.on('close', function (code) {
+              if (output) {
+                  var lines = output.replace(/^\s+|\s+$/g,'').replace(/\r\n\s+/g,'\r\n').split(/\r\n/g);
+                  for (var i=0; i<lines.length; i++) {
+                      if (code === 0)
+                          logger.info('  > ' + lines[i]);
+                      else
+                          logger.error('  > ' + lines[i]);
+                  }
+              }
+              return callback();
+          });
+        } catch (err) {
+            logger.failed('Running NLTEST %s.', 'failed'.red);
+            if (err && err.message)
+                logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
+            return callback();
+        }
     },
     function(callback) {
         logger.trying('Testing LDAP connectivity.');
@@ -258,6 +274,7 @@ async.series([
             sizeLimit: 5,
             filter: nconf.get('LDAP_SEARCH_ALL_QUERY')
         };
+
         try {
             ldap.client.search(nconf.get("LDAP_BASE"), opts, function(err, res) {
                 if (err) {
@@ -283,6 +300,10 @@ async.series([
                     return callback();
                 });
                 res.on('end', function() {
+                  console.log('end');
+                    if (!entries || entries.length === 0) {
+                      logger.error('  > Error: %s', 'Unable to find users. Verify the permissions for the current user.'.red);
+                    }
                     return callback();
                 });
             });
@@ -292,8 +313,7 @@ async.series([
         }
     }
 ],
-function(err, results){
+function(err){
     logger.info('Done!\n');
     process.exit(0);
 });
-

@@ -144,6 +144,60 @@
 		});
 	}
 
+	$('#user-by-login-find').click(function (e) {
+		e.preventDefault();
+
+		var btn = $(this);
+		btn.button('loading');
+
+		$('#user-by-login-results').hide();
+		$('#user-by-login-results').html('');
+		$('#user-by-login-alerts').html('');
+
+		$.get('/users/by-login?_=' + new Date().getTime() + "&" + $.param({ query: $('#user-by-login-input').val() }), function(data) {
+			$('#user-by-login-results').show();
+			if (data === '') {
+				$('#user-by-login-results').html('User not found.');
+			}
+			else {
+				$('#user-by-login-results').html(JSON.stringify(data, null, 2));
+			}
+		})
+		.done(function() {
+			btn.button('reset');
+		})
+		.fail(function(err) {
+			btn.button('reset');
+
+			$('#user-by-login-alerts')
+				.html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>Error searching for user. Error: ' + err.statusText + '</div>');
+		});
+	});
+
+	$('#users-search').click(function (e) {
+		e.preventDefault();
+
+		var btn = $(this);
+		btn.button('loading');
+
+		$('#users-search-results').html('');
+		$('#users-search-alerts').html('');
+
+		$.get('/users/search?_=' + new Date().getTime() + "&" + $.param({ query: $('#users-search-input').val() }), function(data) {
+			$('#users-search-results').show();
+			$('#users-search-results').html(JSON.stringify(data, null, 2));
+		})
+		.done(function() {
+			btn.button('reset');
+		})
+		.fail(function(err) {
+			btn.button('reset');
+
+			$('#users-search-alerts')
+				.html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>Error searching for users. Error: ' + err.statusText + '</div>');
+		});
+	});
+
 	$('#troubleshoot-run').click(function(e) {
 		e.preventDefault();
 
@@ -180,7 +234,7 @@
 		e.preventDefault();
 
 		$.post('/updater/run');
-		
+
 		update = 'Started';
 		$('#update-logs').text('');
 		$('#update-progress').show();

@@ -44,6 +44,9 @@
             <li>
               <a href="/#troubleshooting">Troubleshooting</a>
             </li>
+            <li>
+              <a href="/#search-users">Search</a>
+            </li>
             <% if (process.platform === 'win32') { %>
             <li>
               <a id="update-tab" href="/#update">Update</a>
@@ -125,6 +128,25 @@
                 </div>
                 <div class="widget-content">
                   <% include logs %>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane" id="search-users">
+              <div class="widget-box">
+                <div class="widget-title">
+                  <h5>Find User by Login</h5>
+                </div>
+                <div class="widget-content">
+                  <% include find_user_login %>
+                </div>
+              </div>
+              <div class="widget-box">
+                <div class="widget-title">
+                  <h5>Search Users</h5>
+                </div>
+                <div class="widget-content">
+                  <% include search_users %>
                 </div>
               </div>
             </div>
