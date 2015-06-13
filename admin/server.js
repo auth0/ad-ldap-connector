@@ -438,7 +438,7 @@ app.get('/version', function(req, res) {
 
 
 app.get('/users/search', function(req, res) {
-  var users = new Users(false);
+  var users = new Users(true);
   users.list(req.query.query, function(err, users) {
     if (err) {
       res.status(500);
@@ -453,7 +453,7 @@ app.get('/users/search', function(req, res) {
 });
 
 app.get('/users/by-login', function(req, res) {
-  var users = new Users(false);
+  var users = new Users(true);
   users.getByUserName(req.query.query, function(err, users) {
     if (err) {
       res.status(500);
