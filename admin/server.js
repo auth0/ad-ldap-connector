@@ -12,7 +12,9 @@ var app = express();
 var freeport = require('freeport');
 var multipart = require('connect-multiparty');
 var test_config = require('./test_config');
+var Users = require('../lib/users');
 
+require('../lib/initConf');
 require('../lib/setupProxy');
 
 app.configure(function() {
@@ -401,7 +403,6 @@ app.post('/updater/run', set_current_config, function(req, res) {
 });
 
 app.get('/updater/logs', function(req, res) {
-  console.log('Loading ' + os.tmpdir() + '/adldap-update.log');
 
   res.writeHead(200, {
     "Content-Type": "text/plain"
@@ -433,6 +434,37 @@ app.get('/version', function(req, res) {
   });
   res.write(p.version);
   return res.end();
+});
+
+
+app.get('/users/search', function(req, res) {
+  var users = new Users(true);
+  users.list(req.query.query, function(err, users) {
+    if (err) {
+      res.status(500);
+      res.send({
+        error: err
+      });
+    }
+    else {
+      res.json(users);
+    }
+  });
+});
+
+app.get('/users/by-login', function(req, res) {
+  var users = new Users(true);
+  users.getByUserName(req.query.query, function(err, users) {
+    if (err) {
+      res.status(500);
+      res.send({
+        error: err
+      });
+    }
+    else {
+      res.send(users);
+    }
+  });
 });
 
 http.createServer(app).listen(8357, '127.0.0.1', function() {

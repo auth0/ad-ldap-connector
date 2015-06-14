@@ -1,0 +1,10 @@
+<p>Some applications (like SharePoint) might query the AD LDAP Connector to find users in your LDAP directory. This will help you troubleshoot any issues with search and will allow you to test different LDAP queries used for search (<strong><%= locals.LDAP_SEARCH_QUERY || '(&(objectCategory=person)(anr={0}))' %></strong>).</p>
+
+<form class="form-search">
+  <input id="users-search-input" type="text" class="input-large">
+  <button id="users-search" autocomplete="off" type="submit" data-loading-text="Searching" class="btn btn-primary">Search</button>
+</form>
+
+<div id="users-search-alerts"></div>
+
+<pre id="users-search-results"></pre>
