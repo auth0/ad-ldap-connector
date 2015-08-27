@@ -1,6 +1,7 @@
 var ldap = require('ldapjs');
 var url = require('url');
 var net = require('net');
+var WebSocket = require('ws');
 
 ldap.Attribute.settings.guid_format = ldap.GUID_FORMAT_D;
 
@@ -13,7 +14,7 @@ function try_tcp (options, callback) {
   }, function () {
     return callback(null , port);
   }).on('error', function (err) {
-    return callback(new Error('Cannot connect to ' + parsed.hostname + ':' + port + '. Verify the hostname, port and your firewall settings.'), port);
+    return callback(new Error('Cannot connect to ' + parsed.hostname + ':' + port + '. Verify the hostname, port and your firewall/proxy settings.'), port);
   });
 }
 
@@ -40,18 +41,27 @@ function try_search(client, options, callback) {
 }
 
 function try_socket (socket_url, callback) {
-  var parsed = url.parse(socket_url);
-  var port = parsed.port ||
+  try {
+    var parsed = url.parse(socket_url);
+    var port = parsed.port ||
               (parsed.protocol === 'https:' || parsed.protocol === 'wss:' ? 443 : 89);
 
-  net.connect({
-    port: port,
-    host: parsed.hostname
-  }, function () {
-    return callback(null , port);
-  }).on('error', function (err) {
-    return callback(new Error('Cannot connect to ' + parsed.hostname + ':' + port + '. Verify the hostname, port and your firewall settings.'), port);
-  });
+    var ws = new WebSocket(socket_url);
+    ws.on('open', function () {
+        try {
+          ws.close();
+        } catch (e) { }
+        return callback(null, port);
+    }).on('error', function (err) {
+        try {
+          ws.close();
+        } catch (e) { }
+        return callback(new Error('Cannot connect to ' + parsed.hostname + ':' + port + '. Verify the hostname, port and your firewall settings.'), port);
+    });
+  }
+  catch (err) {
+    return callback(err, port);
+  }
 }
 
 module.exports = function(config, callback){

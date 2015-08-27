@@ -1,3 +1,4 @@
+require('./lib/initConf');
 require('colors');
 require('./eventlog');
 require('./lib/add_certs');
@@ -20,7 +21,6 @@ process.on('uncaughtException', function(err) {
 }).once('SIGTERM', end)
   .once('SIGINT', end);
 
-require('./lib/initConf');
 
 var nconf = require('nconf');
 var ws_client;
