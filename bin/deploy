@@ -9,8 +9,8 @@ VERSION=$(node -e "console.log(require('$DIR/../package.json').version)")
 URL="https://cdn.auth0.com/connector/windows/adldap-$VERSION.msi"
 CDN_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" $URL | grep 200 || true)
 
-aws s3 cp $PROJECT_DIR/update-connector.ps1 s3://assets.auth0.com/connector/windows/update-connector.ps1
-aws s3 cp $PROJECT_DIR/update-connector.cmd s3://assets.auth0.com/connector/windows/update-connector.cmd
+aws s3 cp $PROJECT_DIR/update-connector.ps1 s3://assets.us.auth0.com/connector/windows/update-connector.ps1
+aws s3 cp $PROJECT_DIR/update-connector.cmd s3://assets.us.auth0.com/connector/windows/update-connector.cmd
 
 if [ ! -z "$CDN_EXISTS" ]; then
     echo "There is already a version $VERSION in the CDN. Skiping cdn publish."
@@ -20,9 +20,9 @@ else
     echo "{\"version\":\"$VERSION\", \"url\": \"$URL\", \"checksum\":\"$(shasum $PROJECT_DIR/adldap.msi | cut -d ' ' -f 1)\"}" \
         > $PROJECT_DIR/latest.json
 
-    aws s3 cp $PROJECT_DIR/latest.json s3://assets.auth0.com/connector/windows/latest.json
-    aws s3 cp $PROJECT_DIR/adldap.msi s3://assets.auth0.com/connector/windows/adldap-$VERSION.msi
-    aws s3 cp $PROJECT_DIR/adldap.msi s3://assets.auth0.com/connector/windows/adldap-latest.msi
+    aws s3 cp $PROJECT_DIR/latest.json s3://assets.us.auth0.com/connector/windows/latest.json
+    aws s3 cp $PROJECT_DIR/adldap.msi s3://assets.us.auth0.com/connector/windows/adldap-$VERSION.msi
+    aws s3 cp $PROJECT_DIR/adldap.msi s3://assets.us.auth0.com/connector/windows/adldap-latest.msi
 fi
 
 TAG_NAME="v$VERSION"
