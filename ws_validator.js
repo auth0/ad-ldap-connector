@@ -17,6 +17,10 @@ var cert = {
 var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
 var ws = module.exports = new WebSocket(socket_server_address);
 
+var AccountExpired = require('./lib/errors/AccountExpired');
+var AccountLocked = require('./lib/errors/AccountLocked');
+var PasswordChangeRequired = require('./lib/errors/PasswordChangeRequired');
+var PasswordExpired = require('./lib/errors/PasswordExpired');
 var WrongPassword = require('./lib/errors/WrongPassword');
 var WrongUsername = require('./lib/errors/WrongUsername');
 
@@ -125,6 +129,22 @@ ws.on('open', function () {
 
     users.validate(payload.username, payload.password, function (err, user) {
       if (err) {
+        if (err instanceof AccountExpired) {
+          log("Authentication attempt failed. Reason: " + "account expired".red);
+          return ws.reply(payload.pid, { err: err, profile: err.profile });
+        }
+        if (err instanceof AccountLocked) {
+          log("Authentication attempt failed. Reason: " + "account locked".red);
+          return ws.reply(payload.pid, { err: err, profile: err.profile });
+        }
+        if (err instanceof PasswordChangeRequired) {
+          log("Authentication attempt failed. Reason: " + "password change is required".red);
+          return ws.reply(payload.pid, { err: err, profile: err.profile });
+        }
+        if (err instanceof PasswordExpired) {
+          log("Authentication attempt failed. Reason: " + "password expired".red);
+          return ws.reply(payload.pid, { err: err, profile: err.profile });
+        }
         if (err instanceof WrongPassword) {
           log("Authentication attempt failed. Reason: " + "wrong password".red);
           return ws.reply(payload.pid, { err: err, profile: err.profile });
