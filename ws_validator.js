@@ -14,8 +14,8 @@ var cert = {
   cert: fs.readFileSync(__dirname + '/certs/cert.pem')
 };
 
-var authenticate_when_password_expired = nconf.get('AUTH_WHEN_PASSWORD_EXPIRED');
-var authenticate_when_password_change_required = nconf.get('AUTH_WHEN_PASSWORD_CHANGE_REQUIRED');
+var authenticate_when_password_expired = nconf.get('ALLOW_PASSWORD_EXPIRED');
+var authenticate_when_password_change_required = nconf.get('ALLOW_PASSWORD_CHANGE_REQUIRED');
 
 var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
 var ws = module.exports = new WebSocket(socket_server_address);
