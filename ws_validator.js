@@ -14,9 +14,13 @@ var cert = {
   cert: fs.readFileSync(__dirname + '/certs/cert.pem')
 };
 
+var authenticate_when_password_expired = nconf.get('ALLOW_PASSWORD_EXPIRED');
+var authenticate_when_password_change_required = nconf.get('ALLOW_PASSWORD_CHANGE_REQUIRED');
+
 var socket_server_address = nconf.get('AD_HUB').replace(/^http/i, 'ws');
 var ws = module.exports = new WebSocket(socket_server_address);
 
+var AccountDisabled = require('./lib/errors/AccountDisabled');
 var AccountExpired = require('./lib/errors/AccountExpired');
 var AccountLocked = require('./lib/errors/AccountLocked');
 var PasswordChangeRequired = require('./lib/errors/PasswordChangeRequired');
@@ -129,6 +133,10 @@ ws.on('open', function () {
 
     users.validate(payload.username, payload.password, function (err, user) {
       if (err) {
+        if (err instanceof AccountDisabled) {
+          log("Authentication attempt failed. Reason: " + "account disabled".red);
+          return ws.reply(payload.pid, { err: err, profile: err.profile });
+        }
         if (err instanceof AccountExpired) {
           log("Authentication attempt failed. Reason: " + "account expired".red);
           return ws.reply(payload.pid, { err: err, profile: err.profile });
@@ -138,12 +146,24 @@ ws.on('open', function () {
           return ws.reply(payload.pid, { err: err, profile: err.profile });
         }
         if (err instanceof PasswordChangeRequired) {
-          log("Authentication attempt failed. Reason: " + "password change is required".red);
-          return ws.reply(payload.pid, { err: err, profile: err.profile });
+          if (authenticate_when_password_change_required) {
+            log("Authentication succeeded, but " + "password change is required".red);
+            return ws.sendEvent(payload.pid + '_result', { profile: err.profile });
+          }
+          else {
+            log("Authentication attempt failed. Reason: " + "password change is required".red);
+            return ws.reply(payload.pid, { err: err, profile: err.profile });
+          }
         }
         if (err instanceof PasswordExpired) {
-          log("Authentication attempt failed. Reason: " + "password expired".red);
-          return ws.reply(payload.pid, { err: err, profile: err.profile });
+          if (authenticate_when_password_expired) {
+            log("Authentication succeeded but " + "password expired".red);
+            return ws.sendEvent(payload.pid + '_result', { profile: err.profile });
+          }
+          else {
+            log("Authentication attempt failed. Reason: " + "password expired".red);
+            return ws.reply(payload.pid, { err: err, profile: err.profile });
+          }
         }
         if (err instanceof WrongPassword) {
           log("Authentication attempt failed. Reason: " + "wrong password".red);
@@ -155,7 +175,11 @@ ws.on('open', function () {
         }
         log("Authentication attempt failed. Reason: " + "unexpected error".red);
 
-        console.error('Inner error:', err.inner.stack);
+        if (err.inner && err.inner.stack) {
+          console.error('Inner error:', err.inner.stack);
+        } else {
+          console.log(err);
+        }
 
         ws.reply(payload.pid, { err: err });
         return exit(1);
