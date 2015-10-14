@@ -80,10 +80,15 @@
 	$("#profile-mapper").submit(function(e) {
 		e.preventDefault();
 
+		var btn = $('#profile-mapper-save');
+		btn.button('loading');
+
 		$('#profile-mapper-alerts').html('');
 
 		$.post('/profile-mapper', {
 			code: code.getValue()
+		}).always(function() {
+			btn.button('reset');
 		}).done(function() {
 			$('#profile-mapper-alerts')
 				.html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">&times;</button>The profile mapper script has been saved.</div>');
