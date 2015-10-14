@@ -59,8 +59,10 @@ function set_current_config(req, res, next) {
 }
 
 function restart_server(cb) {
+  console.log('Restarting Auth0 ADLDAP Service...');
   return exec('net stop "Auth0 ADLDAP"', function() {
     exec('net start "Auth0 ADLDAP"', function() {
+      console.log('Done.');
       setTimeout(function() {
         return cb();
       }, 2000);
@@ -308,8 +310,10 @@ app.post('/profile-mapper', function(req, res) {
         error: err
       });
     } else {
-      res.status(200);
-      res.end();
+      return restart_server(function() {
+        res.status(200);
+        res.end();
+      });
     }
   });
 });
