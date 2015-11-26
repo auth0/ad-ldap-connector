@@ -121,8 +121,13 @@ async.series([
     function(callback){
         logger.trying('Testing clock skew...');
 
+        var clock_url = 'https://login.auth0.com/test';
+        if (nconf.get('PROVISIONING_TICKET')) {
+            clock_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
+        }
+
         request.get({
-            uri: "https://login.auth0.com/test",
+            uri: clock_url,
             json: true
         }, function (err, resp, body) {
             if (err || !body || !body.clock) {

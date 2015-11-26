@@ -8,14 +8,17 @@ var fileNames = {
 };
 
 module.exports = function (workingPath, info, cb) {
-  if (fs.existsSync(fileNames.key)) return cb();
+  if (fs.existsSync(fileNames.key)) {
+    console.log('Certificates already exist, skipping certificate generation.');
+    return cb();
+  }
 
   // ensure certs folder
   var certs_folder = path.dirname(fileNames.key);
   if (!fs.existsSync(certs_folder)) {
     fs.mkdirSync(certs_folder);
   }
-  
+
   console.log('Generating a self-signed certificate.'.yellow);
 
   var selfsigned = require('selfsigned');

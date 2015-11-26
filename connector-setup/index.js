@@ -42,18 +42,23 @@ exports.run = function (workingPath, callback) {
     },
     function (cb) {
       var info_url = urlJoin(provisioningTicket, '/info');
+      console.log('Loading settings from ticket: ' + info_url);
+
       request.get({
         url:  info_url,
         json: true
       }, function (err, response, body) {
         if (err) {
           if (err.code === 'ECONNREFUSED') {
-            console.error('Unable to reach auth0 at: ' + info_url);
+            console.log('Unable to reach Auth0 at ' + ticket);
+          } else {
+            console.log('Unexpected error while configuring connection: ' + (err.code || err.message));
           }
           return cb(err);
         }
+
         if (response.statusCode == 404) {
-          return cb (new Error('wrong ticket'));
+          return cb (new Error('Wrong ticket. Does this connection still exist?'));
         }
 
         var unexpected_response =
@@ -72,7 +77,6 @@ exports.run = function (workingPath, callback) {
       });
     },
     function (cb) {
-
       var do_not_configure_firewall = nconf.get('FIREWALL_RULE_CREATED') ||
                                       !info.kerberos ||
                                       process.platform !== 'win32';
@@ -81,12 +85,14 @@ exports.run = function (workingPath, callback) {
         return cb();
       }
 
-      //add a firewall rule the first time
+      // add a firewall rule the first time
       firewall.add_rule({
         name:    'Auth0ConnectorKerberos',
         program: path.resolve(path.join(__dirname, '/../node_modules/kerberos-server/kerberosproxy.net/KerberosProxy/bin/Debug/KerberosProxy.exe')),
         profile: 'private'
       });
+
+      console.log('Firewall rule added.');
 
       cb();
     },
@@ -101,10 +107,13 @@ exports.run = function (workingPath, callback) {
       nconf.set('REALM', info.realm.name);
       nconf.set('SITE_NAME', nconf.get('SITE_NAME') || info.connectionName);
       nconf.set(info.realm.name, info.realm.postTokenUrl);
-      emptyVars.forEach(function (ev) {
+      emptyVars.forEach(function(ev) {
         if (!nconf.get(ev)) nconf.set(ev, '');
       });
+
       nconf.save(cb);
+
+      console.log('Local settings updated.');
     },
     function (cb) {
       certificate(workingPath, info, cb);
@@ -124,6 +133,8 @@ exports.run = function (workingPath, callback) {
     },
     function (cb) {
       nconf.save(cb);
+
+      console.log('Connector setup complete.');
     }
   ], function (err) {
     if (err) return callback(err);
