@@ -28,7 +28,7 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
   var cert = pemToCert(fs.readFileSync(path.join(workingPath, 'certs', 'cert.pem')).toString());
 
   console.log(('Configuring connection ' + connectionInfo.connectionName + '.').yellow);
-
+  console.log(' > Posting certificates and signInEndpoint: ' + signInEndpoint);
 
   request.post({
     url: ticket,
@@ -41,11 +41,17 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
   }, function (err, response, body) {
     if (err) {
       if (err.code === 'ECONNREFUSED') {
-        console.log('Unable to reach auth0 at: ' + ticket);
+        console.log('Unable to reach Auth0 at ' + ticket);
+      } else {
+        console.log('Unexpected error while configuring connection: ' + (err.code || err.message));
       }
       return cb(err);
     }
-    if (response.statusCode !== 200) return cb(new Error(body));
+
+    if (response.statusCode !== 200) {
+      console.log('Unexpected status while configuring connection: ' + response.statusCode);
+      return cb(new Error(body));
+    }
 
     nconf.set('SERVER_URL', serverUrl);
     nconf.set('LAST_SENT_THUMBPRINT', getCurrentThumbprint(workingPath));
