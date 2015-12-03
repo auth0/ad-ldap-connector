@@ -40,11 +40,14 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
     }
   }, function (err, response, body) {
     if (err) {
+      console.log('Unexpected error while configuring connection: ' + (err.code || err.message));
+
       if (err.code === 'ECONNREFUSED') {
-        console.log('Unable to reach Auth0 at ' + ticket);
-      } else {
-        console.log('Unexpected error while configuring connection: ' + (err.code || err.message));
+        console.log(' > Unable to reach Auth0 at ' + ticket + ' (are you connected to the internet?)');
+      } else if (err.code === 'ECONNRESET') {
+        console.log(' > The server closed the connection. Verify your logs in the Auth0 Dashboard or run the troubleshooting tool.');
       }
+
       return cb(err);
     }
 
