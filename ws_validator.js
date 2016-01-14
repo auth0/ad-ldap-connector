@@ -60,7 +60,7 @@ function ping (client, count, callback) {
     if (count === 4) {
       return callback(new Error('server didnt respond to 4 ping commands'));
     }
-    console.log('Server didnt respond to ' + (count + 1) + ' ping commands. Re-ping.');
+    console.log('Auth0 server didn't respond to ' + (count + 1) + ' ping commands. Re-pinging.');
     ping(client, ++count, callback);
   }, 4000);
 
