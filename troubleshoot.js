@@ -68,69 +68,55 @@ async.series([
     function(callback){
         logger.trying('Testing connectivity to Auth0...');
 
-        try {
-          var connectivity_url = 'https://login.auth0.com/test';
-          if (nconf.get('PROVISIONING_TICKET')) {
-              connectivity_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
-          }
-
-          logger.info('  > Test endpoint: ' + connectivity_url.green);
-
-          request.get({
-              uri: connectivity_url,
-              json: true
-          }, function (err, res, body) {
-              if (err || res.statusCode !== 200) {
-                  logger.failed('Error connecting to Auth0.');
-                  if (err)
-                      logger.error('  > Error: %s', JSON.stringify(err));
-                  logger.error('  > Status: %s', res.statusCode);
-                  if (body)
-                      logger.error('  > Body: %s', body.replace(/\n$/, ''));
-              } else {
-                  logger.success('Connection to test endpoint %s.', 'succeeded'.green);
-              }
-              callback();
-          });
-        } catch (e) {
-          logger.failed('Error connecting to Auth0.');
-          if (e) {
-            logger.error('  > Error: %s', JSON.stringify(e));
-          }
+        var connectivity_url = 'https://login.auth0.com/test';
+        if (nconf.get('PROVISIONING_TICKET')) {
+            connectivity_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
         }
+
+        logger.info('  > Test endpoint: ' + connectivity_url.green);
+
+        request.get({
+            uri: connectivity_url,
+            json: true
+        }, function (err, res, body) {
+            if (err || res.statusCode !== 200) {
+                logger.failed('Error connecting to Auth0.');
+                if (err)
+                    logger.error('  > Error: %s', JSON.stringify(err));
+                logger.error('  > Status: %s', res.statusCode);
+                if (body)
+                    logger.error('  > Body: %s', body.replace(/\n$/, ''));
+            } else {
+                logger.success('Connection to test endpoint %s.', 'succeeded'.green);
+            }
+            callback();
+        });
     },
     function(callback){
         logger.trying('Testing hub connectivity (WS).');
 
-        try {
-          var hubUrl = nconf.get('AD_HUB');
-          if (!hubUrl) {
-              hubUrl = "https://login.auth0.com/lo/hub";
-              logger.warn('Could not load AD_HUB from config. Setting to default.');
-          }
-
-          var socket_server_address = hubUrl.replace(/^http/i, 'ws');
-          var ws = new WebSocket(socket_server_address);
-          ws.on('open', function () {
-              logger.success('Connection to hub %s.', 'succeeded'.green);
-              ws.close();
-              callback();
-          }).on('message', function (msg) {
-              logger.success('Message received: %s.', msg);
-              ws.close();
-              callback();
-          }).on('error', function (err) {
-              logger.failed('Connection to hub %s.', 'failed'.red);
-              logger.error('  > Body: %s', err.replace(/\n$/, ''));
-              ws.close();
-              callback();
-          });
-        } catch (e) {
-          logger.failed('Error testing hub connectivity.');
-          if (e) {
-            logger.error('  > Error: %s', JSON.stringify(e));
-          }
+        var hubUrl = nconf.get('AD_HUB');
+        if (!hubUrl) {
+            hubUrl = "https://login.auth0.com/lo/hub";
+            logger.warn('Could not load AD_HUB from config. Setting to default.');
         }
+
+        var socket_server_address = hubUrl.replace(/^http/i, 'ws');
+        var ws = new WebSocket(socket_server_address);
+        ws.on('open', function () {
+            logger.success('Connection to hub %s.', 'succeeded'.green);
+            ws.close();
+            callback();
+        }).on('message', function (msg) {
+            logger.success('Message received: %s.', msg);
+            ws.close();
+            callback();
+        }).on('error', function (err) {
+            logger.failed('Connection to hub %s.', 'failed'.red);
+            logger.error('  > Body: %s', err.replace(/\n$/, ''));
+            ws.close();
+            callback();
+        });
     },
     function(callback){
         logger.trying('Testing clock skew...');
@@ -139,37 +125,30 @@ async.series([
         if (nconf.get('PROVISIONING_TICKET')) {
             clock_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
         }
-        
-        try {
-          request.get({
-              uri: clock_url,
-              json: true
-          }, function (err, resp, body) {
-              if (err || !body || !body.clock) {
-                  logger.failed('Error calling the test endpoint.');
-                  return callback();
-              }
 
-              var auth0_time = body.clock;
-              var local_time = new Date().getTime();
-              var diff = Math.abs(auth0_time - local_time);
-              if (diff > 5000) {
-                  logger.failed('Clock skew detected:');
-                  logger.error('  > Local time: ' + new Date(local_time).toISOString().replace(/T/, ' ').replace(/\..+/, ''));
-                  logger.error('  > Auth0 time: ' + new Date(auth0_time).toISOString().replace(/T/, ' ').replace(/\..+/, '').red);
-              }
-              else {
-                  logger.success('Everything %s. No clock skew detected.', 'OK'.green);
-              }
+        request.get({
+            uri: clock_url,
+            json: true
+        }, function (err, resp, body) {
+            if (err || !body || !body.clock) {
+                logger.failed('Error calling the test endpoint.');
+                return callback();
+            }
 
-              callback();
-          });
-        } catch (e) {
-          logger.failed('Error testing clock skew.');
-          if (e) {
-            logger.error('  > Error: %s', JSON.stringify(e));
-          }
-        }
+            var auth0_time = body.clock;
+            var local_time = new Date().getTime();
+            var diff = Math.abs(auth0_time - local_time);
+            if (diff > 5000) {
+                logger.failed('Clock skew detected:');
+                logger.error('  > Local time: ' + new Date(local_time).toISOString().replace(/T/, ' ').replace(/\..+/, ''));
+                logger.error('  > Auth0 time: ' + new Date(auth0_time).toISOString().replace(/T/, ' ').replace(/\..+/, '').red);
+            }
+            else {
+                logger.success('Everything %s. No clock skew detected.', 'OK'.green);
+            }
+
+            callback();
+        });
     },
     function(callback){
         logger.trying('Testing certificates...');
