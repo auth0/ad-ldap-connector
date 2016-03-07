@@ -1,5 +1,5 @@
 {
-  "name": "sql-fs",
+  "name": "ad-ldap-connector",
   "version": "2.21.3",
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/auth0/sql-fs.git"
+    "url": "https://github.com/auth0/ad-ldap-connector.git"
   },
   "keywords": [
     "sql",
