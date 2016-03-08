@@ -1,13 +1,13 @@
 var WebSocket = require('ws');
-var exit = require('./lib/exit');
-
-var jwt = require('jsonwebtoken');
-var nconf = require('nconf');
-var fs = require('fs');
-var Users = require('./lib/users');
-var users = new Users();
-var async = require('async');
-var randomstring = require('randomstring');
+var exit      = require('./lib/exit');
+var jwt       = require('jsonwebtoken');
+var nconf     = require('nconf');
+var fs        = require('fs');
+var Users     = require('./lib/users');
+var users     = new Users();
+var async     = require('async');
+var cb        = require('cb');
+var ms        = require('ms');
 
 var cert = {
   key:  nconf.get('AUTH_CERT_KEY') || fs.readFileSync(__dirname + '/certs/cert.key'),
@@ -45,26 +45,22 @@ function ping (client, count, callback) {
     callback = function(){};
   }
 
-  var hash = randomstring.generate(7);
-
-  var on_pong = function (data) {
-    if (data.toString() !== hash) return;
-    clearTimeout(check);
-    callback(null, {
-      failed_pings: count
-    });
-  };
-
-  var check = setTimeout(function () {
-    client.removeListener('pong', on_pong);
-    if (count === 4) {
-      return callback(new Error('server didnt respond to 4 ping commands'));
+  var pong = cb(function (err) {
+    if (err instanceof cb.TimeoutError) {
+      client.removeListener('pong', pong);
+      if (count === 4) {
+        return callback(new Error('server did\'t respond to 4 ping commands'));
+      }
+      return ping(client, ++count, callback);
     }
-    console.log('Server didnt respond to ' + (count + 1) + ' ping commands. Re-ping.');
-    ping(client, ++count, callback);
-  }, 4000);
+    callback(null, { failed_pings: count });
+  }).timeout(ms('4s'));
 
-  client.on('pong', on_pong).ping(hash);
+  if (client.readyState !== WebSocket.OPEN) {
+    return callback(new Error('connection is closed'));
+  }
+
+  client.once('pong', pong).ping('');
 }
 
 var log_from_auth0 = console.log.bind(console, 'auth0'.blue + ':');
@@ -100,7 +96,7 @@ ws.on('open', function () {
           }
           done();
         });
-      }, 5000);
+      }, ms('5s'));
     },
     function (err) {
       console.log(err.message);

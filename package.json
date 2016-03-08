@@ -41,6 +41,7 @@
     "levelup": "~0.18.6",
     "lodash": "~2.4.1",
     "lru-cache": "~2.6.3",
+    "ms": "~0.7.1",
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
     "passport": "~0.1.16",
     "passport-local": "~0.1.6",
