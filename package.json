@@ -49,6 +49,7 @@
     "passport-windowsauth": "~0.4.1",
     "randomstring": "~1.0.3",
     "request": "~2.16.6",
+    "rimraf": "~2.5.2",
     "selfsigned": "~1.2.0",
     "stream-rotate": "0.0.4",
     "thumbprint": "0.0.1",
