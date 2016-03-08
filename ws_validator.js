@@ -10,8 +10,8 @@ var async = require('async');
 var randomstring = require('randomstring');
 
 var cert = {
-  key:  fs.readFileSync(__dirname + '/certs/cert.key'),
-  cert: fs.readFileSync(__dirname + '/certs/cert.pem')
+  key:  nconf.get('AUTH_CERT_KEY') || fs.readFileSync(__dirname + '/certs/cert.key'),
+  cert: nconf.get('AUTH_CERT') || fs.readFileSync(__dirname + '/certs/cert.pem')
 };
 
 var authenticate_when_password_expired = nconf.get('ALLOW_PASSWORD_EXPIRED');

@@ -16,6 +16,10 @@ var pemToCert = function(pem) {
 };
 
 var getCurrentThumbprint = function (workingPath) {
+  if (nconf.get('AUTH_CERT')) {
+    return thumbprint.calculate(pemToCert(nconf.get('AUTH_CERT')));
+  }
+
   var cert = pemToCert(fs.readFileSync(path.join(workingPath, 'certs', 'cert.pem')).toString());
   return thumbprint.calculate(cert);
 };
@@ -25,7 +29,8 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
                   ('http://' + os.hostname() + ':' + (nconf.get('PORT') || 4000));
 
   var signInEndpoint = urlJoin(serverUrl, '/wsfed');
-  var cert = pemToCert(fs.readFileSync(path.join(workingPath, 'certs', 'cert.pem')).toString());
+  var pem = nconf.get('AUTH_CERT') || fs.readFileSync(path.join(workingPath, 'certs', 'cert.pem')).toString();
+  var cert = pemToCert(pem);
 
   console.log(('Configuring connection ' + connectionInfo.connectionName + '.').yellow);
   console.log(' > Posting certificates and signInEndpoint: ' + signInEndpoint);

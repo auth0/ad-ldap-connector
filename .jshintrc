@@ -34,6 +34,7 @@
     "beforeEach": false,
     "describe": false,
     "it": false,
-    "escape": false
+    "escape": false,
+    "WebSocket": true
   }
 }

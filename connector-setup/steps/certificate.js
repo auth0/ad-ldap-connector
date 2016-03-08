@@ -1,6 +1,7 @@
 var selfsigned  = require('selfsigned');
 var fs          = require('fs');
 var path        = require('path');
+var nconf = require('nconf');
 
 var fileNames = {
   pem: path.join(process.cwd(), 'certs', 'cert.pem'),
@@ -8,7 +9,7 @@ var fileNames = {
 };
 
 module.exports = function (workingPath, info, cb) {
-  if (fs.existsSync(fileNames.key)) {
+  if (fs.existsSync(fileNames.key) || nconf.get('AUTH_CERT')) {
     console.log('Certificates already exist, skipping certificate generation.');
     return cb();
   }
@@ -21,7 +22,6 @@ module.exports = function (workingPath, info, cb) {
 
   console.log('Generating a self-signed certificate.'.yellow);
 
-  var selfsigned = require('selfsigned');
   var pems = selfsigned.generate({ subj: '/CN=' + info.connectionDomain , days: 365 });
 
   fs.writeFileSync(fileNames.pem, pems.cert);
