@@ -104,12 +104,16 @@ connectorSetup.run(__dirname, function(err) {
   if (nconf.get('KERBEROS_AUTH')) {
     console.log('Using kerberos authentication');
 
-    if (process.platform !== 'win32') {
+    if (process.platform === 'win32') {
+      var kerberos_server = require('kerberos-server');
+      kerberos_server.createServer(options, app);
+    } else if (nconf.get('WITH_KERBEROS_PROXY_FRONTEND')) {
+      var http = require('http');
+      http.createServer(app).listen(options.port);
+    } else {
       return console.log('Detected KERBEROS_AUTH in config, but this platform doesn\'t support it.');
     }
 
-    var kerberos_server = require('kerberos-server');
-    kerberos_server.createServer(options, app);
   }
 
   console.log('listening on port: ' + nconf.get('PORT'));
