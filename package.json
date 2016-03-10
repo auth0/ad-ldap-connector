@@ -57,7 +57,7 @@
     "url-join": "0.0.1",
     "windows-certs": "^3.1.0",
     "winston": "git://github.com/jfromaniello/winston.git#custom_eol_filetransport",
-    "ws": "~0.4.31",
+    "ws": "^1.0.1",
     "wsfed": "~3.0.2",
     "xtend": "~2.1.1"
   },
