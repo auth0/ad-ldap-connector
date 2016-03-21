@@ -135,6 +135,7 @@ exports.run = function (workingPath, callback) {
         nconf.save(cb);
       }
       console.log('Connector setup complete.');
+      cb();
     }
   ], function (err) {
     if (err) return callback(err);
