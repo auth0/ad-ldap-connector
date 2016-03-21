@@ -39,8 +39,7 @@ exports.run = function (workingPath, callback) {
         provisioningTicket = pt;
         cb();
       });
-    },
-    function (cb) {
+    }, function (cb) {
       var info_url = urlJoin(provisioningTicket, '/info');
       console.log('Loading settings from ticket: ' + info_url);
 
