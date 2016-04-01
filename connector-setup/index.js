@@ -131,10 +131,10 @@ exports.run = function (workingPath, callback) {
                           provisioningTicket, cb);
     },
     function (cb) {
-      if (nconf.get('OVERRIDE_CONFIG')) {
-        nconf.save(cb);
-      }
       console.log('Connector setup complete.');
+      if (nconf.get('OVERRIDE_CONFIG')) {
+        return nconf.save(cb);
+      }
       cb();
     }
   ], function (err) {
