@@ -78,7 +78,8 @@ connectorSetup.run(__dirname, function(err) {
   require('./endpoints').install(app);
 
   var options = {
-    port: nconf.get('PORT')
+    port: nconf.get('PORT'),
+    test_user: nconf.get('KERBEROS_DEBUG_USER')
   };
 
   // client certificate-based authentication
@@ -105,8 +106,13 @@ connectorSetup.run(__dirname, function(err) {
     console.log('Using kerberos authentication');
 
     if (process.platform === 'win32') {
-      var kerberos_server = require('kerberos-server');
-      kerberos_server.createServer(options, app);
+      var KerberosServer = require('kerberos-server');
+      var kerberosServer = new KerberosServer(app, options);
+      kerberosServer.listen(options.port)
+                    .on('error', function (err) {
+                      console.error(err.message);
+                      return process.exit(1);
+                    });
     } else if (nconf.get('WITH_KERBEROS_PROXY_FRONTEND')) {
       var http = require('http');
       http.createServer(app).listen(options.port);

@@ -33,7 +33,7 @@
     "express-passport-logout": "~0.1.0",
     "freeport": "~1.0.2",
     "jsonwebtoken": "5.0.4",
-    "kerberos-server": "*",
+    "kerberos-server": "^1.0.0",
     "ldapjs": "~0.7.1",
     "level-spaces": "~2.0.0",
     "level-ttl": "~2.2.0",
