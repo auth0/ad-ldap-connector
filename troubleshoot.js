@@ -57,7 +57,8 @@ console.log('\n Troubleshooting AD LDAP connector\n');
 
 async.series([
     function(callback){
-        var HTTP_PROXY = process.env.HTTP_PROXY || process.env.http_proxy;
+        var HTTP_PROXY = nconf.get('HTTP_PROXY');
+        if (!HTTP_PROXY || HTTP_PROXY === '') { HTTP_PROXY = process.env.HTTP_PROXY || process.env.http_proxy; };
         if (HTTP_PROXY) {
             logger.info('Proxy configured: %s', HTTP_PROXY);
         } else {
@@ -159,67 +160,51 @@ async.series([
             var server_thumbprint;
 
             if (!exists) {
-                logger.warn('  > Local certificate ' + 'certs/cert.pem'.yellow + ' does not exist. Cannot read thumbprint.');
+              logger.warn('  > Local certificate ' + 'certs/cert.pem'.yellow + ' does not exist. Cannot read client thumbprint.');
+              return callback();
             }
             else {
-                var certContents = fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')).toString();
-                var cert = /-----BEGIN CERTIFICATE-----([^-]*)-----END CERTIFICATE-----/g.exec(certContents);
-                if (cert.length > 0) {
-                    cert = cert[1].replace(/[\n|\r\n]/g, '');
-                }
+              var certContents = fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')).toString();
+              var cert = /-----BEGIN CERTIFICATE-----([^-]*)-----END CERTIFICATE-----/g.exec(certContents);
+              if (cert.length > 0) {
+                  cert = cert[1].replace(/[\n|\r\n]/g, '');
+              }
 
-                local_thumbprint = thumbprint.calculate(cert);
-                logger.info('  > Local thumbprint: ' + local_thumbprint);
+              local_thumbprint = thumbprint.calculate(cert);
+              logger.info('  > Local thumbprint: ' + local_thumbprint);
             }
 
-            if (!nconf.get("CONNECTIONS_API_V2_KEY")) {
-                logger.warn('  > ' + 'CONNECTIONS_API_V2_KEY'.yellow + ' not set. Cannot compare with connection thumbprint (This is optional).');
-                return callback();
-            }
-
-
-            var api_url = 'https://login.auth0.com/api/v2/connections?strategy=ad';
-            if (nconf.get('PROVISIONING_TICKET')) {
-                api_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/api/v2/connections?strategy=ad';
-            }
-
-            var connection_name = nconf.get("CONNECTION");
-            if (!connection_name) {
-                logger.warn('  > ' + 'CONNECTION'.yellow + ' not set. Cannot compare with connection thumbprint.');
-                return callback();
+            var provisioning_ticket = nconf.get('PROVISIONING_TICKET');
+            if (!provisioning_ticket) {
+              logger.warn('  > Provisioning ticket missing. Cannot read server thumbprint.');
+              return callback();
             }
 
             request.get({
-                uri: api_url,
-                headers: {
-                    'Authorization': 'Bearer ' + nconf.get("CONNECTIONS_API_V2_KEY")
-                },
+                uri: provisioning_ticket + '/info',
                 json: true
             }, function (err, res, body) {
                 if (err || res.statusCode !== 200) {
-                    logger.error(' > Error loading certificate from Auth0: %s', res.statusCode);
-                    logger.warn('  > Cannot compare with connection thumbprint.');
+                  logger.error(' > Error loading certificate from Auth0: %s', res.statusCode);
+                  logger.warn('  > Cannot compare with connection thumbprint.');
                 } else {
-                    var connection = _.find(body, { 'name': connection_name });
-                    if (!connection) {
-                        logger.error(' > Error loading certificate from Auth0. Could not find connection ' + connection_name.red + '.');
-                    }
-                    else if (!connection.options || !connection.options.certs || connection.options.certs.length != 1) {
-                        logger.error(' > Error loading certificate from Auth0. Certificate missing on the connection.');
-                    }
-                    else {
-                        server_thumbprint = thumbprint.calculate(connection.options.certs[0]);
-                        logger.info('  > Server thumbprint: ' + server_thumbprint);
-                    }
+                  var thumbprints = body.thumbprints;
+                  if (!thumbprints || thumbprints.length === 0) {
+                    logger.info('  > The connection hasn\'t been configured yet, there are no certificates to compare.');
+                    return callback();
+                  }
+
+                  server_thumbprint = body.thumbprints[0];
+                  logger.info('  > Server thumbprint: ' + server_thumbprint);
                 }
 
                 if (local_thumbprint && server_thumbprint) {
-                    if (local_thumbprint === server_thumbprint) {
-                        logger.success('Local and server certificates match.');
-                    }
-                    else {
-                        logger.failed('Local and server certificates ' + 'don\'t match'.red + '.');
-                    }
+                  if (local_thumbprint === server_thumbprint) {
+                    logger.success('Local and server certificates match.');
+                  }
+                  else {
+                    logger.failed('Local and server certificates ' + 'don\'t match'.red + '.');
+                  }
                 }
 
                 callback();
