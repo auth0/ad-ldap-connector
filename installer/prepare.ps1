@@ -1,10 +1,10 @@
 $msiDependencies = @(
-    @{'Name'='Python'; 'Url'="https://www.python.org/ftp/python/2.7.12/python-2.7.12.msi";'Path'='C:\Python 2.7\'} ;
+    @{'Name'='Python'; 'Url'="https://www.python.org/ftp/python/2.7.12/python-2.7.12.msi";'Path'='C:\Python27\'} ;
     @{'Name'='nodejs'; 'Url'="https://nodejs.org/dist/v0.10.40/node-v0.10.40-x86.msi"; 'Path' = 'C:\Program Files (x86)\nodejs'}
     )
 
 $zipDependencies = @(
-    @{'Name'='Wix'; 'Url'="https://wix.codeplex.com/downloads/get/1587180"; 'Path'= "C:\Program Files (x86)\WiX Toolset 3.8\bin"} ;
+    @{'Name'='Wix'; 'Url'="https://wix.codeplex.com/downloads/get/1587180"; 'Path'= "C:\Program Files (x86)\WiX Toolset v3.8\bin"} ;
     @{'Name'='nssm'; 'Url'="http://nssm.cc/release/nssm-2.24.zip"; 'Path'= "C:\Program Files (x86)\"} 
     )
 
@@ -165,4 +165,8 @@ else
             Write-Host "==> Installing $($_.Name) version $($_.Version)" ; 
             Install-NpmPackage -Name $_.Name -Version $_.Version -Global
         }
+
+    Write-Host "Adding Python path to NPM"
+    Start-Process -FilePath "npm" -ArgumentList @("config";"set";"python";"C:\Python27\python.exe") -Wait -NoNewWindow
+
 }
