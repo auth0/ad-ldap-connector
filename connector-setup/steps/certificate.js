@@ -21,8 +21,15 @@ module.exports = function (workingPath, info, cb) {
   }
 
   console.log('Generating a self-signed certificate.'.yellow);
-
-  var pems = selfsigned.generate({ subj: '/CN=' + info.connectionDomain , days: 365 });
+  var pems = selfsigned.generate([
+        { shortName: 'CN', value: info.connectionName},
+        { shortName: 'OU', value: info.connectionDomain},
+        { shortName: 'O', value: 'auth0/ad-ldap-connector'}
+      ], {
+        days: 365, 
+        algorithm: 'sha256', 
+        keySize:2048 
+      });
 
   fs.writeFileSync(fileNames.pem, pems.cert);
   fs.writeFileSync(fileNames.key, pems.private);

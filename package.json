@@ -53,7 +53,7 @@
     "randomstring": "~1.0.3",
     "request": "^2.68.0",
     "rimraf": "~2.5.2",
-    "selfsigned": "~1.2.0",
+    "selfsigned": "^1.5.0",
     "stream-rotate": "crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
     "thumbprint": "0.0.1",
     "tunnel": "~0.0.3",
