@@ -1,6 +1,6 @@
 $msiDependencies = @(
     @{'Name'='Python'; 'Url'="https://www.python.org/ftp/python/2.7.12/python-2.7.12.msi";'Path'='C:\Python27\'} ;
-    @{'Name'='nodejs'; 'Url'="https://nodejs.org/dist/v0.10.40/node-v0.10.40-x86.msi"; 'Path' = 'C:\Program Files (x86)\nodejs'}
+    @{'Name'='nodejs'; 'Url'="https://nodejs.org/dist/v4.4.7/node-v4.4.7-x86.msi"; 'Path' = 'C:\Program Files (x86)\nodejs'}
     )
 
 $zipDependencies = @(
@@ -9,8 +9,8 @@ $zipDependencies = @(
     )
 
 $npmPackages = @(
-    @{'Name'='npm'; 'Version'="1.4.28"} ;
-    @{'Name'='node-gyp'; 'Version'="1.0.2"} 
+    @{'Name'='npm'; 'Version'="3.10.5"} ;
+    @{'Name'='node-gyp'; 'Version'="3.4.0"} 
     )
 
 function Get-TempPath
