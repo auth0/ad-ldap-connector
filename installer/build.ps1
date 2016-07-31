@@ -30,6 +30,11 @@ mkdir $tmp_dir
 #Copy excluding .git and installer
 robocopy $ProjectPath\ $tmp_dir /COPYALL /S /NFL /NDL /NS /NC /NJH /NJS /XD .git installer
 
+Remove-Item -ErrorAction silent -Recurse -Force $ProjectPath\node_modules\edge\test 
+Remove-Item -ErrorAction silent -Recurse -Force $ProjectPath\node_modules\leveldown\build\Release\obj 
+Remove-Item -ErrorAction silent -Recurse -Force $ProjectPath\node_modules\leveldown\deps
+Remove-Item -ErrorAction silent -Force $ProjectPath\node_modules\leveldown\build\Release\leveldb.lib
+
 If (Test-Path $tmp_dir\bin){
     Remove-Item -Recurse -Force $tmp_dir\bin
 }

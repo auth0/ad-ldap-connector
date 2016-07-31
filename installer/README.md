@@ -19,5 +19,6 @@ If you intent to sign the installer you will also need
 
 1.  git clone this repository
 2.  run `npm i --production`
-3.  run `npm version patch`
-4.  from an Elevated Powershell console, run `cd installer` and then `.\build.ps1`.
+3.  remove unnecessary files `node_modules\edge\test`, `node_modules\leveldown\build\Release\obj` and `node_modules\leveldown\build\Release\leveldb.lib`
+4.  run `npm version patch`
+5.  from an Elevated Powershell console, run `cd installer` and then `.\build.ps1`.
