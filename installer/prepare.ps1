@@ -111,7 +111,7 @@ function InstallFrom-Exe
 {
     param(
         [Parameter(Mandatory=$true)][String] $Url,
-        [Parameter(Mandatory=$false)][String] $Args= @(),
+        [Parameter(Mandatory=$false)]$Args= @(),
         [Parameter(Mandatory=$false)][String] $TempFile = (Get-TempFileName) + '.exe'
     )
 
