@@ -229,7 +229,7 @@ else
     Write-Host "Installing Dependencies"
 
     $exeDependencies | ForEach-Object { 
-            if (-not Test-Command $_.Test)
+            if (-not (Test-Command $_.Test))
             {
                 Write-Host "==> Installing $($_.Name)" ;
                 InstallFrom-Exe -Url $_.Url -Args $_.Args
@@ -237,7 +237,7 @@ else
         }
     
     $msiDependencies | ForEach-Object { 
-            if (-not Test-Command $_.Test)
+            if (-not (Test-Command $_.Test))
             {
                 Write-Host "==> Installing $($_.Name)" ;
                 InstallFrom-Url -Url $_.Url -Path $_.Path
@@ -245,7 +245,7 @@ else
         }
 
     $zipDependencies | ForEach-Object { 
-            if (-not Test-Command $_.Test)
+            if (-not (Test-Command $_.Test))
             {
                 Write-Host "==> Installing $($_.Name)" ; 
                 UnpackFrom-Url -Url $_.Url -Path $_.Path

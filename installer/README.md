@@ -5,7 +5,7 @@ This directory contains the scripts to generate an MSI installer.
 1.  Visual Studio 2013. Current build pipeline does not work with 2015.
 2.  Node 4.4.x for Windows. Check you have node.exe in `C:\Program Files (x86)\nodejs\node.exe`.
 3.  Update NPM to version 3.10.5
-4.  [Wix 3.8](https://wix.codeplex.com/releases/view/115492). Check you have the bin in `c:\Program Files (x86)\WiX Toolset v3.8\bin`
+4.  [Wix](https://wix.codeplex.com/releases/) Binaries. Check you have the bin in `c:\Program Files (x86)\WiX Toolset v3.8\bin`
 5.  Your [node-gyp](https://github.com/TooTallNate/node-gyp/#installation) should be able to build native dependencies. Use version 3.4.0
 6.  Download [nssm](http://nssm.cc/release/nssm-2.24.zip) and copy the content to `c:\Program Files (x86)\nssm-2.24\` folder.
 
