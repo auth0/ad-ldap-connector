@@ -1,12 +1,53 @@
+$exeDependencies = @(
+    @{
+        'Name'='git';
+        'Url'='https://github.com/git-for-windows/git/releases/download/v2.9.2.windows.1/Git-2.9.2-32-bit.exe';
+        'Args'=@('/silent';'/norestart');
+        'Test'=@{
+          'Cmd'='git';
+          'Args'=@('-v')
+        }
+    } )
+
 $msiDependencies = @(
-    @{'Name'='Python'; 'Url'="https://www.python.org/ftp/python/2.7.12/python-2.7.12.msi";'Path'='C:\Python27\'} ;
-    @{'Name'='nodejs'; 'Url'="https://nodejs.org/dist/v4.4.7/node-v4.4.7-x86.msi"; 'Path' = 'C:\Program Files (x86)\nodejs'}
-    )
+    @{
+        'Name'='Python';
+        'Url'="https://www.python.org/ftp/python/2.7.12/python-2.7.12.msi";
+        'Path'='C:\Python27\'
+        'Test'=@{
+          'Cmd'='C:\Python27\python.exe';
+          'Args'=@('-v')
+        }
+    } ;
+    @{
+        'Name'='nodejs';
+        'Url'="https://nodejs.org/dist/v4.4.7/node-v4.4.7-x86.msi";
+        'Path' = 'C:\Program Files (x86)\nodejs'
+        'Test'=@{
+          'Cmd'='C:\Program Files (x86)\nodejs\node.exe';
+          'Args'=@('-v')
+        }
+    } )
 
 $zipDependencies = @(
-    @{'Name'='Wix'; 'Url'="https://wix.codeplex.com/downloads/get/1587180"; 'Path'= "C:\Program Files (x86)\WiX Toolset v3.8\bin"} ;
-    @{'Name'='nssm'; 'Url'="http://nssm.cc/release/nssm-2.24.zip"; 'Path'= "C:\Program Files (x86)\"} 
-    )
+    @{
+        'Name'='Wix';
+        'Url'="https://wix.codeplex.com/downloads/get/1587180";
+        'Path'= "C:\Program Files (x86)\WiX Toolset v3.8\bin"
+        'Test'=@{
+          'Cmd'='C:\Program Files (x86)\WiX Toolset v3.8\bin\heat.exe';
+          'Args'=@('-v')
+        }
+    } ;
+    @{
+        'Name'='nssm';
+        'Url'="http://nssm.cc/release/nssm-2.24.zip";
+        'Path'= "C:\Program Files (x86)\"
+        'Test'=@{
+          'Cmd'='C:\Program Files (x86)\nssm-2.24\nssm.exe';
+          'Args'=@('-v')
+        }
+    } )
 
 $npmPackages = @(
     @{'Name'='npm'; 'Version'="3.10.5"} ;
@@ -21,6 +62,28 @@ function Get-TempPath
 function Get-TempFileName
 {
     [io.path]::GetTempFileName()
+}
+
+function Test-Command
+{
+    param(
+         [Parameter(Mandatory=$true)] $Command
+    )
+
+    try
+    {
+        if ($Command.Args -eq $null)
+        {
+            $Command.Args = @();
+        }
+        
+        $process = Start-Process -Wait -PassThrough -File $Command.Cmd -ArgumentList $Command.Args
+        $process.exitCode -eq 0
+    }
+    catch
+    {
+        $false
+    }
 }
 
 function Expand-ZipFile
@@ -42,6 +105,25 @@ function Expand-ZipFile
     {
         $shell.Namespace($Path).copyhere($item)
     }
+}
+
+function InstallFrom-Exe
+{
+    param(
+        [Parameter(Mandatory=$true)][String] $Url,
+        [Parameter(Mandatory=$false)][String] $Args= @(),
+        [Parameter(Mandatory=$false)][String] $TempFile = (Get-TempFileName) + '.exe'
+    )
+
+    Write-Verbose "   ==>Downloading executable  $Url ==> $TempFile"
+    Invoke-WebRequest -Uri $Url -OutFile $TempFile
+
+    Write-Verbose "Starting process"
+
+    Start-Process -Wait -Verb runas -FilePath $TempFile  -ArgumentList $Args
+
+    Write-Debug "Removing $TempFile"
+    Remove-Item $TempFile
 }
 
 function InstallFrom-Url
@@ -146,14 +228,28 @@ else
 {
     Write-Host "Installing Dependencies"
 
+    $exeDependencies | ForEach-Object { 
+            if (-not Test-Command $_.Test)
+            {
+                Write-Host "==> Installing $($_.Name)" ;
+                InstallFrom-Exe -Url $_.Url -Args $_.Args
+            }
+        }
+    
     $msiDependencies | ForEach-Object { 
-            Write-Host "==> Installing $($_.Name)" ; 
-            InstallFrom-Url -Url $_.Url -Path $_.Path
+            if (-not Test-Command $_.Test)
+            {
+                Write-Host "==> Installing $($_.Name)" ;
+                InstallFrom-Url -Url $_.Url -Path $_.Path
+            }
         }
 
     $zipDependencies | ForEach-Object { 
-            Write-Host "==> Installing $($_.Name)" ; 
-            UnpackFrom-Url -Url $_.Url -Path $_.Path
+            if (-not Test-Command $_.Test)
+            {
+                Write-Host "==> Installing $($_.Name)" ; 
+                UnpackFrom-Url -Url $_.Url -Path $_.Path
+            }
          }
     
     #reloads path to execute NPM
@@ -168,5 +264,4 @@ else
 
     Write-Host "Adding Python path to NPM"
     Start-Process -FilePath "npm" -ArgumentList @("config";"set";"python";"C:\Python27\python.exe") -Wait -NoNewWindow
-
 }
