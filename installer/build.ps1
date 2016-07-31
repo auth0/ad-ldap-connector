@@ -20,12 +20,12 @@ Where-Object { Test-Path $_ } |
 ForEach-Object { Remove-Item $_ -Recurse -Force -ErrorAction Stop }
 
 #create output dir
-mkdir output
+mkdir output | Out-Null
 
 #Create a tmpdir
 $tmp_dir = [io.path]::GetTempFileName()
 Remove-Item $tmp_dir
-mkdir $tmp_dir
+mkdir $tmp_dir | Out-Null
 
 #Copy excluding .git and installer
 robocopy $ProjectPath\ $tmp_dir /COPYALL /S /NFL /NDL /NS /NC /NJH /NJS /XD .git installer
