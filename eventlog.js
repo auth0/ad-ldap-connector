@@ -22,6 +22,7 @@ if (process.platform === 'win32') {
 
 var old_log = console.log;
 var old_error = console.error;
+var old_warn = console.warn;
 
 var util = require('util');
 
@@ -32,18 +33,26 @@ function add_timestamp (args) {
   return result;
 }
 
-console.log = function () {
-  var args = add_timestamp(arguments);
-  var message = util.format.apply(util, args).stripColors;
-  if (!message) return;
-  winston.debug(message);
-  old_log.apply(console, args);
+function winston_wrap (fn, winston_fn) {
+  return function() {
+    var args = add_timestamp(arguments);
+    var message = util.format.apply(util, args).stripColors;
+    if (!message) return;
+    winston_fn(message);
+    fn.apply(console, args);
+  };
+}
+
+console.restore = function() {
+  console.log = old_log;
+  console.error = old_error;
+  console.warn = old_warn;
 };
 
-console.error = function () {
-  var args = add_timestamp(arguments);
-  var message = util.format.apply(util, args).stripColors;
-  if (!message) return;
-  winston.error(message);
-  old_error.apply(console, args);
+console.inject = function() {
+  console.log = winston_wrap(old_log, winston.debug);
+  console.error = winston_wrap(old_error, winston.error);
+  console.warn = winston_wrap(old_warn, winston.warn);
 };
+
+console.inject();
