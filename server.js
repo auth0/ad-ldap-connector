@@ -49,6 +49,9 @@ connectorSetup.run(__dirname, function(err) {
   }
 
   var express  = require('express');
+  var bodyParser = require('body-parser');
+  var cookieParser = require('cookie-parser');
+  var logger = require('morgan');
   var passport = require('passport');
 
   require('./lib/setupPassport');
@@ -57,23 +60,20 @@ connectorSetup.run(__dirname, function(err) {
   var app = express();
 
   // configure the webserver
-  app.configure(function(){
-    this.set('view engine', 'ejs');
-    this.set('views', __dirname + '/views');
+  app.set('view engine', 'ejs');
+  app.set('views', __dirname + '/views');
 
-    this.use(express.static(__dirname + '/public'));
-    this.use(express.logger());
+  app.use(express.static(__dirname + '/public'));
+  app.use(logger('combined'));
 
-    this.use(express.cookieParser());
-    this.use(express.bodyParser());
-    this.use(cookieSessions({
-      session_key:    'auth0-ad-conn',
-      secret:         nconf.get('SESSION_SECRET')
-    }));
+  app.use(cookieParser());
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({extended:true}));
+  app.use(cookieSessions({
+    session_key:    'auth0-ad-conn',
+    secret:         nconf.get('SESSION_SECRET')}));
 
-    this.use(passport.initialize());
-    this.use(this.router);
-  });
+  app.use(passport.initialize());
 
   require('./endpoints').install(app);
 
@@ -90,10 +90,7 @@ connectorSetup.run(__dirname, function(err) {
     options.ca = nconf.get('CA_CERT');
     options.pfx = new Buffer(nconf.get('SSL_PFX'), 'base64');
     options.passphrase = nconf.get('SSL_KEY_PASSWORD');
-    //options.key = require('fs').readFileSync('./certs/localhost.key.pem');
-    //options.cert = require('fs').readFileSync('./certs/localhost.cert.pem');
     options.requestCert = true;
-    //options.rejectUnauthorized = false;
 
     if (!nconf.get('KERBEROS_AUTH')) {
       var https = require('https'); // use https server

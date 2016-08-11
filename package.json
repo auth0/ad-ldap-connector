@@ -22,14 +22,18 @@
   "dependencies": {
     "adm-zip": "^0.4.7",
     "async": "~0.2.9",
+    "body-parser": "^1.15.2",
     "cb": "~0.1.0",
     "colors": "~0.6.0-1",
     "commander": "~1.1.1",
     "connect-multiparty": "~1.2.4",
+    "cookie-parser": "^1.4.3",
+    "cookie-session": "^1.2.0",
     "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/master",
     "ejs": "~0.8.3",
-    "express": "^3.21.1",
+    "express": "^4.14.0",
     "express-passport-logout": "~0.1.0",
+    "express-session": "^1.14.0",
     "freeport": "~1.0.2",
     "jsonwebtoken": "5.0.4",
     "kerberos-server": "^1.0.0",
@@ -40,6 +44,7 @@
     "levelup": "^0.19.1",
     "lodash": "~2.4.1",
     "lru-cache": "~2.6.3",
+    "morgan": "^1.7.0",
     "ms": "~0.7.1",
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
     "passport": "~0.1.16",
@@ -65,5 +70,8 @@
     "chai": "~1.7.2",
     "mocha": "~2.1.0",
     "snyk": "^1.18.0"
+  },
+  "engines": {
+    "node": "^4.4.0"
   }
 }

@@ -4,6 +4,10 @@ var fs = require('fs');
 var zip = require('adm-zip');
 var http = require('http');
 var express = require('express');
+var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');
+var session = require('express-session')
+var logger = require('morgan');
 var xtend = require('xtend');
 var request = require('request');
 var urlJoin = require('url-join');
@@ -17,16 +21,14 @@ var Users = require('../lib/users');
 require('../lib/initConf');
 require('../lib/setupProxy');
 
-app.configure(function() {
-  this.set('views', __dirname + '/views');
-  this.set('view engine', 'ejs');
-  this.use(express.static(__dirname + '/public'));
-  this.use(express.urlencoded());
-  this.use(express.cookieParser());
-  this.use(express.session({
-    secret: 'sojo sut ed oterces le'
-  }));
-});
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
+app.use(express.static(__dirname + '/public'));
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(cookieParser());
+app.use(session({
+  secret: 'sojo sut ed oterces le'
+}));
 
 var detected_settings = {};
 
