@@ -5,7 +5,7 @@ $exeDependencies = @(
         'Args'=@('/silent';'/norestart');
         'Test'=@{
           'Cmd'='git';
-          'Args'=@('-v')
+          'Args'=@('--version')
         }
     } )
 
@@ -16,7 +16,7 @@ $msiDependencies = @(
         'Path'='C:\Python27\'
         'Test'=@{
           'Cmd'='C:\Python27\python.exe';
-          'Args'=@('-v')
+          'Args'=@('-V')
         }
     } ;
     @{
@@ -36,7 +36,7 @@ $zipDependencies = @(
         'Path'= "C:\Program Files (x86)\WiX Toolset v3.8\bin"
         'Test'=@{
           'Cmd'='C:\Program Files (x86)\WiX Toolset v3.8\bin\heat.exe';
-          'Args'=@('-v')
+          'Args'=@('-?')
         }
     } ;
     @{
@@ -44,13 +44,12 @@ $zipDependencies = @(
         'Url'="http://nssm.cc/release/nssm-2.24.zip";
         'Path'= "C:\Program Files (x86)\"
         'Test'=@{
-          'Cmd'='C:\Program Files (x86)\nssm-2.24\nssm.exe';
-          'Args'=@('-v')
+          'Path'='C:\Program Files (x86)\nssm-2.24\win32\nssm.exe'
         }
     } )
 
 $npmPackages = @(
-    @{'Name'='npm'; 'Version'="3.10.5"} ;
+    @{'Name'='npm'; 'Version'="3.10.6"} ;
     @{'Name'='node-gyp'; 'Version'="3.4.0"} 
     )
 
@@ -72,13 +71,24 @@ function Test-Command
 
     try
     {
-        if ($Command.Args -eq $null)
+        $result = $true;
+        if ($Command.Cmd -ne $null) 
         {
-            $Command.Args = @();
-        }
+          if ($Command.Args -eq $null)
+          {
+              $Command.Args = @();
+          }
         
-        $process = Start-Process -Wait -PassThrough -File $Command.Cmd -ArgumentList $Command.Args
-        $process.exitCode -eq 0
+          $process = Start-Process -Wait -PassThru -File $Command.Cmd -ArgumentList $Command.Args -NoNewWindow
+          $result = $result -and ($process.exitCode -eq 0)
+        }
+
+        if ($Command.Path -ne $null)
+        {
+          $result = $result -and (Test-Path $Command.Path)
+        }
+
+        $result
     }
     catch
     {
