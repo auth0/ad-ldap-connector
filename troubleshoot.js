@@ -298,6 +298,8 @@ async.series([
 			});
 		} catch (e) {
 			logger.failed('Connection to LDAP %s.', 'failed'.red);
+			if (e && e.message)
+				logger.error('  > Error: %s', e.message.replace(/\r\n|\r|\n/, '').red);
 			return callback();
 		}
 	}
