@@ -29,7 +29,7 @@
     "connect-multiparty": "~1.2.4",
     "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/master",
     "ejs": "~0.8.3",
-    "express": "~3.1.0",
+    "express": "3.12.1",
     "express-passport-logout": "~0.1.0",
     "freeport": "~1.0.2",
     "jsonwebtoken": "5.0.4",
