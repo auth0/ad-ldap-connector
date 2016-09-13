@@ -58,7 +58,7 @@
     "thumbprint": "0.0.1",
     "tunnel": "~0.0.3",
     "url-join": "0.0.1",
-    "windows-certs": "git://github.com/bengarnett/node-windows-certs.git#b1c09a9383b460868ecc419c8b73e138490f499e",
+    "windows-certs": "^3.4.0",
     "winston": "git://github.com/jfromaniello/winston.git#custom_eol_filetransport",
     "ws": "^1.0.1",
     "wsfed": "^3.1.1",
