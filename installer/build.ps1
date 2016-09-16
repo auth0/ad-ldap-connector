@@ -20,12 +20,17 @@ Where-Object { Test-Path $_ } |
 ForEach-Object { Remove-Item $_ -Recurse -Force -ErrorAction Stop }
 
 #create output dir
-mkdir output
+mkdir output | Out-Null
 
 #Create a tmpdir
 $tmp_dir = [io.path]::GetTempFileName()
 Remove-Item $tmp_dir
-mkdir $tmp_dir
+mkdir $tmp_dir | Out-Null
+
+Remove-Item -ErrorAction silent -Recurse -Force $ProjectPath\node_modules\edge\test 
+Remove-Item -ErrorAction silent -Recurse -Force $ProjectPath\node_modules\leveldown\build\Release\obj 
+Remove-Item -ErrorAction silent -Recurse -Force $ProjectPath\node_modules\leveldown\deps
+Remove-Item -ErrorAction silent -Force $ProjectPath\node_modules\leveldown\build\Release\leveldb.lib
 
 #Copy excluding .git and installer
 robocopy $ProjectPath\ $tmp_dir /COPYALL /S /NFL /NDL /NS /NC /NJH /NJS /XD .git installer
