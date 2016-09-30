@@ -9,11 +9,11 @@ REMOTE_DIR_UNIX=$(echo $REMOTE_DIR | sed 's/C\:/\/cygdrive\/c\//g'  | sed 's/\\/
 echo "Generating Windows Installer"
 echo "Copying content to windows"
 
-ssh -t windows-integrations "rimraf $REMOTE_DIR ; mkdir $REMOTE_DIR"
+ssh -t -t windows-integrations "rimraf $REMOTE_DIR ; mkdir $REMOTE_DIR"
 rsync -ra -e ssh --exclude '.git' --exclude 'node_modules' $PROJECT_DIR/ windows-integrations:$REMOTE_DIR_UNIX
 
 echo "Generating installer"
-ssh -t windows-integrations "cd C:\Users\Administrator\Projects\ad-ldap-connector\ ; npm --no-color i ; installer\build.ps1 ; exit"
+ssh -t -t windows-integrations "cd C:\Users\Administrator\Projects\ad-ldap-connector\ ; npm --no-color i ; installer\build.ps1 ; exit"
 
 echo "Downloading installer"
 rsync -ra -e ssh windows-integrations:$REMOTE_DIR_UNIX/installer/output/adldap.msi $PROJECT_DIR/adldap.msi
