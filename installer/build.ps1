@@ -32,7 +32,7 @@ rimraf $ProjectPath\node_modules\leveldown\build\Release\obj
 rimraf $ProjectPath\node_modules\leveldown\deps
 rimraf $ProjectPath\node_modules\leveldown\build\Release\leveldb.lib
 
-npm prune --production
+npm --no-color prune --production
 
 #Copy excluding .git and installer
 robocopy $ProjectPath\ $tmp_dir /COPYALL /S /NFL /NDL /NS /NC /NJH /NJS /XD .git installer
