@@ -59,7 +59,7 @@
     "tunnel": "~0.0.3",
     "url-join": "0.0.1",
     "windows-certs": "^3.4.0",
-    "winston": "git://github.com/jfromaniello/winston.git#custom_eol_filetransport",
+    "winston": "~2.2.0",
     "ws": "^1.0.1",
     "wsfed": "^3.1.1",
     "xtend": "~2.1.1"

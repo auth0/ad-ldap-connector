@@ -15,8 +15,7 @@ if (process.platform === 'win32') {
     stream: log_stream,
     level: "debug",
     json: false,
-    handleExceptions: true,
-    eol: require('os').EOL
+    handleExceptions: true
   });
 }
 
