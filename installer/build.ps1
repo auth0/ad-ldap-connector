@@ -32,6 +32,8 @@ rimraf $ProjectPath\node_modules\leveldown\build\Release\obj
 rimraf $ProjectPath\node_modules\leveldown\deps
 rimraf $ProjectPath\node_modules\leveldown\build\Release\leveldb.lib
 
+npm prune --production
+
 #Copy excluding .git and installer
 robocopy $ProjectPath\ $tmp_dir /COPYALL /S /NFL /NDL /NS /NC /NJH /NJS /XD .git installer
 
@@ -59,4 +61,6 @@ $wix_dir="c:\Program Files (x86)\WiX Toolset v3.8\bin"
 . "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe" sign /n "Auth0" $InstallerPath\output\adldap.msi
 
 #Remove the temp
+echo "removing temp folder"
 rimraf $tmp_dir
+echo "temp folder removed"
