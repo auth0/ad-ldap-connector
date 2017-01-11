@@ -1,9 +1,10 @@
-+  Install Node 0.8.26 with nave:
++  Install Node 4.4.7 with nave:
 
 ```
 $ curl -o /opt/nave https://raw.github.com/isaacs/nave/master/nave.sh
 $ chmod +x /opt/nave
-$ /opt/nave usemain 0.8.26
+$ /opt/nave install 4.4.7
+$ /opt/nave usemain 4.4.7
 ```
 
 +  Download the repository:
@@ -32,7 +33,9 @@ $ node server.js
 
 +  Add your connector ticket when requested.
 
-+  Add your LDAP settings to `config.json` file and then run the connector again:
++  Add your LDAP URL and LDAP base DN when requested.
+
++  Add your LDAP user settings to `config.json` file and then run the connector again:
 
 ```
 $ vi config.json
