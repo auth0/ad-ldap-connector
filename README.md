@@ -16,15 +16,15 @@ The first step is creating a new Connection on the dashboard:
 
 __Connections > Enterprise > AD/LDAP__
 
-![](https://puu.sh/7iXKl.png)
+![](https://cdn.auth0.com/docs/media/articles/connections/enterprise/active-directory/ldap-create.png)
 
 Name the connection and check whether you want `Kerberos` enabled for this connection. If you enable this, you need to enter the range of IP addresses from where `Kerberos` authentication will be enabled. These would typically be the intranet where `Kerberos` would work.
 
-![](https://s3.amazonaws.com/blog.auth0.com/adldap_create_01.PNG)
+![](https://cdn.auth0.com/docs/media/articles/connections/enterprise/active-directory/ldap-create-2.png)
 
 __Save__ the configuration. You are done on the Auth0 side! You will then be prompted to download the __AD/LDAP Connector__ on your machine.
 
-![](https://s3.amazonaws.com/blog.auth0.com/adldap_create_02.PNG)
+![](https://cdn.auth0.com/docs/media/articles/connections/enterprise/active-directory/ldap-create-3.png)
 
 > We ship different versions of the Connector to install it on multiple platforms: Windows, Linux and OS X
 
@@ -35,11 +35,11 @@ Keep the __TICKET URL__ at hand as you will need it later.
 #### Auth0 AD LDAP Connector Setup (Windows Agent)
 On Windows, the Connector is packaged as a standard installer file (__MSI__). Run it on the machine you want to install it and follow the installation wizard:
 
-![](https://s3.amazonaws.com/blog.auth0.com/adldap_01.PNG)
+![](https://cdn.auth0.com/docs/media/articles/connector/install/adldap-connector-setup.png)
 
-![](https://s3.amazonaws.com/blog.auth0.com/adldap_02.PNG)
+> The __AD/LDAP Connector__ in Windows is installed as a Service: 
 
-> The __AD/LDAP Connector__ in Windows is installed as a Service: ![](https://s3.amazonaws.com/blog.auth0.com/adldap_06.PNG)
+![](https://cdn.auth0.com/docs/media/articles/connector/install/adldap-connector-services.png)
 
 Once the installation is complete, you will see the following screen on a browser (notice that the browser is opening a page on the local machine).
 
@@ -47,7 +47,7 @@ Enter the __TICKET URL__ that was generated in __Step 1__.
 
 The __Ticket URL__ uniquely identifies this connector in Auth0. Don't share it with anyone. The Connector will use this to communicate with Auth0 Server and automatically complete the configuration.
 
-![](https://s3.amazonaws.com/blog.auth0.com/adldap_03.PNG)
+![]()
 
 If successful, the next screen will allow you to enter your __Active Directory__ connection parameters. Namely:
 
@@ -79,10 +79,10 @@ If you didn't configure `Kerberos` or you are outside your intranet you will be 
 High availability is achieved through multiple instances of the connector running simultaneously.
 
 1.  Install the connector on the first machine and follow all the steps. Once you have the connection running with only one agent move to the next step.
-2.  Install the connector on the second machine, when the browser opens and requests entering the __Ticket URL__, close the window.
-3.  Copy the `certs` folder and `config.json` from `c:\Program Files(x86)\Auth0\ADLDAP Connector` on the first machine to the same location on the second machine.
-4.  Start the Auth0 ADLDAP agent on the second machine.
-5.  Repeat from step 2 to 5 for every node you want to configure.
+2.  In the AD LDAP configuratino page click on __Import / Export__ and then click __Export__. Keep a copy of the zip file.
+3.  Install the connector on the second machine, when the browser opens and requests entering the __Ticket URL__, click on __Import / Export__.
+4.  In the __Import__ section select the file you downloaded from the first machine and click __Upload__.
+5.  Repeat from step 3 to 4 for every node you want to configure.
 
 ## Running behind a proxy
 

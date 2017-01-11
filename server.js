@@ -33,14 +33,13 @@ connectorSetup.run(__dirname, function(err) {
     return exit(2);
   }
 
-  if(!nconf.get('LDAP_URL')) {
+  if(!nconf.get('LDAP_URL') || !nconf.get('LDAP_BIND_USER') || !nconf.get('LDAP_BIND_CREDENTIALS')) {
     console.error('edit config.json and add your LDAP settings');
     return exit(1);
   }
 
   require('./lib/clock_skew_detector');
   ws_client = require('./ws_validator');
-
   var latency_test = require('./latency_test');
   latency_test.run_many(10);
 

@@ -14,6 +14,7 @@ var winston = require('winston');
 var thumbprint = require('thumbprint');
 var WebSocket = require('ws');
 var isWindows = (process.platform == 'win32');
+var cas = require('./lib/add_certs');
 
 var logger = new winston.Logger({
 	transports: [
@@ -57,6 +58,9 @@ console.log('\n Troubleshooting AD LDAP connector\n');
 
 async.series([
 	function(callback){
+    cas.inject(callback);
+  },
+  function(callback){
 		var HTTP_PROXY = process.env.HTTP_PROXY || process.env.http_proxy;
 		if (HTTP_PROXY) {
 			logger.info('Proxy configured: %s', HTTP_PROXY);
