@@ -3,8 +3,6 @@ var url = require('url');
 var net = require('net');
 var WebSocket = require('ws');
 
-ldap.Attribute.settings.guid_format = ldap.GUID_FORMAT_D;
-
 function try_tcp (options, callback) {
   var parsed = url.parse(options.LDAP_URL);
   var port = parsed.port || (parsed.protocol === 'ldap:' ? 389 : 636);
