@@ -49,7 +49,7 @@
     "passport": "~0.1.16",
     "passport-local": "~0.1.6",
     "passport-ssl-certificate": "git://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
-    "passport-windowsauth": "~0.4.1",
+    "passport-windowsauth": "~1.0.1",
     "randomstring": "~1.0.3",
     "request": "^2.68.0",
     "rimraf": "~2.5.2",
