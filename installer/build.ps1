@@ -44,9 +44,12 @@ If (Test-Path $tmp_dir\bin){
 If (Test-Path $tmp_dir\config.json){
     rimraf $tmp_dir\config.json
 }
+
 If (Test-Path $tmp_dir\logs.log){
     rimraf $tmp_dir\logs.log
 }
+
+rimraf $tmp_dir\config.json.enc
 
 $version = (. "node" -e "console.log(require('$ProjectPathUnix/package.json').version);") | Out-String
 
