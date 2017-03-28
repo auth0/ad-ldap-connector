@@ -4,7 +4,8 @@
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
-    "test": "snyk test && mocha --timeout 50000 --reporter spec",
+    "test": "mocha --timeout 50000 --reporter spec",
+    "snyk": "snyk test",
     "start": "node server.js"
   },
   "repository": {
