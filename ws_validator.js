@@ -49,7 +49,7 @@ function ping (client, count, callback) {
     if (err instanceof cb.TimeoutError) {
       client.removeListener('pong', pong);
       if (count === 4) {
-        return callback(new Error('server didn\'t respond to 4 ping commands'));
+        return callback(new Error('Auth0 server didn\'t respond to ' + (count + 1) + ' ping commands. Re-pinging.'));
       }
       return ping(client, ++count, callback);
     }
