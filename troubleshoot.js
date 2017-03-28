@@ -14,39 +14,40 @@ var winston = require('winston');
 var thumbprint = require('thumbprint');
 var WebSocket = require('ws');
 var isWindows = (process.platform == 'win32');
+var cas = require('./lib/add_certs');
 
 var logger = new winston.Logger({
-    transports: [
-        new winston.transports.Console({
-            timestamp: function() {
-                var date = new Date();
-                var hour = date.getHours();
-                hour = (hour < 10 ? "0" : "") + hour;
-                var min  = date.getMinutes();
-                min = (min < 10 ? "0" : "") + min;
-                var sec  = date.getSeconds();
-                sec = (sec < 10 ? "0" : "") + sec;
-                return hour + ":" + min + ":" + sec;
-            },
-            level: 'debug',
-            handleExceptions: true,
-            json: false,
-            colorize: true
-        })
-    ],
-    exitOnError: false
+	transports: [
+		new winston.transports.Console({
+			timestamp: function() {
+				var date = new Date();
+				var hour = date.getHours();
+				hour = (hour < 10 ? "0" : "") + hour;
+				var min  = date.getMinutes();
+				min = (min < 10 ? "0" : "") + min;
+				var sec  = date.getSeconds();
+				sec = (sec < 10 ? "0" : "") + sec;
+				return hour + ":" + min + ":" + sec;
+			},
+			level: 'debug',
+			handleExceptions: true,
+			json: false,
+			colorize: true
+		})
+	],
+	exitOnError: false
 });
 logger.trying = function(message, arg) {
-    if (!arg) arg = '';
-    logger.info((isWindows ? '* ' : '\u272D ').yellow + message, arg);
+	if (!arg) arg = '';
+	logger.info((isWindows ? '* ' : '\u272D ').yellow + message, arg);
 };
 logger.success = function(message, arg) {
-    if (!arg) arg = '';
-    logger.info((isWindows ? '\u221A ' : '\u2714 ').green + message, arg);
+	if (!arg) arg = '';
+	logger.info((isWindows ? '\u221A ' : '\u2714 ').green + message, arg);
 };
 logger.failed = function(message, arg) {
-    if (!arg) arg = '';
-    logger.error((isWindows ? '\u00D7 ' : '\u2716 ').red + message, arg);
+	if (!arg) arg = '';
+	logger.error((isWindows ? '\u00D7 ' : '\u2716 ').red + message, arg);
 };
 
 process.on('uncaughtException', function (err) {
@@ -56,269 +57,256 @@ process.on('uncaughtException', function (err) {
 console.log('\n Troubleshooting AD LDAP connector\n');
 
 async.series([
-    function(callback){
-        var HTTP_PROXY = process.env.HTTP_PROXY || process.env.http_proxy;
-        if (HTTP_PROXY) {
-            logger.info('Proxy configured: %s', HTTP_PROXY);
-        } else {
-            logger.info('No proxy server configured.');
-        }
-        callback();
-    },
-    function(callback){
-        logger.trying('Testing connectivity to Auth0...');
+	function(callback){
+    cas.inject(callback);
+  },
+  function(callback){
+		var HTTP_PROXY = process.env.HTTP_PROXY || process.env.http_proxy;
+		if (HTTP_PROXY) {
+			logger.info('Proxy configured: %s', HTTP_PROXY);
+		} else {
+			logger.info('No proxy server configured.');
+		}
+		callback();
+	},
+	function(callback){
+		logger.trying('Testing connectivity to Auth0...');
 
-        var connectivity_url = 'https://login.auth0.com/test';
-        if (nconf.get('PROVISIONING_TICKET')) {
-            connectivity_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
-        }
+		var connectivity_url = 'https://login.auth0.com/test';
+		if (nconf.get('PROVISIONING_TICKET')) {
+			connectivity_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
+		}
 
-        logger.info('  > Test endpoint: ' + connectivity_url.green);
+		logger.info('  > Test endpoint: ' + connectivity_url.green);
 
-        request.get({
-            uri: connectivity_url,
-            json: true
-        }, function (err, res, body) {
-            if (err || res.statusCode !== 200) {
-                logger.failed('Error connecting to Auth0.');
-                if (err)
-                    logger.error('  > Error: %s', JSON.stringify(err));
-                logger.error('  > Status: %s', res.statusCode);
-                if (body)
-                    logger.error('  > Body: %s', body.replace(/\n$/, ''));
-            } else {
-                logger.success('Connection to test endpoint %s.', 'succeeded'.green);
-            }
-            callback();
-        });
-    },
-    function(callback){
-        logger.trying('Testing hub connectivity (WS).');
+		request.get({
+			uri: connectivity_url,
+			json: true
+		}, function (err, res, body) {
+			if (err || res.statusCode !== 200) {
+				logger.failed('Error connecting to Auth0.');
+				if (err)
+					logger.error('  > Error: %s', JSON.stringify(err));
+				logger.error('  > Status: %s', res.statusCode);
+				if (body)
+					logger.error('  > Body: %s', body.replace(/\n$/, ''));
+			} else {
+				logger.success('Connection to test endpoint %s.', 'succeeded'.green);
+			}
+			callback();
+		});
+	},
+	function(callback){
+		logger.trying('Testing hub connectivity (WS).');
 
-        var hubUrl = nconf.get('AD_HUB');
-        if (!hubUrl) {
-            hubUrl = "https://login.auth0.com/lo/hub";
-            logger.warn('Could not load AD_HUB from config. Setting to default.');
-        }
+		var hubUrl = nconf.get('AD_HUB');
+		if (!hubUrl) {
+			hubUrl = "https://login.auth0.com/lo/hub";
+			logger.warn('Could not load AD_HUB from config. Setting to default.');
+		}
 
-        var socket_server_address = hubUrl.replace(/^http/i, 'ws');
-        var ws = new WebSocket(socket_server_address);
-        ws.on('open', function () {
-            logger.success('Connection to hub %s.', 'succeeded'.green);
-            ws.close();
-            callback();
-        }).on('message', function (msg) {
-            logger.success('Message received: %s.', msg);
-            ws.close();
-            callback();
-        }).on('error', function (err) {
-            logger.failed('Connection to hub %s.', 'failed'.red);
-            logger.error('  > Body: %s', err.replace(/\n$/, ''));
-            ws.close();
-            callback();
-        });
-    },
-    function(callback){
-        logger.trying('Testing clock skew...');
+		var socket_server_address = hubUrl.replace(/^http/i, 'ws');
+		var ws = new WebSocket(socket_server_address);
+		ws.on('open', function () {
+			logger.success('Connection to hub %s.', 'succeeded'.green);
+			ws.close();
+			callback();
+		}).on('message', function (msg) {
+			logger.success('Message received: %s.', msg);
+			ws.close();
+			callback();
+		}).on('error', function (err) {
+			logger.failed('Connection to hub %s.', 'failed'.red);
+			logger.error('  > Body: %s', err.replace(/\n$/, ''));
+			ws.close();
+			callback();
+		});
+	},
+	function(callback){
+		logger.trying('Testing clock skew...');
 
-        var clock_url = 'https://login.auth0.com/test';
-        if (nconf.get('PROVISIONING_TICKET')) {
-            clock_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
-        }
+		var clock_url = 'https://login.auth0.com/test';
+		if (nconf.get('PROVISIONING_TICKET')) {
+			clock_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/test';
+		}
 
-        request.get({
-            uri: clock_url,
-            json: true
-        }, function (err, resp, body) {
-            if (err || !body || !body.clock) {
-                logger.failed('Error calling the test endpoint.');
-                return callback();
-            }
+		request.get({
+			uri: clock_url,
+			json: true
+		}, function (err, resp, body) {
+			if (err || !body || !body.clock) {
+				logger.failed('Error calling the test endpoint.');
+				return callback();
+			}
 
-            var auth0_time = body.clock;
-            var local_time = new Date().getTime();
-            var diff = Math.abs(auth0_time - local_time);
-            if (diff > 5000) {
-                logger.failed('Clock skew detected:');
-                logger.error('  > Local time: ' + new Date(local_time).toISOString().replace(/T/, ' ').replace(/\..+/, ''));
-                logger.error('  > Auth0 time: ' + new Date(auth0_time).toISOString().replace(/T/, ' ').replace(/\..+/, '').red);
-            }
-            else {
-                logger.success('Everything %s. No clock skew detected.', 'OK'.green);
-            }
+			var auth0_time = body.clock;
+			var local_time = new Date().getTime();
+			var diff = Math.abs(auth0_time - local_time);
+			if (diff > 5000) {
+				logger.failed('Clock skew detected:');
+				logger.error('  > Local time: ' + new Date(local_time).toISOString().replace(/T/, ' ').replace(/\..+/, ''));
+				logger.error('  > Auth0 time: ' + new Date(auth0_time).toISOString().replace(/T/, ' ').replace(/\..+/, '').red);
+			}
+			else {
+				logger.success('Everything %s. No clock skew detected.', 'OK'.green);
+			}
 
-            callback();
-        });
-    },
-    function(callback){
-        logger.trying('Testing certificates...');
+			callback();
+		});
+	},
+	function(callback){
+		logger.trying('Testing certificates...');
 
-        var certPath = path.join(__dirname, 'certs', 'cert.pem');
-        fs.exists(certPath, function (exists) {
-            var local_thumbprint;
-            var server_thumbprint;
+		var certPath = path.join(__dirname, 'certs', 'cert.pem');
+		fs.exists(certPath, function (exists) {
+			var local_thumbprint;
+			var server_thumbprint;
 
-            if (!exists) {
-                logger.warn('  > Local certificate ' + 'certs/cert.pem'.yellow + ' does not exist. Cannot read thumbprint.');
-            }
-            else {
-                var certContents = fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')).toString();
-                var cert = /-----BEGIN CERTIFICATE-----([^-]*)-----END CERTIFICATE-----/g.exec(certContents);
-                if (cert.length > 0) {
-                    cert = cert[1].replace(/[\n|\r\n]/g, '');
-                }
+			if (!exists) {
+				logger.warn('  > Local certificate ' + 'certs/cert.pem'.yellow + ' does not exist. Cannot read thumbprint.');
+			}
+			else {
+				var certContents = fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')).toString();
+				var cert = /-----BEGIN CERTIFICATE-----([^-]*)-----END CERTIFICATE-----/g.exec(certContents);
+				if (cert.length > 0) {
+					cert = cert[1].replace(/[\n|\r\n]/g, '');
+				}
 
-                local_thumbprint = thumbprint.calculate(cert);
-                logger.info('  > Local thumbprint: ' + local_thumbprint);
-            }
+				local_thumbprint = thumbprint.calculate(cert);
+				logger.info('  > Local thumbprint: ' + local_thumbprint);
+			}
 
-            if (!nconf.get("CONNECTIONS_API_V2_KEY")) {
-                logger.warn('  > ' + 'CONNECTIONS_API_V2_KEY'.yellow + ' not set. Cannot compare with connection thumbprint (This is optional).');
-                return callback();
-            }
+			if (!nconf.get("PROVISIONING_TICKET")) {
+				logger.warn('  > ' + 'PROVISIONING_TICKET'.yellow + ' not set. Cannot compare with connection thumbprint (This is optional).');
+				return callback();
+			}
 
 
-            var api_url = 'https://login.auth0.com/api/v2/connections?strategy=ad';
-            if (nconf.get('PROVISIONING_TICKET')) {
-                api_url = 'https://' + url.parse(nconf.get('PROVISIONING_TICKET')).host + '/api/v2/connections?strategy=ad';
-            }
+			var info_url = nconf.get('PROVISIONING_TICKET') + '/info';
+			request.get({
+				uri: info_url,
+				json: true
+			}, function (err, res, body) {
+				if (res && res.statusCode !== 200 || err) {
+					logger.error(' > Error loading certificate from Auth0: %s', res && res.statusCode || err);
+					logger.warn('  > Cannot compare with connection thumbprint.');
+				} else {
+					var thumbprints = body.thumbprints
+					if (!thumbprints || thumbprints.length === 0) {
+						logger.error(' > No thumbprints available in the connection information. Cannot compare certificates.');
+					}
+					else {
+						server_thumbprint = body.thumbprints[0];
+						logger.info('  > Server thumbprint: ' + server_thumbprint);
+					}
+				}
 
-            var connection_name = nconf.get("CONNECTION");
-            if (!connection_name) {
-                logger.warn('  > ' + 'CONNECTION'.yellow + ' not set. Cannot compare with connection thumbprint.');
-                return callback();
-            }
+				if (local_thumbprint && server_thumbprint) {
+					if (local_thumbprint === server_thumbprint) {
+						logger.success('Local and server certificates match.');
+					}
+					else {
+						logger.failed('Local and server certificates ' + 'don\'t match'.red + '.');
+					}
+				}
 
-            request.get({
-                uri: api_url,
-                headers: {
-                    'Authorization': 'Bearer ' + nconf.get("CONNECTIONS_API_V2_KEY")
-                },
-                json: true
-            }, function (err, res, body) {
-                if (err || res.statusCode !== 200) {
-                    logger.error(' > Error loading certificate from Auth0: %s', res.statusCode);
-                    logger.warn('  > Cannot compare with connection thumbprint.');
-                } else {
-                    var connection = _.find(body, { 'name': connection_name });
-                    if (!connection) {
-                        logger.error(' > Error loading certificate from Auth0. Could not find connection ' + connection_name.red + '.');
-                    }
-                    else if (!connection.options || !connection.options.certs || connection.options.certs.length != 1) {
-                        logger.error(' > Error loading certificate from Auth0. Certificate missing on the connection.');
-                    }
-                    else {
-                        server_thumbprint = thumbprint.calculate(connection.options.certs[0]);
-                        logger.info('  > Server thumbprint: ' + server_thumbprint);
-                    }
-                }
+				callback();
+			});
+		});
+	},
+	function(callback) {
+		logger.trying('Running NLTEST...');
 
-                if (local_thumbprint && server_thumbprint) {
-                    if (local_thumbprint === server_thumbprint) {
-                        logger.success('Local and server certificates match.');
-                    }
-                    else {
-                        logger.failed('Local and server certificates ' + 'don\'t match'.red + '.');
-                    }
-                }
+		if (!isWindows) {
+			logger.warn('  > NLTEST can only run on Windows.');
+			return callback();
+		}
 
-                callback();
-            });
-        });
-    },
-    function(callback) {
-        logger.trying('Running NLTEST...');
+		try {
+		  var output = '';
+		  var spawn = require('child_process').spawn;
+		  var nltest = spawn('nltest', ['/dsgetdc:']);
+		  nltest.on('error', function (err) {
+			  logger.failed('Running NLTEST %s.', 'failed'.red);
+			  if (err && err.message)
+				  logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
+			  return callback();
+		  });
+		  nltest.stdout.on('data', function (data) { output += data; });
+		  nltest.stderr.on('data', function (data) { output += data; });
+		  nltest.on('close', function (code) {
+			  if (output) {
+				  var lines = output.replace(/^\s+|\s+$/g,'').replace(/\r\n\s+/g,'\r\n').split(/\r\n/g);
+				  for (var i=0; i<lines.length; i++) {
+					  if (code === 0)
+						  logger.info('  > ' + lines[i]);
+					  else
+						  logger.error('  > ' + lines[i]);
+				  }
+			  }
+			  return callback();
+		  });
+		} catch (err) {
+			logger.failed('Running NLTEST %s.', 'failed'.red);
+			if (err && err.message)
+				logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
+			return callback();
+		}
+	},
+	function(callback) {
+		logger.trying('Testing LDAP connectivity.');
+		if (!nconf.get("LDAP_BASE")) {
+			logger.warn('  > ' + 'LDAP_BASE'.yellow + 'not set. Cannot test connectivity.');
+			return callback();
+		}
 
-        if (!isWindows) {
-            logger.warn('  > NLTEST can only run on Windows.');
-            return callback();
-        }
+		logger.info('  > LDAP BASE: %s', nconf.get("LDAP_BASE"))
 
-        try {
-          var output = '';
-          var spawn = require('child_process').spawn;
-          var nltest = spawn('nltest', ['/dsgetdc:']);
-          nltest.on('error', function (err) {
-              logger.failed('Running NLTEST %s.', 'failed'.red);
-              if (err && err.message)
-                  logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
-              return callback();
-          });
-          nltest.stdout.on('data', function (data) { output += data; });
-          nltest.stderr.on('data', function (data) { output += data; });
-          nltest.on('close', function (code) {
-              if (output) {
-                  var lines = output.replace(/^\s+|\s+$/g,'').replace(/\r\n\s+/g,'\r\n').split(/\r\n/g);
-                  for (var i=0; i<lines.length; i++) {
-                      if (code === 0)
-                          logger.info('  > ' + lines[i]);
-                      else
-                          logger.error('  > ' + lines[i]);
-                  }
-              }
-              return callback();
-          });
-        } catch (err) {
-            logger.failed('Running NLTEST %s.', 'failed'.red);
-            if (err && err.message)
-                logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
-            return callback();
-        }
-    },
-    function(callback) {
-        logger.trying('Testing LDAP connectivity.');
-        if (!nconf.get("LDAP_BASE")) {
-            logger.warn('  > ' + 'LDAP_BASE'.yellow + 'not set. Cannot test connectivity.');
-            return callback();
-        }
+		var opts = {
+			scope: 'sub',
+			sizeLimit: 5,
+			filter: nconf.get('LDAP_SEARCH_ALL_QUERY')
+		};
 
-        logger.info('  > LDAP BASE: %s', nconf.get("LDAP_BASE"))
+		try {
+			ldap.client.search(nconf.get("LDAP_BASE"), opts, function(err, res) {
+				if (err) {
+					logger.failed('Connection to LDAP %s.', 'failed'.red);
+					if (err && err.message)
+						logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
+					return callback();
+				}
 
-        var opts = {
-            scope: 'sub',
-            sizeLimit: 5,
-            filter: nconf.get('LDAP_SEARCH_ALL_QUERY')
-        };
-
-        try {
-            ldap.client.search(nconf.get("LDAP_BASE"), opts, function(err, res) {
-                if (err) {
-                    logger.failed('Connection to LDAP %s.', 'failed'.red);
-                    if (err && err.message)
-                        logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
-                    return callback();
-                }
-
-                var entries = [];
-                res.on('searchEntry', function(entry) {
-                    logger.info('  > Found user: %s', entry.object.sAMAccountName || entry.object.mail || entry.object.name);
-                    entries.push(entry);
-                });
-                res.on('error', function(err) {
-                    if (err.message === 'Size Limit Exceeded' && entries.length > 0) {
-                        logger.success('Connection to LDAP %s.', 'succeeded'.green);
-                        return callback();
-                    }
-                    logger.failed('Connection to LDAP %s.', 'failed'.red);
-                    if (err && err.message)
-                        logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').trim().red);
-                    return callback();
-                });
-                res.on('end', function() {
-                  console.log('end');
-                    if (!entries || entries.length === 0) {
-                      logger.error('  > Error: %s', 'Unable to find users. Verify the permissions for the current user.'.red);
-                    }
-                    return callback();
-                });
-            });
-        } catch (e) {
-            logger.failed('Connection to LDAP %s.', 'failed'.red);
-            return callback();
-        }
-    }
+				var entries = [];
+				res.on('searchEntry', function(entry) {
+					logger.info('  > Found user: %s', entry.object.sAMAccountName || entry.object.mail || entry.object.name);
+					entries.push(entry);
+				});
+				res.on('error', function(err) {
+					if (err.message === 'Size Limit Exceeded' && entries.length > 0) {
+						logger.success('Connection to LDAP %s.', 'succeeded'.green);
+						return callback();
+					}
+					logger.failed('Connection to LDAP %s.', 'failed'.red);
+					if (err && err.message)
+						logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').trim().red);
+					return callback();
+				});
+				res.on('end', function() {
+				  console.log('end');
+					if (!entries || entries.length === 0) {
+					  logger.error('  > Error: %s', 'Unable to find users. Verify the permissions for the current user.'.red);
+					}
+					return callback();
+				});
+			});
+		} catch (e) {
+			logger.failed('Connection to LDAP %s.', 'failed'.red);
+			return callback();
+		}
+	}
 ],
 function(err){
-    logger.info('Done!\n');
-    process.exit(0);
+	logger.info('Done!\n');
+	process.exit(0);
 });

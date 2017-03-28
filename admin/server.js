@@ -1,9 +1,16 @@
-require('../lib/add_certs');
+require('../lib/initConf');
+require('../lib/setupProxy');
+
+var cas = require('../lib/add_certs');
 var os = require('os');
 var fs = require('fs');
 var zip = require('adm-zip');
 var http = require('http');
 var express = require('express');
+var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');
+var session = require('express-session')
+var logger = require('morgan');
 var xtend = require('xtend');
 var request = require('request');
 var urlJoin = require('url-join');
@@ -14,35 +21,32 @@ var multipart = require('connect-multiparty');
 var test_config = require('./test_config');
 var Users = require('../lib/users');
 
-require('../lib/initConf');
-require('../lib/setupProxy');
-
-app.configure(function() {
-  this.set('views', __dirname + '/views');
-  this.set('view engine', 'ejs');
-  this.use(express.static(__dirname + '/public'));
-  this.use(express.urlencoded());
-  this.use(express.cookieParser());
-  this.use(express.session({
-    secret: 'sojo sut ed oterces le'
-  }));
-});
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
+app.use(express.static(__dirname + '/public'));
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(cookieParser());
+app.use(session({
+  secret: 'sojo sut ed oterces le'
+}));
 
 var detected_settings = {};
 
-exec('"' + __dirname + '//settings_detector.exe"', function(err, stdout, stderr) {
-  console.log(arguments);
-  try {
-    var parsed = JSON.parse(stdout);
-    console.log(parsed);
-    if (parsed.error) {
-      parsed = {};
-      return;
-    }
-    detected_settings.LDAP_BASE = parsed.baseDN;
-    detected_settings.LDAP_URL = 'ldap://' + parsed.domainController;
-  } catch (er) {}
-});
+if (process.platform === 'win32') {
+  exec('"' + __dirname + '//settings_detector.exe"', function(err, stdout, stderr) {
+    console.log(arguments);
+    try {
+      var parsed = JSON.parse(stdout);
+      console.log(parsed);
+      if (parsed.error) {
+        parsed = {};
+        return;
+      }
+      detected_settings.LDAP_BASE = parsed.baseDN;
+      detected_settings.LDAP_URL = 'ldap://' + parsed.domainController;
+    } catch (er) {}
+  });
+}
 
 function read_current_config() {
   var current_config = {};
@@ -59,15 +63,23 @@ function set_current_config(req, res, next) {
 }
 
 function restart_server(cb) {
-  console.log('Restarting Auth0 ADLDAP Service...');
-  return exec('net stop "Auth0 ADLDAP"', function() {
-    exec('net start "Auth0 ADLDAP"', function() {
-      console.log('Done.');
-      setTimeout(function() {
-        return cb();
-      }, 2000);
+   // required to test immediately after configuration
+  require('../lib/initConf');
+  Users = require('../lib/users');
+
+  if (process.platform === 'win32') {
+    console.log('Restarting Auth0 ADLDAP Service...');
+    return exec('net stop "Auth0 ADLDAP"', function() {
+      exec('net start "Auth0 ADLDAP"', function() {
+        console.log('Done.');
+        setTimeout(function() {
+          return cb();
+        }, 2000);
+      });
     });
-  });
+  }
+
+  cb();
 }
 
 function merge_config(req, res) {
@@ -160,14 +172,28 @@ app.post('/ticket', set_current_config, function(req, res, next) {
     url: info_url,
     json: true
   }, function(err, resp, body) {
-    if (err && err.code === 'ECONNREFUSED') {
-      console.error('Unable to reach auth0 at: ' + info_url);
-      return res.render('index', xtend(req.current_config, {
-        ERROR: 'Unable to connect to Auth0, verify internet connectivity.'
-      }));
-    }
+    if (err){
+      if (err.code === 'ECONNREFUSED') {
+        console.error('Unable to reach auth0 at: ' + info_url);
+        return res.render('index', xtend(req.current_config, {
+          ERROR: 'Unable to connect to Auth0, verify internet connectivity.'
+        }));
+      }
 
-    if (err) {
+      if (err.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' || err.code ==='CERT_UNTRUSTED') {
+        console.error('The Auth0 certificate at ' + info_url + ' could not be validated', err);
+        return res.render('index', xtend(req.current_config, {
+          ERROR: 'The Auth0 server is using a certificate issued by an untrusted Certification Authority. Go to https://auth0.com/docs/connector/ca-certificates for instructions on how to install your certificate Authority. \n ' + err.message
+        }));
+      }
+
+      if (err.code === 'DEPTH_ZERO_SELF_SIGNED_CERT') {
+        console.error('The Auth0 certificate at ' + info_url + ' could not be validated', err);
+        return res.render('index', xtend(req.current_config, {
+          ERROR: 'The Auth0 server is using a selg-signed certificate. Go to https://auth0.com/docs/connector/ca-certificates for instructions on how to install your certificate. \n' + err.message
+        }));
+      }
+
       return res.render('index', xtend(req.current_config, {
         ERROR: 'Network error: ' + err.message
       }));
@@ -181,7 +207,16 @@ app.post('/ticket', set_current_config, function(req, res, next) {
 
     req.body.AD_HUB = body.adHub;
 
-    next();
+    if (!detected_settings.LDAP_URL) {
+      var adLdapSettings = require('../connector-setup/steps/ad-ldap-settings.js');
+      adLdapSettings.discoverSettings(body.connectionDomain, function(config) {
+        console.dir(config);
+        detected_settings = config;
+        next();
+      });
+    } else {
+      next();
+    }
   });
 }, merge_config);
 
@@ -471,6 +506,10 @@ app.get('/users/by-login', function(req, res) {
   });
 });
 
-http.createServer(app).listen(8357, '127.0.0.1', function() {
-  console.log('Listening on http://localhost:8357.');
+cas.inject(function(err) {
+  if (err) console.log('Custom CA certificates were not loaded',err);
+
+  http.createServer(app).listen(8357, '127.0.0.1', function() {
+    console.log('Listening on http://localhost:8357.');
+  });
 });

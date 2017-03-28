@@ -41,6 +41,10 @@ exports.install = function (app) {
     });
   }
 
+  app.get('/test-headers', function (req, res) {
+    res.json(req.headers);
+  });
+
   app.get('/test-iis', function (req, res) {
     res.send(200, 'worked! your iis user is: ' + req.headers['x-iisnode-logon_user']);
   });
@@ -48,7 +52,7 @@ exports.install = function (app) {
   app.get('/wsfed',
     function (req, res, next) {
       if (req.session.messages) return next();
-      
+
       var strategies = nconf.get('LDAP_URL') ?
                           (nconf.get('CLIENT_CERT_AUTH') ?
                             ['ClientCertAuthentication'] :

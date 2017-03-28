@@ -6,13 +6,14 @@ var program = require('commander');
 var async = require('async');
 var request = require('request');
 var urlJoin = require('url-join');
-
+var cas = require('../lib/add_certs');
 var firewall = require('../lib/firewall');
 var path = require('path');
 
 //steps
 var certificate = require('./steps/certificate');
 var configureConnection = require('./steps/configureConnection');
+var adLdapSettings = require('./steps/ad-ldap-settings');
 
 program
   .version(require('../package.json').version)
@@ -41,6 +42,8 @@ exports.run = function (workingPath, callback) {
       });
     },
     function (cb) {
+      cas.inject(cb);
+    }, function (cb) {
       var info_url = urlJoin(provisioningTicket, '/info');
       console.log('Loading settings from ticket: ' + info_url);
 
@@ -49,13 +52,25 @@ exports.run = function (workingPath, callback) {
         json: true
       }, function (err, response, body) {
         if (err) {
-          if (err.code === 'ECONNREFUSED') {
-            console.log('Unable to reach Auth0 at ' + ticket);
-          } else {
-            console.log('Unexpected error while configuring connection: ' + (err.code || err.message));
+          switch(err.code) {
+            case 'ECONNREFUSED':
+              console.log('Unable to reach Auth0 at ' + ticket);
+              break;
+            case 'UNABLE_TO_VERIFY_LEAF_SIGNATURE':
+            case 'CERT_UNTRUSTED':
+              console.error('The Auth0 server is using a certificate issued by an untrusted Certification Authority.', err)
+              console.log('Go to https://auth0.com/docs/connector/ca-certificates for instructions on how to install your CA certificate.');
+              break;
+            case 'DEPTH_ZERO_SELF_SIGNED_CERT':
+              console.error('The Auth0 server is using a self-signed certificate', err)
+              console.log('Go to https://auth0.com/docs/connector/ca-certificates for instructions on how to install your certificate.');
+              break;
+            default:
+              console.error('Unexpected error while configuring connection:', err);
           }
           return cb(err);
         }
+
 
         if (response.statusCode == 404) {
           return cb (new Error('Wrong ticket. Does this connection still exist?'));
@@ -73,7 +88,43 @@ exports.run = function (workingPath, callback) {
 
         info = body;
 
+
         cb();
+      });
+    },
+    function(cb) {
+      var ldap_url = nconf.get('LDAP_URL');
+      var ldap_base = nconf.get('LDAP_BASE');
+
+      if(ldap_url) return cb();
+
+      adLdapSettings.discoverSettings(info.connectionDomain, function(config) {
+        var detectedUrl = '';
+        var detectedDN = ''
+        if (config) {
+          detectedUrl = config.LDAP_URL || '';
+          detectedDN = config.LDAP_BASE || '';
+
+        }
+
+        if (console.restore) console.restore();
+
+        console.log('test');
+        program.prompt('Please enter your LDAP server URL [' + (detectedUrl) + ']: ', function (url) {
+          ldap_url = (url && url.length>0) ? url : detectedUrl;
+
+          program.prompt('Please enter the LDAP server base DN [' + (detectedDN) + ']: ', function (dn) {
+            ldap_base = (dn && dn.length>0) ? dn : detectedDN;
+
+            nconf.set('LDAP_BASE', ldap_base);
+            nconf.set('LDAP_URL', ldap_url);
+            nconf.save();
+
+            if (console.inject) console.inject();
+
+            cb();
+          });
+        });
       });
     },
     function (cb) {
@@ -132,9 +183,11 @@ exports.run = function (workingPath, callback) {
                           provisioningTicket, cb);
     },
     function (cb) {
-      nconf.save(cb);
-
       console.log('Connector setup complete.');
+      if (nconf.get('OVERRIDE_CONFIG')) {
+        return nconf.save(cb);
+      }
+      cb();
     }
   ], function (err) {
     if (err) return callback(err);

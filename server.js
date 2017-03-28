@@ -33,14 +33,13 @@ connectorSetup.run(__dirname, function(err) {
     return exit(2);
   }
 
-  if(!nconf.get('LDAP_URL')) {
+  if(!nconf.get('LDAP_URL') || !nconf.get('LDAP_BIND_USER') || !nconf.get('LDAP_BIND_CREDENTIALS')) {
     console.error('edit config.json and add your LDAP settings');
     return exit(1);
   }
 
   require('./lib/clock_skew_detector');
   ws_client = require('./ws_validator');
-
   var latency_test = require('./latency_test');
   latency_test.run_many(10);
 
@@ -49,6 +48,9 @@ connectorSetup.run(__dirname, function(err) {
   }
 
   var express  = require('express');
+  var bodyParser = require('body-parser');
+  var cookieParser = require('cookie-parser');
+  var logger = require('morgan');
   var passport = require('passport');
 
   require('./lib/setupPassport');
@@ -57,28 +59,26 @@ connectorSetup.run(__dirname, function(err) {
   var app = express();
 
   // configure the webserver
-  app.configure(function(){
-    this.set('view engine', 'ejs');
-    this.set('views', __dirname + '/views');
+  app.set('view engine', 'ejs');
+  app.set('views', __dirname + '/views');
 
-    this.use(express.static(__dirname + '/public'));
-    this.use(express.logger());
+  app.use(express.static(__dirname + '/public'));
+  app.use(logger('combined'));
 
-    this.use(express.cookieParser());
-    this.use(express.bodyParser());
-    this.use(cookieSessions({
-      session_key:    'auth0-ad-conn',
-      secret:         nconf.get('SESSION_SECRET')
-    }));
+  app.use(cookieParser());
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({extended:true}));
+  app.use(cookieSessions({
+    session_key:    'auth0-ad-conn',
+    secret:         nconf.get('SESSION_SECRET')}));
 
-    this.use(passport.initialize());
-    this.use(this.router);
-  });
+  app.use(passport.initialize());
 
   require('./endpoints').install(app);
 
   var options = {
-    port: nconf.get('PORT')
+    port: nconf.get('PORT'),
+    test_user: nconf.get('KERBEROS_DEBUG_USER')
   };
 
   // client certificate-based authentication
@@ -89,10 +89,7 @@ connectorSetup.run(__dirname, function(err) {
     options.ca = nconf.get('CA_CERT');
     options.pfx = new Buffer(nconf.get('SSL_PFX'), 'base64');
     options.passphrase = nconf.get('SSL_KEY_PASSWORD');
-    //options.key = require('fs').readFileSync('./certs/localhost.key.pem');
-    //options.cert = require('fs').readFileSync('./certs/localhost.cert.pem');
     options.requestCert = true;
-    //options.rejectUnauthorized = false;
 
     if (!nconf.get('KERBEROS_AUTH')) {
       var https = require('https'); // use https server
@@ -104,12 +101,21 @@ connectorSetup.run(__dirname, function(err) {
   if (nconf.get('KERBEROS_AUTH')) {
     console.log('Using kerberos authentication');
 
-    if (process.platform !== 'win32') {
+    if (process.platform === 'win32') {
+      var KerberosServer = require('kerberos-server');
+      var kerberosServer = new KerberosServer(app, options);
+      kerberosServer.listen(options.port)
+                    .on('error', function (err) {
+                      console.error(err.message);
+                      return process.exit(1);
+                    });
+    } else if (nconf.get('WITH_KERBEROS_PROXY_FRONTEND')) {
+      var http = require('http');
+      http.createServer(app).listen(options.port);
+    } else {
       return console.log('Detected KERBEROS_AUTH in config, but this platform doesn\'t support it.');
     }
 
-    var kerberos_server = require('kerberos-server');
-    kerberos_server.createServer(options, app);
   }
 
   console.log('listening on port: ' + nconf.get('PORT'));

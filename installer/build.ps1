@@ -8,7 +8,7 @@ $InstallerPath = "$ProjectPath\Installer"
 echo "installer path is $InstallerPath"
 
 # remember to manually remove this after npm install... it fails because the path is too long.
-# Remove-Item -Recurse -Force "..\node_modules\jsonwebtoken\node_modules\jws\node_modules\base64url\node_modules\tap"
+# rimraf "..\node_modules\jsonwebtoken\node_modules\jws\node_modules\base64url\node_modules\tap"
 
 #Clean
 @(
@@ -17,29 +17,39 @@ echo "installer path is $InstallerPath"
     'directory.wxs'
 ) |
 Where-Object { Test-Path $_ } |
-ForEach-Object { Remove-Item $_ -Recurse -Force -ErrorAction Stop }
+ForEach-Object { rimraf $_ }
 
 #create output dir
-mkdir output
+mkdir output | Out-Null
 
 #Create a tmpdir
 $tmp_dir = [io.path]::GetTempFileName()
 Remove-Item $tmp_dir
-mkdir $tmp_dir
+mkdir $tmp_dir | Out-Null
+
+rimraf $ProjectPath\node_modules\edge\test
+rimraf $ProjectPath\node_modules\leveldown\build\Release\obj
+rimraf $ProjectPath\node_modules\leveldown\deps
+rimraf $ProjectPath\node_modules\leveldown\build\Release\leveldb.lib
+
+npm --no-color prune --production
 
 #Copy excluding .git and installer
 robocopy $ProjectPath\ $tmp_dir /COPYALL /S /NFL /NDL /NS /NC /NJH /NJS /XD .git installer
 
 If (Test-Path $tmp_dir\bin){
-    Remove-Item -Recurse -Force $tmp_dir\bin
+    rimraf $tmp_dir\bin
 }
 
 If (Test-Path $tmp_dir\config.json){
-    Remove-Item $tmp_dir\config.json
+    rimraf $tmp_dir\config.json
 }
+
 If (Test-Path $tmp_dir\logs.log){
-    Remove-Item $tmp_dir\logs.log
+    rimraf $tmp_dir\logs.log
 }
+
+rimraf $tmp_dir\config.json.enc
 
 $version = (. "node" -e "console.log(require('$ProjectPathUnix/package.json').version);") | Out-String
 
@@ -54,4 +64,6 @@ $wix_dir="c:\Program Files (x86)\WiX Toolset v3.8\bin"
 . "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe" sign /n "Auth0" $InstallerPath\output\adldap.msi
 
 #Remove the temp
-Remove-Item -Recurse -Force $tmp_dir
+echo "removing temp folder"
+rimraf $tmp_dir
+echo "temp folder removed"
