@@ -5,10 +5,6 @@ node_js:
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_7b35491612ac_key -iv $encrypted_7b35491612ac_iv -in config.json.enc -out config.json -d
-  - openssl aes-256-cbc -K $encrypted_7b35491612ac_key -iv $encrypted_7b35491612ac_iv -in certs.tar.gz.enc -out certs.tar.gz -d
-  - tar -xzf certs.tar.gz
-  - rm -f certs.tar.gz
 
 after_script:
-  - rm -f certs/cert.*
   - rm -f config.json
