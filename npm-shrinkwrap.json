@@ -858,9 +858,9 @@
       "resolved": "https://registry.npmjs.org/keypress/-/keypress-0.1.0.tgz"
     },
     "ldapjs": {
-      "version": "0.7.1",
-      "from": "ldapjs@>=0.7.1 <0.8.0",
-      "resolved": "https://registry.npmjs.org/ldapjs/-/ldapjs-0.7.1.tgz"
+      "version": "1.0.1",
+      "from": "ldapjs@>=0.8.0 <1.0.1",
+      "resolved": "https://registry.npmjs.org/ldapjs/-/ldapjs-1.0.1.tgz"
     },
     "level-codec": {
       "version": "6.1.0",
@@ -1201,9 +1201,9 @@
       "resolved": "https://registry.npmjs.org/passport-strategy/-/passport-strategy-1.0.0.tgz"
     },
     "passport-windowsauth": {
-      "version": "0.4.1",
-      "from": "passport-windowsauth@>=0.4.1 <0.5.0",
-      "resolved": "https://registry.npmjs.org/passport-windowsauth/-/passport-windowsauth-0.4.1.tgz"
+      "version": "1.0.1",
+      "from": "passport-windowsauth@>=1.0.1 <1.0.1",
+      "resolved": "https://registry.npmjs.org/passport-windowsauth/-/passport-windowsauth-1.0.1.tgz"
     },
     "path-array": {
       "version": "1.0.1",
