@@ -110,6 +110,11 @@ module.exports = function(config, callback){
       tlsOptions:     tlsOptions
     });
 
+    // Handles `unhandled` connection errors to avoid admin console crash  
+    client.on('error',function(err){
+      return callback(err,result);
+    });
+
     try_connect(client, config, function (err) {
       result.push({
         proof: 'Testing LDAP bind to LDAP server',
