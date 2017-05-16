@@ -90,7 +90,7 @@ We discourage running the connector behind an http proxy.
 
 If you still want to try it out behind a proxy you need an environment variable `http_proxy` or `HTTP_PROXY` set to `http://my-proxy:8080`.
 
-## Throubleshooting
+## Troubleshooting
 
 If you always get invalid username or password, try to search a profile by password with the following command:
 
