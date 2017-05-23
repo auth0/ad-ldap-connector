@@ -207,6 +207,20 @@ ws.on('open', function () {
       });
     });
   });
+}).on('change_password', function(command){
+  jwt.verify(command.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {
+    if (err) {
+      console.error('Unauthorized change_password attempt');
+      return;
+    }
+    console.log('Attempting change_password.');
+
+    users.changePassword(payload.username, payload.password, function (err, profile) {
+      if (err) return ws.sendEvent(payload.pid + '_change_password_result', {err: err});
+      console.log('password change succeeded.');
+      ws.sendEvent(payload.pid + '_change_password_result', {profile: profile});
+    });
+  });
 });
 
 function authenticate_connector() {
