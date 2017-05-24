@@ -57,6 +57,18 @@
   </div>
 
   <div class="control-group">
+    <label class="control-label" for="ENABLE_WRITE_BACK">Enable Write Back:</label>
+    <div class="controls">
+      <input type="checkbox"
+          name="ENABLE_WRITE_BACK"
+          id="ENABLE_WRITE_BACK"
+          <%= locals.ENABLE_WRITE_BACK ? 'checked' : '' %>
+          >
+      <span class="help-block">Enable write back to enable password reset. The service account needs additioal permissions to reset the password</span>
+    </div>
+  </div>
+
+  <div class="control-group">
     <div class="controls">
       <button type="submit" class="btn btn-primary">Save</button>
     </div>

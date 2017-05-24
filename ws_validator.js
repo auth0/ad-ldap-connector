@@ -1,16 +1,16 @@
 var WebSocket = require('ws');
-var exit      = require('./lib/exit');
-var jwt       = require('jsonwebtoken');
-var nconf     = require('nconf');
-var fs        = require('fs');
-var Users     = require('./lib/users');
-var users     = new Users();
-var async     = require('async');
-var cb        = require('cb');
-var ms        = require('ms');
+var exit = require('./lib/exit');
+var jwt = require('jsonwebtoken');
+var nconf = require('nconf');
+var fs = require('fs');
+var Users = require('./lib/users');
+var users = new Users();
+var async = require('async');
+var cb = require('cb');
+var ms = require('ms');
 
 var cert = {
-  key:  nconf.get('AUTH_CERT_KEY') || fs.readFileSync(__dirname + '/certs/cert.key'),
+  key: nconf.get('AUTH_CERT_KEY') || fs.readFileSync(__dirname + '/certs/cert.key'),
   cert: nconf.get('AUTH_CERT') || fs.readFileSync(__dirname + '/certs/cert.pem')
 };
 
@@ -27,6 +27,7 @@ var PasswordChangeRequired = require('./lib/errors/PasswordChangeRequired');
 var PasswordExpired = require('./lib/errors/PasswordExpired');
 var WrongPassword = require('./lib/errors/WrongPassword');
 var WrongUsername = require('./lib/errors/WrongUsername');
+var InsufficientAccessRightsError = require('./lib/errors/InsufficientAccessRightsError');
 
 ws.sendEvent = function (name, payload) {
   this.send(JSON.stringify({
@@ -39,10 +40,10 @@ ws.reply = function (pid, response) {
   return this.sendEvent(pid + '_result', response);
 };
 
-function ping (client, count, callback) {
+function ping(client, count, callback) {
   if (typeof count === 'undefined') {
     count = 0;
-    callback = function(){};
+    callback = function () {};
   }
 
   var pong = cb(function (err) {
@@ -53,7 +54,9 @@ function ping (client, count, callback) {
       }
       return ping(client, ++count, callback);
     }
-    callback(null, { failed_pings: count });
+    callback(null, {
+      failed_pings: count
+    });
   }).timeout(ms('4s'));
 
   if (client.readyState !== WebSocket.OPEN) {
@@ -86,7 +89,9 @@ ws.on('open', function () {
   var client = this;
 
   async.whilst(
-    function () { return true; },
+    function () {
+      return true;
+    },
     function (done) {
       setTimeout(function () {
         ping(client, 0, function (err, result) {
@@ -131,43 +136,68 @@ ws.on('open', function () {
       if (err) {
         if (err instanceof AccountDisabled) {
           log("Authentication attempt failed. Reason: " + "account disabled".red);
-          return ws.reply(payload.pid, { err: err, profile: err.profile });
+          return ws.reply(payload.pid, {
+            err: err,
+            profile: err.profile
+          });
         }
         if (err instanceof AccountExpired) {
           log("Authentication attempt failed. Reason: " + "account expired".red);
-          return ws.reply(payload.pid, { err: err, profile: err.profile });
+          return ws.reply(payload.pid, {
+            err: err,
+            profile: err.profile
+          });
         }
         if (err instanceof AccountLocked) {
           log("Authentication attempt failed. Reason: " + "account locked".red);
-          return ws.reply(payload.pid, { err: err, profile: err.profile });
+          return ws.reply(payload.pid, {
+            err: err,
+            profile: err.profile
+          });
         }
         if (err instanceof PasswordChangeRequired) {
           if (authenticate_when_password_change_required) {
             log("Authentication succeeded, but " + "password change is required".red);
-            return ws.sendEvent(payload.pid + '_result', { profile: err.profile });
-          }
-          else {
+            return ws.sendEvent(payload.pid + '_result', {
+              profile: err.profile
+            });
+          } else {
             log("Authentication attempt failed. Reason: " + "password change is required".red);
-            return ws.reply(payload.pid, { err: err, profile: err.profile });
+            return ws.reply(payload.pid, {
+              err: err,
+              profile: err.profile
+            });
           }
         }
         if (err instanceof PasswordExpired) {
           if (authenticate_when_password_expired) {
             log("Authentication succeeded but " + "password expired".red);
-            return ws.sendEvent(payload.pid + '_result', { profile: err.profile });
-          }
-          else {
+            return ws.sendEvent(payload.pid + '_result', {
+              profile: err.profile
+            });
+          } else {
             log("Authentication attempt failed. Reason: " + "password expired".red);
-            return ws.reply(payload.pid, { err: err, profile: err.profile });
+            return ws.reply(payload.pid, {
+              err: err,
+              profile: err.profile
+            });
           }
         }
         if (err instanceof WrongPassword) {
           log("Authentication attempt failed. Reason: " + "wrong password".red);
-          return ws.reply(payload.pid, { err: err, profile: err.profile });
+          return ws.reply(payload.pid, {
+            err: err,
+            profile: err.profile
+          });
         }
         if (err instanceof WrongUsername) {
           log("Authentication attempt failed. Reason: " + "wrong username".red);
-          return ws.reply(payload.pid, { err: err, profile: { username: payload.username } });
+          return ws.reply(payload.pid, {
+            err: err,
+            profile: {
+              username: payload.username
+            }
+          });
         }
         log("Authentication attempt failed. Reason: " + "unexpected error".red);
 
@@ -177,13 +207,17 @@ ws.on('open', function () {
           console.log(err);
         }
 
-        ws.reply(payload.pid, { err: err });
+        ws.reply(payload.pid, {
+          err: err
+        });
         return exit(1);
       }
 
       log('Authentication succeeded.');
 
-      ws.sendEvent(payload.pid + '_result', { profile: user });
+      ws.sendEvent(payload.pid + '_result', {
+        profile: user
+      });
     });
   });
 }).on('search_users', function (msg) {
@@ -200,35 +234,71 @@ ws.on('open', function () {
     };
 
     users.list(payload.search, options, function (err, users) {
-      if (err) return ws.sendEvent(payload.pid + '_search_users_result', {err: err});
+      if (err) return ws.sendEvent(payload.pid + '_search_users_result', {
+        err: err
+      });
       console.log('Search succeeded.');
       ws.sendEvent(payload.pid + '_search_users_result', {
         users: users
       });
     });
   });
-}).on('change_password', function(command){
-  jwt.verify(command.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {
-    if (err) {
-      console.error('Unauthorized change_password attempt');
-      return;
-    }
-    console.log('Attempting change_password.');
-
-    users.changePassword(payload.username, payload.password, function (err, profile) {
-      if (err) return ws.sendEvent(payload.pid + '_change_password_result', {err: err});
-      console.log('password change succeeded.');
-      ws.sendEvent(payload.pid + '_change_password_result', {profile: profile});
-    });
-  });
 });
 
+// Listen only for change_password event when write back is enabled.
+if (nconf.get('ENABLE_WRITE_BACK')) {
+  ws.on('change_password', function (command) {
+    jwt.verify(command.jwt, nconf.get('TENANT_SIGNING_KEY'), function (err, payload) {
+      if (err) {
+        console.error('Unauthorized change_password attempt');
+        return;
+      }
+      console.log('Attempting change_password.');
+
+      users.changePassword(payload.username, payload.password, function (err, profile) {
+        if (err) {
+          if (err instanceof InsufficientAccessRightsError) {
+            log("Change Password attempt failed. Reason: " + "Service account has Insufficient Access Rights".red);
+            return ws.reply(payload.pid, {
+              err: err,
+              profile: err.profile
+            });
+
+            log("Change Password attempt failed. Reason: " + "unexpected error".red);
+
+            if (err.inner && err.inner.stack) {
+              console.error('Inner error:', err.inner.stack);
+            } else {
+              console.log(err);
+            }
+          }
+          return ws.sendEvent(payload.pid + '_change_password_result', {
+            err: err
+          });
+        }
+
+        console.log('password change succeeded.');
+        ws.sendEvent(payload.pid + '_change_password_result', {
+          profile: profile
+        });
+      });
+    });
+  });
+}
+
 function authenticate_connector() {
+  var defaultCapabilities = ['search', 'login'];
+  if (nconf.get('ENABLE_WRITE_BACK')) defaultCapabilities.push('change_password');
+
   var token = jwt.sign({}, cert.key, {
     algorithm: 'RS256',
     expiresInMinutes: 1,
     issuer: nconf.get('CONNECTION'),
-    audience: nconf.get('REALM')
+    audience: nconf.get('REALM'),
+    "http://schemas.auth0.com/ad-ldap-connector/capabilites": defaultCapabilities
   });
-  ws.sendEvent('authenticate', { jwt: token });
-}
+
+  ws.sendEvent('authenticate', {
+    jwt: token
+  });
+};

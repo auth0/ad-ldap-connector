@@ -123,6 +123,9 @@ app.get('/', set_current_config, function(req, res) {
 });
 
 app.post('/ldap', set_current_config, function(req, res, next) {
+  // Convert ENABLE_WRITE_BACK to boolean.
+  req.body.ENABLE_WRITE_BACK = !!(req.body.ENABLE_WRITE_BACK && req.body.ENABLE_WRITE_BACK === 'on');
+  
   var config = xtend({}, req.current_config, req.body);
   test_config(config, function(err, result) {
     if (err) {
