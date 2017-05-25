@@ -252,32 +252,35 @@ if (nconf.get('ENABLE_WRITE_BACK')) {
       if (err) {
         console.error('Unauthorized change_password attempt');
         return;
-      }
-      console.log('Attempting change_password.');
+      };
+
+      log('Attempting change_password.');
 
       users.changePassword(payload.username, payload.password, function (err, profile) {
         if (err) {
           if (err instanceof InsufficientAccessRightsError) {
             log("Change Password attempt failed. Reason: " + "Service account has Insufficient Access Rights".red);
-            return ws.reply(payload.pid, {
+            return ws.reply(payload.pid + '_change_password_result', {
               err: err,
               profile: err.profile
             });
-
-            log("Change Password attempt failed. Reason: " + "unexpected error".red);
-
-            if (err.inner && err.inner.stack) {
-              console.error('Inner error:', err.inner.stack);
-            } else {
-              console.log(err);
-            }
           }
-          return ws.sendEvent(payload.pid + '_change_password_result', {
+
+          log("Change Password attempt failed. Reason: " + "unexpected error".red);
+
+          if (err.inner && err.inner.stack) {
+            console.error('Inner error:', err.inner.stack);
+          } else {
+            console.log(err);
+          };
+
+          ws.sendEvent(payload.pid + '_change_password_result', {
             err: err
           });
+          return exit(1);
         }
 
-        console.log('password change succeeded.');
+        log('Password Change succeeded.');
         ws.sendEvent(payload.pid + '_change_password_result', {
           profile: profile
         });
