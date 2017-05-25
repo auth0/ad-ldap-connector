@@ -254,6 +254,9 @@ if (nconf.get('ENABLE_WRITE_BACK')) {
         return;
       };
 
+      var log_prepend = 'user ' + payload.username + ':';
+      var log = console.log.bind(console, log_prepend.blue);
+
       log('Attempting change_password.');
 
       users.changePassword(payload.username, payload.password, function (err, profile) {
