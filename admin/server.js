@@ -123,8 +123,9 @@ app.get('/', set_current_config, function(req, res) {
 });
 
 app.post('/ldap', set_current_config, function(req, res, next) {
-  // Convert ENABLE_WRITE_BACK to boolean.
+  // Convert ENABLE_WRITE_BACK and ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD to boolean.
   req.body.ENABLE_WRITE_BACK = !!(req.body.ENABLE_WRITE_BACK && req.body.ENABLE_WRITE_BACK === 'on');
+  req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD = !!(req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD && req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD === 'on');
   
   var config = xtend({}, req.current_config, req.body);
   test_config(config, function(err, result) {

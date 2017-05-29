@@ -66,7 +66,7 @@ function try_socket(socket_url, callback) {
 }
 
 module.exports = function (config, callback) {
-  var missing_required = ['LDAP_URL', 'LDAP_BASE', 'LDAP_BIND_USER', 'LDAP_BIND_PASSWORD', 'ENABLE_WRITE_BACK']
+  var missing_required = ['LDAP_URL', 'LDAP_BASE', 'LDAP_BIND_USER', 'LDAP_BIND_PASSWORD', 'ENABLE_WRITE_BACK', 'ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD']
     .filter(function (k) {
       var value = config[k];
       return _.isBoolean(value) ? false : !value;
