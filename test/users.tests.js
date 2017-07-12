@@ -6,6 +6,7 @@ var Users = require('../lib/users');
 var crypto = require('../lib/crypto');
 var cas = require('../lib/add_certs');
 var https = require('https');
+var PasswordComplexityError = require('../lib/errors/PasswordComplexityError');
 
 var password = nconf.get('LDAP_BIND_PASSWORD') || crypto.decrypt(nconf.get('LDAP_BIND_CREDENTIALS'));
 
@@ -147,7 +148,7 @@ describe('users', function () {
     });
   });
 
-  describe.skip('changePassword with username and password', function () {
+  describe('change password', function () {
     var profile;
 
     before(function (done) {
@@ -171,6 +172,37 @@ describe('users', function () {
       expect(profile.name.givenName).to.equal('John');
       expect(profile.emails[0].value).to.equal('john@fabrikam.com');
       expect(profile.sAMAccountName).to.equal('john');
+    });
+  });
+
+  describe.only('change password that doesn\'t meet complexity', function () {  
+    var error;
+
+    before(function (done) {
+      users.changePassword('john', 42, function (err, p) {
+        error = err;
+        done();
+      });
+    });
+        
+    it('should contain error', function () {
+      expect(error.message).to.equal('Password password doesn’t meet minimum requirements');
+      expect(error).to.be.an.instanceof(PasswordComplexityError);
+    });
+
+    it('should include groups', function () {
+      expect(error.profile.groups).to.include('Administrators');
+      expect(error.profile.groups).to.include('Domain Admins');
+      expect(error.profile.groups).to.include('Denied RODC Password Replication Group');
+      expect(error.profile.groups).to.include('Full-Admin');
+    });
+
+    it('should include basic attributes', function () {
+      expect(error.profile.id).to.equal('ae8fbd21-d66c-4f78-ad8e-53ab078cee16');
+      expect(error.profile.name.familyName).to.equal('Fabrikam');
+      expect(error.profile.name.givenName).to.equal('John');
+      expect(error.profile.emails[0].value).to.equal('john@fabrikam.com');
+      expect(error.profile.sAMAccountName).to.equal('john');
     });
   });
 });
