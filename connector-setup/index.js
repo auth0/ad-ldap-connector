@@ -130,12 +130,11 @@ exports.run = function (workingPath, callback) {
     function (cb) {
       const connection = createConnection();
       connection.search(nconf.get('LDAP_BASE'), '(objectclass=*)', function (err, res) {
-        if (err) {
-          nconf.set('ANONYMOUS_SEARCH_ENABLED',false);
-          return cb();
-        }
-        nconf.set('ANONYMOUS_SEARCH_ENABLED',true);
-        cb();
+        nconf.set('ANONYMOUS_SEARCH_ENABLED',!err);
+        res.once('end', function(){
+          connection.destroy();
+          cb();
+        });
       });
     },
     function (cb) {
