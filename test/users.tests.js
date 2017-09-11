@@ -1,4 +1,5 @@
 require('../lib/initConf');
+//process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
 var nconf = require('nconf');
 var expect = require('chai').expect;
@@ -175,7 +176,7 @@ describe('users', function () {
     });
   });
 
-  describe.only('change password that doesn\'t meet complexity', function () {  
+  describe('change password that doesn\'t meet complexity', function () {  
     var error;
 
     before(function (done) {
