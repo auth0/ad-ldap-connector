@@ -8,6 +8,7 @@ var request = require('request');
 var urlJoin = require('url-join');
 var cas = require('../lib/add_certs');
 var firewall = require('../lib/firewall');
+const createConnection = require('../lib/ldap').createConnection;
 var path = require('path');
 
 //steps
@@ -108,8 +109,7 @@ exports.run = function (workingPath, callback) {
         }
 
         if (console.restore) console.restore();
-
-        console.log('test');
+        
         program.prompt('Please enter your LDAP server URL [' + (detectedUrl) + ']: ', function (url) {
           ldap_url = (url && url.length>0) ? url : detectedUrl;
 
@@ -124,6 +124,27 @@ exports.run = function (workingPath, callback) {
 
             cb();
           });
+        });
+      });
+    },
+    function (cb) {
+      function anonymousSearchEnabled(enabled) {
+        nconf.set('ANONYMOUS_SEARCH_ENABLED',enabled);
+        connection.destroy();
+        return cb();
+      }
+
+      const connection = createConnection();
+      connection.search(nconf.get('LDAP_BASE'), '(objectclass=*)', function (err, res) {
+        if (err) {
+          return anonymousSearchEnabled(false);
+        }
+        
+        res.once('end', function(){
+          anonymousSearchEnabled(true);
+        })
+        .once('error',function(err){
+          anonymousSearchEnabled(false);
         });
       });
     },

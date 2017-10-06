@@ -33,9 +33,19 @@ connectorSetup.run(__dirname, function(err) {
     return exit(2);
   }
 
-  if(!nconf.get('LDAP_URL') || !nconf.get('LDAP_BIND_USER') || !nconf.get('LDAP_BIND_CREDENTIALS')) {
-    console.error('edit config.json and add your LDAP settings');
+  if(!nconf.get('LDAP_URL')) {
+    console.error('edit config.json and add your LDAP URL');
     return exit(1);
+  }
+
+  if (!nconf.get('LDAP_BIND_USER') || !nconf.get('LDAP_BIND_CREDENTIALS')) {
+    if (!nconf.get('ANONYMOUS_SEARCH_ENABLED')){
+      console.error('Anonymous LDAP search is not enabled. Please edit config.json to add LDAP_BIND_USER');
+      return exit(1);
+    }
+    else{
+      console.log('Anonymous LDAP search is enabled. LDAP_BIND_USER is not required')
+    }
   }
 
   require('./lib/clock_skew_detector');
