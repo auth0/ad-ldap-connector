@@ -3,12 +3,15 @@ var fs          = require('fs');
 var path        = require('path');
 var nconf = require('nconf');
 
-var fileNames = {
-  pem: path.join(process.cwd(), 'certs', 'cert.pem'),
-  key: path.join(process.cwd(), 'certs', 'cert.key')
+function getFileNames(workingPath) {
+  return {
+    pem: path.join(workingPath, 'certs', 'cert.pem'),
+    key: path.join(workingPath, 'certs', 'cert.key')
+  };
 };
 
 module.exports = function (workingPath, info, cb) {
+  let fileNames = getFileNames(workingPath);
   if (fs.existsSync(fileNames.key) || nconf.get('AUTH_CERT')) {
     console.log('Certificates already exist, skipping certificate generation.');
     return cb();
@@ -26,9 +29,9 @@ module.exports = function (workingPath, info, cb) {
         { shortName: 'OU', value: info.connectionDomain},
         { shortName: 'O', value: 'auth0/ad-ldap-connector'}
       ], {
-        days: 365, 
-        algorithm: 'sha256', 
-        keySize:2048 
+        days: 365,
+        algorithm: 'sha256',
+        keySize:2048
       });
 
   fs.writeFileSync(fileNames.pem, pems.cert);
