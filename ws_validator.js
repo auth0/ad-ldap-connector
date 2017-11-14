@@ -28,6 +28,7 @@ var PasswordExpired = require('./lib/errors/PasswordExpired');
 var WrongPassword = require('./lib/errors/WrongPassword');
 var WrongUsername = require('./lib/errors/WrongUsername');
 var InsufficientAccessRightsError = require('./lib/errors/InsufficientAccessRightsError');
+var PasswordComplexityError = require('./lib/errors/PasswordComplexityError');
 
 ws.sendEvent = function (name, payload) {
   this.send(JSON.stringify({
@@ -261,9 +262,9 @@ if (nconf.get('ENABLE_WRITE_BACK')) {
 
       users.changePassword(payload.username, payload.password, function (err, profile) {
         if (err) {
-          if (err instanceof InsufficientAccessRightsError) {
-            log("Change Password attempt failed. Reason: " + "Service account has Insufficient Access Rights".red);
-            return ws.reply(payload.pid + '_change_password_result', {
+          if (err instanceof InsufficientAccessRightsError || err instanceof PasswordComplexityError) {
+            log("Change Password attempt failed. Reason: " + err.message.red);
+            return ws.sendEvent(payload.pid + '_change_password_result', {
               err: err,
               profile: err.profile
             });
