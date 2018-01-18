@@ -6,11 +6,10 @@ var expect = require('chai').expect;
 var Users = require('../lib/users');
 var crypto = require('../lib/crypto');
 var cas = require('../lib/add_certs');
-var https = require('https');
 var PasswordComplexityError = require('../lib/errors/PasswordComplexityError');
 
 var password = nconf.get('LDAP_BIND_PASSWORD') || crypto.decrypt(nconf.get('LDAP_BIND_CREDENTIALS'));
-
+var jane_password = nconf.get('JANE_PASSWORD');
 /*
  * These tests needs a config.json file in place pointing to our test-AD
  */
@@ -153,7 +152,7 @@ describe('users', function () {
     var profile;
 
     before(function (done) {
-      users.changePassword('john', password, function (err, p) {
+      users.changePassword('jane', jane_password, function (err, p) {
         if (err) return done(err);
         profile = p;
         done();
@@ -168,26 +167,26 @@ describe('users', function () {
     });
 
     it('should include basic attributes', function () {
-      expect(profile.id).to.equal('ae8fbd21-d66c-4f78-ad8e-53ab078cee16');
-      expect(profile.name.familyName).to.equal('Fabrikam');
-      expect(profile.name.givenName).to.equal('John');
-      expect(profile.emails[0].value).to.equal('john@fabrikam.com');
-      expect(profile.sAMAccountName).to.equal('john');
+      expect(profile.id).to.equal('d0eb2fa3-802d-4172-889c-1812e6e83f4f');
+      expect(profile.name.familyName).to.equal('Doe');
+      expect(profile.name.givenName).to.equal('Jane');
+      expect(profile.emails[0].value).to.equal('jane@fabrikam.com');
+      expect(profile.sAMAccountName).to.equal('jane');
     });
   });
 
-  describe('change password that doesn\'t meet complexity', function () {  
+  describe('change password that doesn\'t meet complexity', function () {
     var error;
 
     before(function (done) {
-      users.changePassword('john', 42, function (err, p) {
+      users.changePassword('jane', 42, function (err, p) {
         error = err;
         done();
       });
     });
-        
+
     it('should contain error', function () {
-      expect(error.message).to.equal('Password password doesn’t meet minimum requirements');
+      expect(error.message).to.equal('Password doesn’t meet minimum requirements');
       expect(error).to.be.an.instanceof(PasswordComplexityError);
     });
 
@@ -199,11 +198,11 @@ describe('users', function () {
     });
 
     it('should include basic attributes', function () {
-      expect(error.profile.id).to.equal('ae8fbd21-d66c-4f78-ad8e-53ab078cee16');
-      expect(error.profile.name.familyName).to.equal('Fabrikam');
-      expect(error.profile.name.givenName).to.equal('John');
-      expect(error.profile.emails[0].value).to.equal('john@fabrikam.com');
-      expect(error.profile.sAMAccountName).to.equal('john');
+      expect(error.profile.id).to.equal('d0eb2fa3-802d-4172-889c-1812e6e83f4f');
+      expect(error.profile.name.familyName).to.equal('Doe');
+      expect(error.profile.name.givenName).to.equal('Jane');
+      expect(error.profile.emails[0].value).to.equal('jane@fabrikam.com');
+      expect(error.profile.sAMAccountName).to.equal('jane');
     });
   });
 });

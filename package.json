@@ -4,7 +4,7 @@
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
-    "test": "mocha --timeout 50000 --reporter spec",
+    "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec",
     "snyk": "snyk test",
     "start": "node server.js"
   },

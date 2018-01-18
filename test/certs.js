@@ -38,6 +38,7 @@ describe('Connection to server with empty subject', function () {
       port: PORT,
       ca: cert.ca,
       servername: 'localhost',
+      rejectUnauthorized: true
     }, function() {
       socket.end();
       done(new Error('Certificate should not pass server Identity validation'));
@@ -47,7 +48,7 @@ describe('Connection to server with empty subject', function () {
       done();
     });
   });
-  
+
   it('should connect when using connector\'s server identity verification', function(done) {
     var socket = tls.connect(PORT, {
       ca: cert.ca,
