@@ -5,6 +5,7 @@ npm-debug.log
 /wa/iisnode/*
 config.json
 config.json*
+config*.json
 installer/output/*
 installer/adldap.msi
 installer/directory.wxs
