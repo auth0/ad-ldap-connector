@@ -1853,8 +1853,8 @@
     },
     "passport-ssl-certificate": {
       "version": "0.0.0",
-      "from": "git://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
-      "resolved": "git://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462"
+      "from": "https://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
+      "resolved": "https://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462"
     },
     "passport-strategy": {
       "version": "1.0.0",
@@ -2391,7 +2391,7 @@
     "stream-rotate": {
       "version": "0.0.4",
       "from": "crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
-      "resolved": "git://github.com/crigot/stream-rotate.git#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
+      "resolved": "https://github.com/crigot/stream-rotate.git#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
       "dependencies": {
         "mkdirp": {
           "version": "0.3.5",
