@@ -61,6 +61,7 @@
     "tunnel": "~0.0.3",
     "url-join": "^0.0.1",
     "win-ca": "^1.0.0",
+    "win-ca-ffi": "github:jfromaniello/win-ca#copy-files",
     "winston": "~2.2.0",
     "ws": "^1.1.2",
     "wsfed": "^3.2.0",

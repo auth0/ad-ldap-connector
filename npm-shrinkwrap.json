@@ -1094,7 +1094,6 @@
       "version": "2.2.0",
       "resolved": "https://registry.npmjs.org/ffi/-/ffi-2.2.0.tgz",
       "integrity": "sha1-vxiwRmain3EiftVoldVDCvRwQvo=",
-      "optional": true,
       "requires": {
         "bindings": "1.2.1",
         "debug": "2.6.1",
@@ -2900,7 +2899,6 @@
       "version": "1.1.0",
       "resolved": "https://registry.npmjs.org/ref-struct/-/ref-struct-1.1.0.tgz",
       "integrity": "sha1-XV7mWtQc78Olxf60BYcmHkee3BM=",
-      "optional": true,
       "requires": {
         "debug": "2.6.1",
         "ref": "1.3.5"
@@ -3912,14 +3910,11 @@
       "resolved": "https://registry.npmjs.org/win-ca/-/win-ca-1.0.0.tgz",
       "integrity": "sha1-ew0c1yJxLxC/FY9dmUqjlQevWTI=",
       "requires": {
-        "win-ca-ffi": "1.0.0"
+        "win-ca-ffi": "github:jfromaniello/win-ca#e2dbcec5b4e407f2066db1b0f6952ccc35328aab"
       }
     },
     "win-ca-ffi": {
-      "version": "1.0.0",
-      "resolved": "https://registry.npmjs.org/win-ca-ffi/-/win-ca-ffi-1.0.0.tgz",
-      "integrity": "sha1-glpgGYHB6nLjNJvAD4ix1unMQfk=",
-      "optional": true,
+      "version": "github:jfromaniello/win-ca#e2dbcec5b4e407f2066db1b0f6952ccc35328aab",
       "requires": {
         "ffi": "2.2.0",
         "node-forge": "0.6.49"
@@ -3928,8 +3923,7 @@
         "node-forge": {
           "version": "0.6.49",
           "resolved": "https://registry.npmjs.org/node-forge/-/node-forge-0.6.49.tgz",
-          "integrity": "sha1-8e6V1ddGI5OP4Z1piqWibVTS9g8=",
-          "optional": true
+          "integrity": "sha1-8e6V1ddGI5OP4Z1piqWibVTS9g8="
         }
       }
     },
