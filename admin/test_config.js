@@ -97,13 +97,10 @@ module.exports = function (config, callback) {
       var cas;
 
       if (process.platform === 'win32') {
-        var certs = require('windows-certs');
-
-        cas = certs.get({
-          storeLocation: 'LocalMachine',
-          storeName: ['TrustedPeople', 'CertificateAuthority', 'Root']
-        }).map(function (cert) {
-          return cert.pem;
+        var winCa = require('win-ca');
+        var forge = require('node-forge');
+        cas = winCa.all().map(function(ca){
+          return { pem: forge.pki.certificateToPem(ca) };
         });
       } else {
         cas = https.globalAgent.options.ca;
@@ -126,7 +123,7 @@ module.exports = function (config, callback) {
       tlsOptions: tlsOptions
     });
 
-    // Handles `unhandled` connection errors to avoid admin console crash  
+    // Handles `unhandled` connection errors to avoid admin console crash
     client.on('error',function(err){
       return callback(err,result);
     });
