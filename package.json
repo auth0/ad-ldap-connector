@@ -47,6 +47,7 @@
     "morgan": "^1.7.0",
     "ms": "^2.0.0",
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
+    "node-forge": "^0.7.5",
     "passport": "~0.1.16",
     "passport-local": "~0.1.6",
     "passport-ssl-certificate": "git://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
@@ -59,7 +60,7 @@
     "thumbprint": "^0.0.1",
     "tunnel": "~0.0.3",
     "url-join": "^0.0.1",
-    "windows-certs": "^3.4.0",
+    "win-ca": "^1.0.0",
     "winston": "~2.2.0",
     "ws": "^1.1.2",
     "wsfed": "^3.2.0",
@@ -71,7 +72,10 @@
     "mocha": "~2.1.0",
     "snyk": "^1.18.0"
   },
+  "optionalDependencies": {
+    "win-ca-ffi": "github:jfromaniello/win-ca#copy-files"
+  },
   "engines": {
-    "node": "^4.4.0"
+    "node": "^8"
   }
 }
