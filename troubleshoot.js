@@ -87,7 +87,8 @@ async.series([
 				logger.failed('Error connecting to Auth0.');
 				if (err)
 					logger.error('  > Error: %s', JSON.stringify(err));
-				logger.error('  > Status: %s', res.statusCode);
+				if (res)
+					logger.error('  > Status: %s', res.statusCode);
 				if (body)
 					logger.error('  > Body: %s', body.replace(/\n$/, ''));
 			} else {
