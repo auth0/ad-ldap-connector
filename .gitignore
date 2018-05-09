@@ -14,3 +14,4 @@ node_modules/*
 *.log
 cache.db/
 .DS_store*
+.vscode
