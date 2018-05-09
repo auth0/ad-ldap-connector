@@ -64,6 +64,20 @@ describe('users', function () {
     });
   });
 
+  it('should be able ot validate multiple simultaneous requests', function (done) {
+    async.parallel([
+      function(cb) {
+        users.validate('john', password, cb);
+      },
+      function(cb) {
+        users.validate('john', password, cb);
+      },
+      function(cb) {
+        users.validate('john', password, cb);       
+      }],
+      done);
+  });
+
   describe('validate with username and password', function () {
     var profile;
 
