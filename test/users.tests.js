@@ -7,6 +7,7 @@ var Users = require('../lib/users');
 var crypto = require('../lib/crypto');
 var cas = require('../lib/add_certs');
 var PasswordComplexityError = require('../lib/errors/PasswordComplexityError');
+var async = require('async');
 
 var password = nconf.get('LDAP_BIND_PASSWORD') || crypto.decrypt(nconf.get('LDAP_BIND_CREDENTIALS'));
 var jane_password = nconf.get('JANE_PASSWORD');
@@ -73,7 +74,7 @@ describe('users', function () {
         users.validate('john', password, cb);
       },
       function(cb) {
-        users.validate('john', password, cb);       
+        users.validate('john', password, cb);
       }],
       done);
   });
