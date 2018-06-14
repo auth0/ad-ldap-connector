@@ -2,7 +2,7 @@ var urlJoin    = require('url-join');
 var request    = require('request');
 var fs         = require('fs');
 var path       = require('path');
-var thumbprint = require('thumbprint');
+var thumbprint = require('@auth0/thumbprint');
 var nconf      = require('nconf');
 var os         = require('os');
 

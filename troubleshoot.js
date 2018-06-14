@@ -11,7 +11,7 @@ var async = require('async');
 var nconf = require('nconf');
 var request = require('request');
 var winston = require('winston');
-var thumbprint = require('thumbprint');
+var thumbprint = require('@auth0/thumbprint');
 var WebSocket = require('ws');
 var isWindows = (process.platform == 'win32');
 var cas = require('./lib/add_certs');
