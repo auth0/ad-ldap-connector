@@ -91,6 +91,9 @@ describe('users', function () {
     });
 
     it('should include groups', function () {
+      expect(profile.groups).to.include('Users');
+      expect(profile.groups).to.include('Domain Users');
+      expect(profile.groups).to.include('Recursive Group');
       expect(profile.groups).to.include('Administrators');
       expect(profile.groups).to.include('Domain Admins');
       expect(profile.groups).to.include('Denied RODC Password Replication Group');
@@ -125,6 +128,9 @@ describe('users', function () {
     });
 
     it('should include groups', function () {
+      expect(error.profile.groups).to.include('Users');
+      expect(error.profile.groups).to.include('Domain Users');
+      expect(error.profile.groups).to.include('Recursive Group');
       expect(error.profile.groups).to.include('Administrators');
       expect(error.profile.groups).to.include('Domain Admins');
       expect(error.profile.groups).to.include('Denied RODC Password Replication Group');
@@ -175,6 +181,9 @@ describe('users', function () {
     });
 
     it('should include groups', function () {
+      expect(profile.groups).to.include('Users');
+      expect(profile.groups).to.include('Domain Users');
+      expect(profile.groups).to.include('Recursive Group');
       expect(profile.groups).to.include('Administrators');
       expect(profile.groups).to.include('Domain Admins');
       expect(profile.groups).to.include('Denied RODC Password Replication Group');
@@ -206,6 +215,9 @@ describe('users', function () {
     });
 
     it('should include groups', function () {
+      expect(error.profile.groups).to.include('Users');
+      expect(error.profile.groups).to.include('Domain Users');
+      expect(error.profile.groups).to.include('Recursive Group');
       expect(error.profile.groups).to.include('Administrators');
       expect(error.profile.groups).to.include('Domain Admins');
       expect(error.profile.groups).to.include('Denied RODC Password Replication Group');
