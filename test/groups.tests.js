@@ -23,7 +23,7 @@ describe('users', function() {
       get(key) {
         return {
           'LDAP_SEARCH_PRIMARY_GROUP': '(objectSid:={0})',
-          'LDAP_SEARCH_PRIMARY_PARENT_GROUPS': '(member:1.2.840.113556.1.4.1941:={0})',
+          'LDAP_SEARCH_PRIMARY_ALL_GROUPS': '(member:1.2.840.113556.1.4.1941:={0})',
           'GROUP_PROPERTIES': [],
           'GROUPS_TIMEOUT_SECONDS': 20,
           'GROUPS_DEREF_ALIASES': 0
@@ -43,9 +43,17 @@ describe('users', function() {
 
         let result = await groups.getPrimaryGroups(config, client, baseDn, user);
         console.log('RESULT', result);
-        expect(result).to.contain('Users');
-        expect(result).to.contain('Domain Users');
-        expect(result).to.contain('Recursive Group');
+        expect(result).to.have.members([
+          { dn: 'CN=Users,CN=Builtin,DC=fabrikam,DC=com', cn: 'Users', controls: [] },
+          { dn: 'CN=Domain Users,CN=Users,DC=fabrikam,DC=com', cn: 'Domain Users', controls: [],
+            memberOf: [
+              'CN=Recursive Group,CN=Users,DC=fabrikam,DC=com',
+              'CN=Users,CN=Builtin,DC=fabrikam,DC=com'
+          ]},
+          { dn: 'CN=Recursive Group,CN=Users,DC=fabrikam,DC=com', cn: 'Recursive Group', controls: [],
+            memberOf: 'CN=Domain Users,CN=Users,DC=fabrikam,DC=com'
+          }
+        ]);
       });
     });
   });
