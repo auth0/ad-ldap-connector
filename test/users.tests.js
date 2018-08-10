@@ -220,4 +220,132 @@ describe('users', function () {
       expect(error.profile.sAMAccountName).to.equal('jane');
     });
   });
+
+  describe('listing groups from the AD server', function() {
+    var error;
+    var response;
+    var saveQuery;
+
+    before(function (done) {
+      // We override the group query to prevent the tests from breaking if new
+      // custom groups are added to the test environment.
+      saveQuery = nconf.get('LDAP_SEARCH_LIST_GROUPS_QUERY');
+      nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', '(&(isCriticalSystemObject=TRUE)(objectCategory=group))');
+      users.listGroups('john', function(err, res) {
+        error = err;
+        response = res;
+        done();
+      });
+    });
+
+    after(function() {
+      nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', saveQuery);
+    });
+
+    it('should return the groups', function() {
+      expect(error).to.not.exist;
+      expect(response).to.deep.equal([
+        "Administrators",
+        "Users",
+        "Guests",
+        "Print Operators",
+        "Backup Operators",
+        "Replicator",
+        "Remote Desktop Users",
+        "Network Configuration Operators",
+        "Performance Monitor Users",
+        "Performance Log Users",
+        "Distributed COM Users",
+        "IIS_IUSRS",
+        "Cryptographic Operators",
+        "Event Log Readers",
+        "Certificate Service DCOM Access",
+        "Domain Computers",
+        "Domain Controllers",
+        "Schema Admins",
+        "Enterprise Admins",
+        "Cert Publishers",
+        "Domain Admins",
+        "Domain Users",
+        "Domain Guests",
+        "Group Policy Creator Owners",
+        "RAS and IAS Servers",
+        "Server Operators",
+        "Account Operators",
+        "Pre-Windows 2000 Compatible Access",
+        "Incoming Forest Trust Builders",
+        "Windows Authorization Access Group",
+        "Terminal Server License Servers",
+        "Allowed RODC Password Replication Group",
+        "Denied RODC Password Replication Group",
+        "Read-only Domain Controllers",
+        "Enterprise Read-only Domain Controllers"
+      ]);
+    });
+  });
+
+  describe('listing groups from AD server with extended properties list', function() {
+    var error;
+    var response;
+    var saveQuery;
+    var saveValue;
+
+    before(function (done) {
+      saveQuery = nconf.get('LDAP_SEARCH_LIST_GROUPS_QUERY');
+      saveValue = nconf.get('GROUP_PROPERTIES');
+      nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', '(&(isCriticalSystemObject=TRUE)(objectCategory=group))');
+      nconf.set('GROUP_PROPERTIES', ['cn', 'objectGUID']);
+      users.listGroups('john', function(err, res) {
+        error = err;
+        response = res;
+        done();
+      });
+    });
+
+    after(function() {
+      nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', saveQuery);
+      nconf.set('GROUP_PROPERTIES', saveValue);
+    });
+
+    it('should return the groups with extended properties', function() {
+      expect(error).to.not.exist;
+      expect(response).to.deep.equal([
+        {"cn":"Administrators", "objectGUID":"0@\u000bI\nZ�M�+o�\u0005\b�r"},
+        {"cn":"Users", "objectGUID":"�Ǜ\u001b*�pC��\rkE��F"},
+        {"cn":"Guests", "objectGUID":"t�L�M+\u001eL�X�<�5�J"},
+        {"cn":"Print Operators", "objectGUID":"\u0015@��`,!@��\"�%J�"},
+        {"cn":"Backup Operators", "objectGUID":"G��\u0019h&\u0002E�0\u001d�\u0001g��"},
+        {"cn":"Replicator", "objectGUID":"\f\u000b���\u0016�D������"},
+        {"cn":"Remote Desktop Users", "objectGUID":"S���\u0015�.L�L��\u0017���"},
+        {"cn":"Network Configuration Operators", "objectGUID":"֏\"��]yD�c��<�O�"},
+        {"cn":"Performance Monitor Users", "objectGUID":"�\u000b�v\f��J�\u001a�� vV�"},
+        {"cn":"Performance Log Users", "objectGUID":"A��j:\n�F����F?\u0001�"},
+        {"cn":"Distributed COM Users", "objectGUID":"�ǎ�k�YL�\u001e�,�V�@"},
+        {"cn":"IIS_IUSRS", "objectGUID":"��fr�WHK���\u0018�.K"},
+        {"cn":"Cryptographic Operators", "objectGUID":"�D���\u000e�B���MD���"},
+        {"cn":"Event Log Readers", "objectGUID":"����U��K�\u0003u9\u001esdz"},
+        {"cn":"Certificate Service DCOM Access", "objectGUID":"�]i�,&�H�\u001eƒ\u000e\u0006��"},
+        {"cn":"Domain Computers", "objectGUID":"�\u0019\u001f\u001f���@��4P, ��"},
+        {"cn":"Domain Controllers", "objectGUID":"7+\t\u0003��\u0016H�\u0012��X\u001d!\u0012"},
+        {"cn":"Schema Admins", "objectGUID":"�B�\f��\u0013C�Է��TC "},
+        {"cn":"Enterprise Admins", "objectGUID":"\u0017\u0018�K��MO�-P�\u0018\u0013��"},
+        {"cn":"Cert Publishers", "objectGUID":"\\\u0005�2���J�e�&�*ݟ"},
+        {"cn":"Domain Admins", "objectGUID":"��\rJ��\u0016H�D����1="},
+        {"cn":"Domain Users", "objectGUID":"\u000b���\u0002��C�c�\t���7"},
+        {"cn":"Domain Guests", "objectGUID":"̊�/2��O�<�J�z�D"},
+        {"cn":"Group Policy Creator Owners", "objectGUID":"r�Gק�,C�A��v�=�"},
+        {"cn":"RAS and IAS Servers", "objectGUID":"hq�\u0011���O�|�\tr\u0012�T"},
+        {"cn":"Server Operators", "objectGUID":"��\b�]/.D�E�&\u001b�x�"},
+        {"cn":"Account Operators", "objectGUID":"�G���J�F�\u0000\u0005�n�E�"},
+        {"cn":"Pre-Windows 2000 Compatible Access", "objectGUID":"�^\u0003��uoE�0�/e` 3"},
+        {"cn":"Incoming Forest Trust Builders", "objectGUID":"-�;>\u0000xYM��0:�~\\�"},
+        {"cn":"Windows Authorization Access Group", "objectGUID":"{e��\u0003m\u0013B�p:H��6:"},
+        {"cn":"Terminal Server License Servers", "objectGUID":"�\u0016%\b�\u001f�C�!�X(�a\b"},
+        {"cn":"Allowed RODC Password Replication Group", "objectGUID":"Adm>_%�@���L\"���"},
+        {"cn":"Denied RODC Password Replication Group", "objectGUID":"��kU\u0007\u0004\u0018K�CԡDh��"},
+        {"cn":"Read-only Domain Controllers", "objectGUID":"&X0)��<M�㡆����"},
+        {"cn":"Enterprise Read-only Domain Controllers", "objectGUID":"4L�\u0013\u0002�\u0010A�ex[�R\u0016q"}
+      ]);
+    });
+  });
 });

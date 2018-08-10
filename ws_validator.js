@@ -244,6 +244,29 @@ ws.on('open', function () {
       });
     });
   });
+}).on('list_groups', function(msg) {
+  jwt.verify(msg.jwt, nconf.get('TENANT_SIGNING_KEY'), function(err, payload) {
+    if (err) {
+      console.error('Unauthorized attempt of list_groups');
+      return;
+    }
+
+    console.log('Listing groups.');
+
+    var options = {
+      limit: payload.limit
+    };
+
+    users.listGroups(options, function (err, groups) {
+      if (err) return ws.sendEvent(payload.pid + '_list_groups_result', {
+        err: err
+      });
+      console.log('Listing groups succeeded.');
+      ws.sendEvent(payload.pid + '_list_groups_result', {
+        groups: groups
+      });
+    });
+  })
 });
 
 // Listen only for change_password event when write back is enabled.
