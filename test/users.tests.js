@@ -65,7 +65,7 @@ describe('users', function () {
     });
   });
 
-  it('should be able ot validate multiple simultaneous requests', function (done) {
+  it('should be able to validate multiple simultaneous requests', function (done) {
     async.parallel([
       function(cb) {
         users.validate('john', password, cb);
@@ -107,6 +107,48 @@ describe('users', function () {
 
   });
 
+  describe('validate with username and password and groups with extended properties list', function () {
+    var profile;
+    var saveValue;
+
+    before(function (done) { users._groupsCache.del('CN=Administrators,CN=Users,DC=fabrikam,DC=com', done); });
+    before(function (done) { users._groupsCache.del('CN=Domain Admins,CN=Users,DC=fabrikam,DC=com', done); });
+    before(function (done) { users._groupsCache.del('CN=Denied RODC Password Replication Group,CN=Users,DC=fabrikam,DC=com', done); });
+    before(function (done) { users._groupsCache.del('CN=Full-Admin,CN=Users,DC=fabrikam,DC=com', done); });
+
+    before(function () {
+      saveValue = nconf.get('GROUP_PROPERTIES');
+      nconf.set('GROUP_PROPERTIES', ['cn', 'objectGUID']);
+    });
+
+    after(function() {
+      nconf.set('GROUP_PROPERTIES', saveValue);
+    });
+
+    before(function (done) {
+      users.validate('john', password, function (err, p) {
+        if (err) return done(err);
+        profile = p;
+        done();
+      });
+    });
+
+    it('should include groups', function () {
+      expect(profile.groups[0]).to.deep.equal({ cn: 'Administrators', objectGUID: '490b4030-5a0a-4dd5-a32b-6fd10508c272' });
+      expect(profile.groups[1]).to.deep.equal({ cn: 'Domain Admins', objectGUID: '4a0deedb-cffa-4816-b144-adfac0d7313d' });
+      expect(profile.groups[2]).to.deep.equal({ cn: 'Denied RODC Password Replication Group', objectGUID: '556bdab6-0407-4b18-a443-d4a14468f688' });
+      expect(profile.groups[3]).to.deep.equal({ cn: 'Full-Admin', objectGUID: '27f15475-5a5e-42a9-9c08-0e9c6718be3d' });
+    });
+
+    it('should include basic attributes', function () {
+      expect(profile.id).to.equal('ae8fbd21-d66c-4f78-ad8e-53ab078cee16');
+      expect(profile.name.familyName).to.equal('Fabrikam');
+      expect(profile.name.givenName).to.equal('John');
+      expect(profile.emails[0].value).to.equal('john@fabrikam.com');
+      expect(profile.sAMAccountName).to.equal('john');
+    });
+
+  });
   describe('validate with wrong password', function () {
     var error;
 
@@ -310,41 +352,41 @@ describe('users', function () {
     it('should return the groups with extended properties', function() {
       expect(error).to.not.exist;
       expect(response).to.deep.equal([
-        {"cn":"Administrators", "objectGUID":"0@\u000bI\nZ�M�+o�\u0005\b�r"},
-        {"cn":"Users", "objectGUID":"�Ǜ\u001b*�pC��\rkE��F"},
-        {"cn":"Guests", "objectGUID":"t�L�M+\u001eL�X�<�5�J"},
-        {"cn":"Print Operators", "objectGUID":"\u0015@��`,!@��\"�%J�"},
-        {"cn":"Backup Operators", "objectGUID":"G��\u0019h&\u0002E�0\u001d�\u0001g��"},
-        {"cn":"Replicator", "objectGUID":"\f\u000b���\u0016�D������"},
-        {"cn":"Remote Desktop Users", "objectGUID":"S���\u0015�.L�L��\u0017���"},
-        {"cn":"Network Configuration Operators", "objectGUID":"֏\"��]yD�c��<�O�"},
-        {"cn":"Performance Monitor Users", "objectGUID":"�\u000b�v\f��J�\u001a�� vV�"},
-        {"cn":"Performance Log Users", "objectGUID":"A��j:\n�F����F?\u0001�"},
-        {"cn":"Distributed COM Users", "objectGUID":"�ǎ�k�YL�\u001e�,�V�@"},
-        {"cn":"IIS_IUSRS", "objectGUID":"��fr�WHK���\u0018�.K"},
-        {"cn":"Cryptographic Operators", "objectGUID":"�D���\u000e�B���MD���"},
-        {"cn":"Event Log Readers", "objectGUID":"����U��K�\u0003u9\u001esdz"},
-        {"cn":"Certificate Service DCOM Access", "objectGUID":"�]i�,&�H�\u001eƒ\u000e\u0006��"},
-        {"cn":"Domain Computers", "objectGUID":"�\u0019\u001f\u001f���@��4P, ��"},
-        {"cn":"Domain Controllers", "objectGUID":"7+\t\u0003��\u0016H�\u0012��X\u001d!\u0012"},
-        {"cn":"Schema Admins", "objectGUID":"�B�\f��\u0013C�Է��TC "},
-        {"cn":"Enterprise Admins", "objectGUID":"\u0017\u0018�K��MO�-P�\u0018\u0013��"},
-        {"cn":"Cert Publishers", "objectGUID":"\\\u0005�2���J�e�&�*ݟ"},
-        {"cn":"Domain Admins", "objectGUID":"��\rJ��\u0016H�D����1="},
-        {"cn":"Domain Users", "objectGUID":"\u000b���\u0002��C�c�\t���7"},
-        {"cn":"Domain Guests", "objectGUID":"̊�/2��O�<�J�z�D"},
-        {"cn":"Group Policy Creator Owners", "objectGUID":"r�Gק�,C�A��v�=�"},
-        {"cn":"RAS and IAS Servers", "objectGUID":"hq�\u0011���O�|�\tr\u0012�T"},
-        {"cn":"Server Operators", "objectGUID":"��\b�]/.D�E�&\u001b�x�"},
-        {"cn":"Account Operators", "objectGUID":"�G���J�F�\u0000\u0005�n�E�"},
-        {"cn":"Pre-Windows 2000 Compatible Access", "objectGUID":"�^\u0003��uoE�0�/e` 3"},
-        {"cn":"Incoming Forest Trust Builders", "objectGUID":"-�;>\u0000xYM��0:�~\\�"},
-        {"cn":"Windows Authorization Access Group", "objectGUID":"{e��\u0003m\u0013B�p:H��6:"},
-        {"cn":"Terminal Server License Servers", "objectGUID":"�\u0016%\b�\u001f�C�!�X(�a\b"},
-        {"cn":"Allowed RODC Password Replication Group", "objectGUID":"Adm>_%�@���L\"���"},
-        {"cn":"Denied RODC Password Replication Group", "objectGUID":"��kU\u0007\u0004\u0018K�CԡDh��"},
-        {"cn":"Read-only Domain Controllers", "objectGUID":"&X0)��<M�㡆����"},
-        {"cn":"Enterprise Read-only Domain Controllers", "objectGUID":"4L�\u0013\u0002�\u0010A�ex[�R\u0016q"}
+        { cn: 'Administrators', objectGUID: '490b4030-5a0a-4dd5-a32b-6fd10508c272' },
+        { cn: 'Users', objectGUID: '1b9bc7aa-ef2a-4370-adeb-0d6b45fffa46' },
+        { cn: 'Guests', objectGUID: 'b34cc274-2b4d-4c1e-b458-cb3cbb35a44a' },
+        { cn: 'Print Operators', objectGUID: 'e7f44015-2c60-4021-aebd-22ca254ae0b3' },
+        { cn: 'Backup Operators', objectGUID: '19b3b847-2668-4502-8c30-1dd20167d3d1' },
+        { cn: 'Replicator', objectGUID: 'fce80b0c-1699-44d7-94b9-bbe4a9ddf485' },
+        { cn: 'Remote Desktop Users', objectGUID: 'c9819153-a815-4c2e-934c-fa92178af5ab' },
+        { cn: 'Network Configuration Operators', objectGUID: 'e0228fd6-5de0-4479-9e63-88c83cb14fb3' },
+        { cn: 'Performance Monitor Users', objectGUID: '768b0b90-b90c-4a87-821a-b1dd207656ca' },
+        { cn: 'Performance Log Users', objectGUID: '6aa9a841-0a3a-4689-bfc8-d7ff463f01c1' },
+        { cn: 'Distributed COM Users', objectGUID: 'dc8ec7f6-a96b-4c59-aa1e-f22cb156ad40' },
+        { cn: 'IIS_IUSRS', objectGUID: '7266fbc0-57a0-4b48-a9f9-cc18ea832e4b' },
+        { cn: 'Cryptographic Operators', objectGUID: 'fcd844c8-0e82-42d6-b0bf-ae4d449a9184' },
+        { cn: 'Event Log Readers', objectGUID: '8d9585b9-ae55-4bf8-8303-75391e73647a' },
+        { cn: 'Certificate Service DCOM Access', objectGUID: 'a6695dc6-262c-48de-911e-c6920e06d4ed' },
+        { cn: 'Domain Computers', objectGUID: '1f1f198c-f9d1-40e0-bede-34502c208de5' },
+        { cn: 'Domain Controllers', objectGUID: '03092b37-d6b5-4816-bf12-aade581d2112' },
+        { cn: 'Schema Admins', objectGUID: '0cb242b3-c282-4313-86d4-b7dbd2544320' },
+        { cn: 'Enterprise Admins', objectGUID: '4ba21817-cfac-4f4d-a32d-50b51813f1de' },
+        { cn: 'Cert Publishers', objectGUID: '32bd055c-f3ac-4afa-8a65-e726ec2add9f' },
+        { cn: 'Domain Admins', objectGUID: '4a0deedb-cffa-4816-b144-adfac0d7313d' },
+        { cn: 'Domain Users', objectGUID: 'c5c1cb0b-ac02-43a8-bb63-88099a94cf37' },
+        { cn: 'Domain Guests', objectGUID: '2fe68acc-cf32-4fd2-aa3c-d94aa17af644' },
+        { cn: 'Group Policy Creator Owners', objectGUID: 'd7479b72-84a7-432c-b541-80b276e33dd0' },
+        { cn: 'RAS and IAS Servers', objectGUID: '11c47168-99b7-4fa8-847c-ef097212f054' },
+        { cn: 'Server Operators', objectGUID: '8408fdab-2f5d-442e-bd45-ac261bb87898' },
+        { cn: 'Account Operators', objectGUID: 'afa447da-4ad1-46d5-9600-05ac6eee45db' },
+        { cn: 'Pre-Windows 2000 Compatible Access', objectGUID: 'c1035ec5-75ef-456f-8930-fb2f65602033' },
+        { cn: 'Incoming Forest Trust Builders', objectGUID: '3e3ba02d-7800-4d59-b8d4-303ac27e5c8f' },
+        { cn: 'Windows Authorization Access Group', objectGUID: 'ffcf657b-6d03-4213-ad70-3a48c0b4363a' },
+        { cn: 'Terminal Server License Servers', objectGUID: '082516d6-1fdf-4395-8921-a55828f36108' },
+        { cn: 'Allowed RODC Password Replication Group', objectGUID: '3e6d6441-255f-40a9-aaa3-904c2291b6c1' },
+        { cn: 'Denied RODC Password Replication Group', objectGUID: '556bdab6-0407-4b18-a443-d4a14468f688' },
+        { cn: 'Read-only Domain Controllers', objectGUID: '29305826-dbb0-4d3c-9fe3-a186c9f79795' },
+        { cn: 'Enterprise Read-only Domain Controllers', objectGUID: '13c64c34-af02-4110-9865-785b83521671' }
       ]);
     });
   });
