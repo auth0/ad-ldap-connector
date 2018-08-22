@@ -231,7 +231,7 @@ describe('users', function () {
       // custom groups are added to the test environment.
       saveQuery = nconf.get('LDAP_SEARCH_LIST_GROUPS_QUERY');
       nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', '(&(isCriticalSystemObject=TRUE)(objectCategory=group))');
-      users.listGroups('john', function(err, res) {
+      users.listGroups(function(err, res) {
         error = err;
         response = res;
         done();
@@ -295,7 +295,7 @@ describe('users', function () {
       saveValue = nconf.get('GROUP_PROPERTIES');
       nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', '(&(isCriticalSystemObject=TRUE)(objectCategory=group))');
       nconf.set('GROUP_PROPERTIES', ['cn', 'objectGUID']);
-      users.listGroups('john', function(err, res) {
+      users.listGroups(function(err, res) {
         error = err;
         response = res;
         done();
@@ -345,6 +345,35 @@ describe('users', function () {
         {"cn":"Denied RODC Password Replication Group", "objectGUID":"��kU\u0007\u0004\u0018K�CԡDh��"},
         {"cn":"Read-only Domain Controllers", "objectGUID":"&X0)��<M�㡆����"},
         {"cn":"Enterprise Read-only Domain Controllers", "objectGUID":"4L�\u0013\u0002�\u0010A�ex[�R\u0016q"}
+      ]);
+    });
+  });
+
+  describe('listing groups from AD server with a limit', function() {
+    var error;
+    var response;
+    var saveQuery;
+
+    before(function (done) {
+      // We override the group query to prevent the tests from breaking if new
+      // custom groups are added to the test environment.
+      saveQuery = nconf.get('LDAP_SEARCH_LIST_GROUPS_QUERY');
+      nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', '(&(isCriticalSystemObject=TRUE)(objectCategory=group))');
+      users.listGroups({limit: 1}, function(err, res) {
+        error = err;
+        response = res;
+        done();
+      });
+    });
+
+    after(function() {
+      nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', saveQuery);
+    });
+
+    it('should return the groups', function() {
+      expect(error).to.not.exist;
+      expect(response).to.deep.equal([
+        "Administrators"
       ]);
     });
   });
