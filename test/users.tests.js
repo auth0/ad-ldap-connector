@@ -8,6 +8,7 @@ var crypto = require('../lib/crypto');
 var cas = require('../lib/add_certs');
 var PasswordComplexityError = require('../lib/errors/PasswordComplexityError');
 var async = require('async');
+var cache = require('../lib/cache');
 
 var password = nconf.get('LDAP_BIND_PASSWORD') || crypto.decrypt(nconf.get('LDAP_BIND_CREDENTIALS'));
 var jane_password = nconf.get('JANE_PASSWORD');
@@ -23,24 +24,26 @@ describe('users', function () {
     if (nconf.get('LDAP_URL').toLowerCase().substr(0, 5) === 'ldaps') {
       cas.inject(function () {
         console.log('Using LDAPs');
+        // We need to wait until the LDAP bind is done
         users = new Users();
-        done();
+        setTimeout(done, 500);
       });
     }else{
       users = new Users();
-      done();
+      // We need to wait until the LDAP bind is done
+      setTimeout(done, 500);
     }
   });
 
   beforeEach(function clearCache (done) {
     const ops = [];
-    users._groupsCache.createReadStream()
+    cache.db.createReadStream()
       .on('data', function (data) {
         ops.push({ type: 'del', key: data.key });
       })
       .on('error', done)
       .on('end', function () {
-        users._groupsCache.batch(ops, done);
+        cache.db.batch(ops, done);
       });
   });
 
@@ -401,6 +404,7 @@ describe('users', function () {
   describe('listing groups from AD server with paging support', function() {
     var error;
     var response;
+    var metadata;
     var saveQuery;
     var saveValue;
 
@@ -418,9 +422,11 @@ describe('users', function () {
       // custom groups are added to the test environment.
       saveQuery = nconf.get('LDAP_SEARCH_LIST_GROUPS_QUERY');
       nconf.set('LDAP_SEARCH_LIST_GROUPS_QUERY', '(&(isCriticalSystemObject=TRUE)(objectCategory=group))');
-      users.listGroups({page: 1, pageSize: 10}, function(err, res) {
+      users.listGroups({page: 1, pageSize: 10}, function(err, res, meta) {
         error = err;
         response = res;
+        metadata = meta;
+
         done();
       });
     });
@@ -431,6 +437,7 @@ describe('users', function () {
 
     it('should return the groups (page 1 and 2)', function (done) {
       expect(error).to.not.exist;
+      expect(metadata).to.deep.equal({ totalEntries: 35 });
       expect(response).to.deep.equal([
         { dn: 'CN=Account Operators,CN=Builtin,DC=fabrikam,DC=com', cn: 'Account Operators' },
         { dn: 'CN=Administrators,CN=Builtin,DC=fabrikam,DC=com', cn: 'Administrators' },
@@ -444,8 +451,9 @@ describe('users', function () {
         { dn: 'CN=Domain Admins,CN=Users,DC=fabrikam,DC=com', cn: 'Domain Admins' }
       ]);
 
-      users.listGroups({page: 2, pageSize: 10}, function(err, res) {
+      users.listGroups({page: 2, pageSize: 10}, function(err, res, meta) {
         expect(err).to.not.exist;
+        expect(meta).to.deep.equal({ totalEntries: 35 });
         expect(res).to.deep.equal([
           { dn: 'CN=Domain Computers,CN=Users,DC=fabrikam,DC=com', cn: 'Domain Computers' },
           { dn: 'CN=Domain Controllers,CN=Users,DC=fabrikam,DC=com', cn: 'Domain Controllers' },

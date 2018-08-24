@@ -5,6 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec",
+    "cover": "nyc --reporter=text-summary npm run test",
+    "cover:html": "nyc --reporter=html npm run test",
     "snyk": "snyk test",
     "start": "node server.js"
   },
@@ -70,6 +72,7 @@
     "bump-version": "^0.5.0",
     "chai": "~1.7.2",
     "mocha": "~2.1.0",
+    "nyc": "^12.0.2",
     "snyk": "^1.18.0"
   },
   "optionalDependencies": {

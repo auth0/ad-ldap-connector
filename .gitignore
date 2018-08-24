@@ -15,3 +15,5 @@ node_modules/*
 cache.db/
 .DS_store*
 .vscode
+coverage/*
+.nyc_output/*

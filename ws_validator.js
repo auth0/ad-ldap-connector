@@ -136,21 +136,21 @@ ws.on('open', function () {
     users.validate(payload.username, payload.password, function (err, user) {
       if (err) {
         if (err instanceof AccountDisabled) {
-          log("Authentication attempt failed. Reason: " + "account disabled".red);
+          log('Authentication attempt failed. Reason: ' + 'account disabled'.red);
           return ws.reply(payload.pid, {
             err: err,
             profile: err.profile
           });
         }
         if (err instanceof AccountExpired) {
-          log("Authentication attempt failed. Reason: " + "account expired".red);
+          log('Authentication attempt failed. Reason: ' + 'account expired'.red);
           return ws.reply(payload.pid, {
             err: err,
             profile: err.profile
           });
         }
         if (err instanceof AccountLocked) {
-          log("Authentication attempt failed. Reason: " + "account locked".red);
+          log('Authentication attempt failed. Reason: ' + 'account locked'.red);
           return ws.reply(payload.pid, {
             err: err,
             profile: err.profile
@@ -158,12 +158,12 @@ ws.on('open', function () {
         }
         if (err instanceof PasswordChangeRequired) {
           if (authenticate_when_password_change_required) {
-            log("Authentication succeeded, but " + "password change is required".red);
+            log('Authentication succeeded, but ' + 'password change is required'.red);
             return ws.sendEvent(payload.pid + '_result', {
               profile: err.profile
             });
           } else {
-            log("Authentication attempt failed. Reason: " + "password change is required".red);
+            log('Authentication attempt failed. Reason: ' + 'password change is required'.red);
             return ws.reply(payload.pid, {
               err: err,
               profile: err.profile
@@ -172,12 +172,12 @@ ws.on('open', function () {
         }
         if (err instanceof PasswordExpired) {
           if (authenticate_when_password_expired) {
-            log("Authentication succeeded but " + "password expired".red);
+            log('Authentication succeeded but ' + 'password expired'.red);
             return ws.sendEvent(payload.pid + '_result', {
               profile: err.profile
             });
           } else {
-            log("Authentication attempt failed. Reason: " + "password expired".red);
+            log('Authentication attempt failed. Reason: ' + 'password expired'.red);
             return ws.reply(payload.pid, {
               err: err,
               profile: err.profile
@@ -185,14 +185,14 @@ ws.on('open', function () {
           }
         }
         if (err instanceof WrongPassword) {
-          log("Authentication attempt failed. Reason: " + "wrong password".red);
+          log('Authentication attempt failed. Reason: ' + 'wrong password'.red);
           return ws.reply(payload.pid, {
             err: err,
             profile: err.profile
           });
         }
         if (err instanceof WrongUsername) {
-          log("Authentication attempt failed. Reason: " + "wrong username".red);
+          log('Authentication attempt failed. Reason: ' + 'wrong username'.red);
           return ws.reply(payload.pid, {
             err: err,
             profile: {
@@ -200,7 +200,7 @@ ws.on('open', function () {
             }
           });
         }
-        log("Authentication attempt failed. Reason: " + "unexpected error".red);
+        log('Authentication attempt failed. Reason: ' + 'unexpected error'.red);
 
         if (err.inner && err.inner.stack) {
           console.error('Inner error:', err.inner.stack);
@@ -254,19 +254,21 @@ ws.on('open', function () {
     console.log('Listing groups.');
 
     var options = {
-      limit: payload.limit
+      page: Number(payload.page),
+      pageSize: Number(payload.pageSize)
     };
 
-    users.listGroups(options, function (err, groups) {
+    users.listGroups(options, function (err, groups, metadata) {
       if (err) return ws.sendEvent(payload.pid + '_list_groups_result', {
         err: err
       });
       console.log('Listing groups succeeded.');
       ws.sendEvent(payload.pid + '_list_groups_result', {
-        groups: groups
+        groups: groups,
+        metadata
       });
     });
-  })
+  });
 });
 
 // Listen only for change_password event when write back is enabled.
@@ -276,7 +278,7 @@ if (nconf.get('ENABLE_WRITE_BACK')) {
       if (err) {
         console.error('Unauthorized change_password attempt');
         return;
-      };
+      }
 
       var log_prepend = 'user ' + payload.username + ':';
       var log = console.log.bind(console, log_prepend.blue);
@@ -286,20 +288,20 @@ if (nconf.get('ENABLE_WRITE_BACK')) {
       users.changePassword(payload.username, payload.password, function (err, profile) {
         if (err) {
           if (err instanceof InsufficientAccessRightsError || err instanceof PasswordComplexityError) {
-            log("Change Password attempt failed. Reason: " + err.message.red);
+            log('Change Password attempt failed. Reason: ' + err.message.red);
             return ws.sendEvent(payload.pid + '_change_password_result', {
               err: err,
               profile: err.profile
             });
           }
 
-          log("Change Password attempt failed. Reason: " + "unexpected error".red);
+          log('Change Password attempt failed. Reason: ' + 'unexpected error'.red);
 
           if (err.inner && err.inner.stack) {
             console.error('Inner error:', err.inner.stack);
           } else {
             console.log(err);
-          };
+          }
 
           ws.sendEvent(payload.pid + '_change_password_result', {
             err: err
@@ -325,10 +327,10 @@ function authenticate_connector() {
     expiresInMinutes: 1,
     issuer: nconf.get('CONNECTION'),
     audience: nconf.get('REALM'),
-    "http://schemas.auth0.com/ad-ldap-connector/capabilites": defaultCapabilities
+    'http://schemas.auth0.com/ad-ldap-connector/capabilites': defaultCapabilities
   });
 
   ws.sendEvent('authenticate', {
     jwt: token
   });
-};
+}
