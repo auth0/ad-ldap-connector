@@ -128,27 +128,6 @@ exports.run = function (workingPath, callback) {
       });
     },
     function (cb) {
-      function anonymousSearchEnabled(enabled) {
-        nconf.set('ANONYMOUS_SEARCH_ENABLED',enabled);
-        connection.destroy();
-        return cb();
-      }
-
-      const connection = createConnection();
-      connection.search(nconf.get('LDAP_BASE'), '(objectclass=*)', function (err, res) {
-        if (err) {
-          return anonymousSearchEnabled(false);
-        }
-        
-        res.once('end', function(){
-          anonymousSearchEnabled(true);
-        })
-        .once('error',function(err){
-          anonymousSearchEnabled(false);
-        });
-      });
-    },
-    function (cb) {
       var do_not_configure_firewall = nconf.get('FIREWALL_RULE_CREATED') ||
                                       !info.kerberos ||
                                       process.platform !== 'win32';
