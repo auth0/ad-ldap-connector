@@ -255,16 +255,17 @@ ws.on('open', function () {
 
     var options = {
       page: Number(payload.page),
-      pageSize: Number(payload.pageSize)
+      pageSize: Number(payload.pageSize),
+      pagingCookie: payload.pagingCookie
     };
 
     users.listGroups(options, function (err, groups, metadata) {
-      if (err) return ws.sendEvent(payload.pid + '_list_groups_result', {
-        err: err
-      });
+      if (err) {
+        return ws.sendEvent(payload.pid + '_list_groups_result', { err });
+      }
       console.log('Listing groups succeeded.');
       ws.sendEvent(payload.pid + '_list_groups_result', {
-        groups: groups,
+        groups,
         metadata
       });
     });
