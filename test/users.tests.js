@@ -35,6 +35,9 @@ describe('users', function () {
   it('should be able to query by name', function (done) {
     users.list('wolo', function (err, users) {
       if (err) return done(err);
+      expect(users[0].id).to
+        .match(/[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}/, 'Id should be a UUID');
+
       expect(users[0].name.familyName).to.eql('Woloski');
       expect(users[0].name.givenName).to.eql('Matias');
       done();
