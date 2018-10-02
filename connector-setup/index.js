@@ -133,15 +133,23 @@ exports.run = function (workingPath, callback) {
         connection.destroy();
         return cb();
       }
-
+      const searchOpts = {
+        filter: '(objectclass=person)',
+        scope: 'sub'
+      };
       const connection = createConnection();
-      connection.search(nconf.get('LDAP_BASE'), '(objectclass=*)', function (err, res) {
+      connection.search(nconf.get('LDAP_BASE'), searchOpts , function (err, res) {
         if (err) {
           return anonymousSearchEnabled(false);
         }
         
-        res.once('end', function(){
-          anonymousSearchEnabled(true);
+        var searchEntry;
+        res.once('searchEntry', function (entry) {
+          searchEntry = entry;
+        })
+        .once('end', function(result){
+          const isEnabled = searchEntry && result.status===0;
+          anonymousSearchEnabled(isEnabled);
         })
         .once('error',function(err){
           anonymousSearchEnabled(false);
