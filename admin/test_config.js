@@ -97,10 +97,13 @@ module.exports = function (config, callback) {
       var cas;
 
       if (process.platform === 'win32') {
-        var winCa = require('win-ca');
+        var winca = require('win-ca-ffi');
         var forge = require('node-forge');
-        cas = winCa.all().map(function(ca){
-          return { pem: forge.pki.certificateToPem(ca) };
+        var moment = require('moment');
+        var cas = [];
+        winca.each(['TRUSTEDPEOPLE', 'CA', 'ROOT'], function(ca){
+          if (moment(ca.validity.notAfter).isBefore()) { return; }
+          cas.push(forge.pki.certificateToPem(ca));
         });
       } else {
         cas = https.globalAgent.options.ca;
