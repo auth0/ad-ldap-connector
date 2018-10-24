@@ -31,7 +31,7 @@
     "connect-multiparty": "^2.0.0",
     "cookie-parser": "^1.4.3",
     "cookie-session": "^1.2.0",
-    "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/master",
+    "cookie-sessions": "https://github.com/auth0/cookie-sessions/tarball/a192c158c8f1b40e4f248cb3242171869cbb48d9",
     "ejs": "^2.5.5",
     "express": "^4.15.2",
     "express-passport-logout": "~0.1.0",
