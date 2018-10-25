@@ -2594,8 +2594,7 @@
       }
     },
     "passport-ssl-certificate": {
-      "version": "git://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
-      "from": "passport-ssl-certificate@git://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
+      "version": "https://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
       "requires": {
         "passport-strategy": "1.x.x"
       }
@@ -3452,8 +3451,7 @@
       "integrity": "sha1-+vUbnrdKrvOzrPStX2Gr8ky3uT4="
     },
     "stream-rotate": {
-      "version": "github:crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
-      "from": "stream-rotate@github:crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
+      "version": "https://github.com/crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
       "requires": {
         "mkdirp": "0.3.5",
         "moment": "^2.14.1"
@@ -3924,7 +3922,7 @@
     },
     "win-ca-ffi": {
       "version": "1.0.0",
-      "resolved": "github:jfromaniello/win-ca#f5a9fcd99fba90b4647b1f043c56fe970a971dd3",
+      "resolved": "https://github.com/jfromaniello/win-ca#f5a9fcd99fba90b4647b1f043c56fe970a971dd3",
       "optional": true,
       "requires": {
         "ffi": "^2.2.0",
