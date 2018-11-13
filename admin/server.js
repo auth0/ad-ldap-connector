@@ -10,8 +10,6 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var session = require('express-session')
-var logger = require('morgan');
-var xtend = require('xtend');
 var request = require('request');
 var urlJoin = require('url-join');
 var exec = require('child_process').exec;
@@ -20,6 +18,7 @@ var freeport = require('freeport');
 var multipart = require('connect-multiparty');
 var test_config = require('./test_config');
 var Users = require('../lib/users');
+var _ = require('lodash');
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
@@ -83,7 +82,7 @@ function restart_server(cb) {
 }
 
 function merge_config(req, res) {
-  var new_config = xtend(req.current_config, req.body);
+  var new_config = _.extend(req.current_config, req.body);
   fs.writeFileSync(__dirname + '/../config.json',
     JSON.stringify(new_config, null, 2));
 
@@ -113,7 +112,7 @@ function run(cmd, args, callback) {
 
 app.get('/', set_current_config, function(req, res) {
   console.log(req.session.LDAP_RESULTS);
-  res.render('index', xtend(req.current_config, {
+  res.render('index', _.extend(req.current_config, {
     SUCCESS: req.query && req.query.s === '1',
     LDAP_RESULTS: req.session.LDAP_RESULTS
   }, {
@@ -126,11 +125,11 @@ app.post('/ldap', set_current_config, function(req, res, next) {
   // Convert ENABLE_WRITE_BACK and ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD to boolean.
   req.body.ENABLE_WRITE_BACK = !!(req.body.ENABLE_WRITE_BACK && req.body.ENABLE_WRITE_BACK === 'on');
   req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD = !!(req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD && req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD === 'on');
-  
-  var config = xtend({}, req.current_config, req.body);
+
+  var config = _.extend({}, req.current_config, req.body);
   test_config(config, function(err, result) {
     if (err) {
-      return res.render('index', xtend(req.current_config, req.body, {
+      return res.render('index', _.extend(req.current_config, req.body, {
         ERROR: err.message,
         LDAP_RESULTS: result
       }));
@@ -165,7 +164,7 @@ app.post('/server', multipart(), set_current_config, function(req, res, next) {
 
 app.post('/ticket', set_current_config, function(req, res, next) {
   if (!req.body.PROVISIONING_TICKET) {
-    return res.render('index', xtend(req.current_config, {
+    return res.render('index', _.extend(req.current_config, {
       ERROR: 'The ticket url ' + req.body.PROVISIONING_TICKET + ' is not vaild.'
     }));
   }
@@ -179,32 +178,32 @@ app.post('/ticket', set_current_config, function(req, res, next) {
     if (err){
       if (err.code === 'ECONNREFUSED') {
         console.error('Unable to reach auth0 at: ' + info_url);
-        return res.render('index', xtend(req.current_config, {
+        return res.render('index', _.extend(req.current_config, {
           ERROR: 'Unable to connect to Auth0, verify internet connectivity.'
         }));
       }
 
       if (err.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' || err.code ==='CERT_UNTRUSTED') {
         console.error('The Auth0 certificate at ' + info_url + ' could not be validated', err);
-        return res.render('index', xtend(req.current_config, {
+        return res.render('index', _.extend(req.current_config, {
           ERROR: 'The Auth0 server is using a certificate issued by an untrusted Certification Authority. Go to https://auth0.com/docs/connector/ca-certificates for instructions on how to install your certificate Authority. \n ' + err.message
         }));
       }
 
       if (err.code === 'DEPTH_ZERO_SELF_SIGNED_CERT') {
         console.error('The Auth0 certificate at ' + info_url + ' could not be validated', err);
-        return res.render('index', xtend(req.current_config, {
+        return res.render('index', _.extend(req.current_config, {
           ERROR: 'The Auth0 server is using a selg-signed certificate. Go to https://auth0.com/docs/connector/ca-certificates for instructions on how to install your certificate. \n' + err.message
         }));
       }
 
-      return res.render('index', xtend(req.current_config, {
+      return res.render('index', _.extend(req.current_config, {
         ERROR: 'Network error: ' + err.message
       }));
     }
 
     if (resp.statusCode !== 200 || !body || !body.adHub) {
-      return res.render('index', xtend(req.current_config, {
+      return res.render('index', _.extend(req.current_config, {
         ERROR: 'Wrong ticket url.'
       }));
     }
@@ -257,7 +256,7 @@ app.post('/import', set_current_config, multipart(), function(req, res, next) {
   console.log('Importing configuration.');
 
   if (!req.files || !req.files.IMPORT_FILE || req.files.IMPORT_FILE.size === 0) {
-    return res.render('index', xtend(req.current_config, {
+    return res.render('index', _.extend(req.current_config, {
       ERROR: 'Upload a valid zip file.'
     }));
   }
@@ -275,7 +274,7 @@ app.post('/import', set_current_config, multipart(), function(req, res, next) {
   });
 
   return restart_server(function() {
-    return res.render('index', xtend(read_current_config(), {
+    return res.render('index', _.extend(read_current_config(), {
       SUCCESS: true
     }));
   });
