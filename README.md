@@ -18,7 +18,7 @@ __Connections > Enterprise > AD/LDAP__
 
 ![](https://cdn.auth0.com/docs/media/articles/connections/enterprise/active-directory/ldap-create.png)
 
-Name the connection and check whether you want `Kerberos` enabled for this connection. If you enable this, you need to enter the range of IP addresses from where `Kerberos` authentication will be enabled. These would typically be the intranet where `Kerberos` would work.
+Name the connection and check whether you want `Kerberos` enabled for this connection. If you enable this, you will need to enter the range of IP addresses from where `Kerberos` authentication will be enabled. These would typically be the intranet where `Kerberos` would work.
 
 ![](https://cdn.auth0.com/docs/media/articles/connections/enterprise/active-directory/ldap-create-2.png)
 
