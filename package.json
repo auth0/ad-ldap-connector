@@ -24,7 +24,7 @@
     "@auth0/thumbprint": "0.0.6",
     "adm-zip": "^0.4.11",
     "async": "~0.2.9",
-    "body-parser": "^1.17.1",
+    "body-parser": "^1.18.3",
     "cb": "~0.1.0",
     "colors": "~0.6.0-1",
     "commander": "~1.1.1",
