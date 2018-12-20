@@ -33,7 +33,7 @@
     "cookie-session": "^1.2.0",
     "cookie-sessions": "github:auth0/cookie-sessions#53a8aae",
     "ejs": "^2.5.5",
-    "express": "^4.15.2",
+    "express": "^4.16.4",
     "express-passport-logout": "~0.1.0",
     "express-session": "^1.14.0",
     "freeport": "~1.0.2",
