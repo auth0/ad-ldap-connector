@@ -228,7 +228,7 @@
     },
     "bindings": {
       "version": "1.2.1",
-      "resolved": "https://registry.npmjs.org/bindings/-/bindings-1.2.1.tgz",
+      "resolved": "http://registry.npmjs.org/bindings/-/bindings-1.2.1.tgz",
       "integrity": "sha1-FK1hE4EtLTfXLme0ystLtyZQXxE="
     },
     "bl": {
@@ -734,31 +734,6 @@
         "cookie-signature": "1.0.6"
       }
     },
-    "cookie-session": {
-      "version": "1.2.0",
-      "resolved": "https://registry.npmjs.org/cookie-session/-/cookie-session-1.2.0.tgz",
-      "integrity": "sha1-nfK+uecjmY5w0eMf2jeyigvPN/8=",
-      "requires": {
-        "cookies": "0.5.0",
-        "debug": "~2.2.0",
-        "on-headers": "~1.0.0"
-      },
-      "dependencies": {
-        "debug": {
-          "version": "2.2.0",
-          "resolved": "https://registry.npmjs.org/debug/-/debug-2.2.0.tgz",
-          "integrity": "sha1-+HBX6ZWxofauaklgZkE3vFbwOdo=",
-          "requires": {
-            "ms": "0.7.1"
-          }
-        },
-        "ms": {
-          "version": "0.7.1",
-          "resolved": "https://registry.npmjs.org/ms/-/ms-0.7.1.tgz",
-          "integrity": "sha1-nNE8A62/8ltl7/3nzoZO6VIBcJg="
-        }
-      }
-    },
     "cookie-sessions": {
       "version": "github:auth0/cookie-sessions#53a8aae3d04528982b660af6e7333d27f2f123d3",
       "from": "github:auth0/cookie-sessions#53a8aae",
@@ -777,14 +752,6 @@
       "version": "1.0.6",
       "resolved": "https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.0.6.tgz",
       "integrity": "sha1-4wOogrNCzD7oylE6eZmXNNqzriw="
-    },
-    "cookies": {
-      "version": "0.5.0",
-      "resolved": "https://registry.npmjs.org/cookies/-/cookies-0.5.0.tgz",
-      "integrity": "sha1-FkysRqHTyjs7h0J0FMJJMdg4ECU=",
-      "requires": {
-        "keygrip": "~1.0.0"
-      }
     },
     "core-util-is": {
       "version": "1.0.2",
@@ -1281,9 +1248,9 @@
       }
     },
     "ffi": {
-      "version": "2.2.0",
-      "resolved": "https://registry.npmjs.org/ffi/-/ffi-2.2.0.tgz",
-      "integrity": "sha1-vxiwRmain3EiftVoldVDCvRwQvo=",
+      "version": "2.3.0",
+      "resolved": "https://registry.npmjs.org/ffi/-/ffi-2.3.0.tgz",
+      "integrity": "sha512-vkPA9Hf9CVuQ5HeMZykYvrZF2QNJ/iKGLkyDkisBnoOOFeFXZQhUPxBARPBIZMJVulvBI2R+jgofW03gyPpJcQ==",
       "optional": true,
       "requires": {
         "bindings": "~1.2.0",
@@ -1857,11 +1824,6 @@
       "requires": {
         "freeport": "~1.0.2"
       }
-    },
-    "keygrip": {
-      "version": "1.0.1",
-      "resolved": "https://registry.npmjs.org/keygrip/-/keygrip-1.0.1.tgz",
-      "integrity": "sha1-sC+kgW7vIajEs1yp5Skh/8iaMOk="
     },
     "keypress": {
       "version": "0.1.0",
