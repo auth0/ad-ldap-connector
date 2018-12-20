@@ -63,7 +63,7 @@
     "win-ca": "^1.0.0",
     "winston": "~2.2.0",
     "ws": "^1.1.5",
-    "wsfed": "^3.2.0",
+    "wsfed": "^3.3.3",
     "xtend": "~2.1.1"
   },
   "devDependencies": {
