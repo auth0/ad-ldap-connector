@@ -34,7 +34,7 @@
     "ejs": "^2.5.5",
     "express": "^4.16.4",
     "express-passport-logout": "~0.1.0",
-    "express-session": "^1.14.0",
+    "express-session": "^1.15.6",
     "freeport": "~1.0.2",
     "jsonwebtoken": "^5.7.0",
     "kerberos-server": "^1.0.0",
