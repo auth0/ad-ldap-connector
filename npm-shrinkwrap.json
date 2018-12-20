@@ -228,7 +228,7 @@
     },
     "bindings": {
       "version": "1.2.1",
-      "resolved": "http://registry.npmjs.org/bindings/-/bindings-1.2.1.tgz",
+      "resolved": "https://registry.npmjs.org/bindings/-/bindings-1.2.1.tgz",
       "integrity": "sha1-FK1hE4EtLTfXLme0ystLtyZQXxE="
     },
     "bl": {
@@ -3138,18 +3138,11 @@
       }
     },
     "selfsigned": {
-      "version": "1.9.1",
-      "resolved": "https://registry.npmjs.org/selfsigned/-/selfsigned-1.9.1.tgz",
-      "integrity": "sha1-zdpEktcNSGVw+HxlVGAjVY4d+lo=",
+      "version": "1.10.4",
+      "resolved": "https://registry.npmjs.org/selfsigned/-/selfsigned-1.10.4.tgz",
+      "integrity": "sha512-9AukTiDmHXGXWtWjembZ5NDmVvP2695EtpgbCsxCa68w3c88B+alqbmZ4O3hZ4VWGXeGWzEVdvqgAJD8DQPCDw==",
       "requires": {
-        "node-forge": "0.6.33"
-      },
-      "dependencies": {
-        "node-forge": {
-          "version": "0.6.33",
-          "resolved": "https://registry.npmjs.org/node-forge/-/node-forge-0.6.33.tgz",
-          "integrity": "sha1-RjgRh59XPUUVWtap9D3ClujoXrw="
-        }
+        "node-forge": "0.7.5"
       }
     },
     "semver": {
