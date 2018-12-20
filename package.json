@@ -22,7 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "@auth0/thumbprint": "0.0.6",
-    "adm-zip": "^0.4.7",
+    "adm-zip": "^0.4.11",
     "async": "~0.2.9",
     "body-parser": "^1.17.1",
     "cb": "~0.1.0",
