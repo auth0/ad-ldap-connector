@@ -59,7 +59,7 @@
     "stream-rotate": "crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
     "tunnel": "~0.0.3",
     "url-join": "^0.0.1",
-    "win-ca": "^1.0.0",
+    "win-ca": "^1.1.0",
     "winston": "~2.2.0",
     "ws": "^1.1.5",
     "wsfed": "^3.3.3",
