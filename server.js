@@ -79,8 +79,8 @@ connectorSetup.run(__dirname, function(err) {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended:true}));
   app.use(cookieSessions({
-    session_key:    'auth0-ad-conn',
-    secret:         nconf.get('SESSION_SECRET')}));
+    name:    'auth0-ad-conn',
+    secret:   nconf.get('SESSION_SECRET')}));
 
   app.use(passport.initialize());
 

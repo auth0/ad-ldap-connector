@@ -1,0 +1,37 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.12.0
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  'npm:base64url:20180511':
+    - '*':
+        reason: The vulnerability is for Node <=4 but we're in Node 8
+        expires: '2019-11-19T12:18:32.458Z'
+  'npm:chownr:20180731':
+    - leveldown > prebuild-install > tar-fs > chownr:
+        reason: >-
+          The vulnerable package is not used during runtime, only when
+          installing
+        expires: '2019-11-19T13:55:05.888Z'
+  'npm:deep-extend:20180409':
+    - leveldown > prebuild-install > rc > deep-extend:
+        reason: >-
+          The vulnerable package is not used during runtime, only when
+          installing
+        expires: '2019-11-19T13:55:05.888Z'
+  'snyk:lic:npm:xmldom:LGPL-3.0':
+    - wsfed > saml > xml-crypto > xmldom:
+        reason: >-
+          The LICENSE file in xmldom GitHub repo suggests one can choose between MIT and
+          LGPL-3. The MIT one is compliant with our repo
+        expires: '2019-01-19T14:12:04.030Z'
+    - wsfed > saml > xmldom:
+        reason: >-
+          The LICENSE file in xmldom GitHub repo suggests one can choose between MIT and
+          LGPL-3. The MIT one is compliant with our repo
+        expires: '2019-01-19T14:12:04.030Z'
+    - wsfed > saml > xml-encryption > xmldom:
+        reason: >-
+          The LICENSE file in xmldom GitHub repo suggests one can choose between MIT and
+          LGPL-3. The MIT one is compliant with our repo
+        expires: '2019-01-19T14:12:04.030Z'
+patch: {}
