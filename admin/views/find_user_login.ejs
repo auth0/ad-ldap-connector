@@ -1,4 +1,4 @@
-<p>When users authenticate first a lookup will happen in the LDAP directory to find their DN after which the AD LDAP connector will try an LDAP bind using the DN with the password. The username is configurable and the user search will happen using the following query: <strong><%= locals.LDAP_SEARCH_QUERY || '(sAMAccountName={0})' %></strong></p>
+<p>When users authenticate first a lookup will happen in the LDAP directory to find their DN after which the AD LDAP connector will try an LDAP bind using the DN with the password. The username is configurable and the user search will happen using the following query: <strong><%= locals.LDAP_USER_BY_NAME || '(sAMAccountName={0})' %></strong></p>
 
 <p>This search form allows you to test usernames to verify if the current query is compatible with your directory.</p>
 
