@@ -1,10 +1,10 @@
 require('../lib/initConf');
 require('../lib/setupProxy');
 
+var archiver = require('archiver');
 var cas = require('../lib/add_certs');
 var os = require('os');
 var fs = require('fs');
-var zip = require('adm-zip');
 var http = require('http');
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -126,7 +126,7 @@ app.post('/ldap', set_current_config, function(req, res, next) {
   // Convert ENABLE_WRITE_BACK and ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD to boolean.
   req.body.ENABLE_WRITE_BACK = !!(req.body.ENABLE_WRITE_BACK && req.body.ENABLE_WRITE_BACK === 'on');
   req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD = !!(req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD && req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD === 'on');
-  
+
   var config = xtend({}, req.current_config, req.body);
   test_config(config, function(err, result) {
     if (err) {
@@ -232,25 +232,27 @@ app.get('/export', set_current_config, function(req, res) {
     .replace(/\:|\-/g, '')
     .replace('T', '-');
 
-  var exp = new zip();
+  var archive = archiver('zip', {
+    zlib: { level: 9 } // Sets the compression level.
+  });
+
   if (fs.existsSync(__dirname + '/../config.json')) {
-    exp.addLocalFile(__dirname + '/../config.json');
+    archive.file(__dirname + '/../config.json', { name: 'config.json' });
   }
   if (fs.existsSync(__dirname + '/../lib/profileMapper.js')) {
-    exp.addLocalFile(__dirname + '/../lib/profileMapper.js', 'lib/');
+    archive.file(__dirname + '/../lib/profileMapper.js', { name: 'profileMapper.js' });
   }
   if (fs.existsSync(__dirname + '/../certs/cert.key')) {
-    exp.addLocalFile(__dirname + '/../certs/cert.key', 'certs/');
+    archive.file(__dirname + '/../certs/cert.key', { name: 'cert.key' });
   }
   if (fs.existsSync(__dirname + '/../certs/cert.pem')) {
-    exp.addLocalFile(__dirname + '/../certs/cert.pem', 'certs/');
+    archive.file(__dirname + '/../certs/cert.pem', { name: 'cert.pem' });
   }
 
-  var data = exp.toBuffer();
   res.set('Content-Type', 'application/zip')
   res.set('Content-Disposition', 'attachment; filename=connector_export_' + today + '.zip');
-  res.set('Content-Length', data.length);
-  res.end(data, 'binary');
+  archive.pipe(res);
+  archive.finalize();
 });
 
 app.post('/import', set_current_config, multipart(), function(req, res, next) {
