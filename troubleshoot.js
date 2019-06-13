@@ -15,6 +15,8 @@ var thumbprint = require('@auth0/thumbprint');
 var WebSocket = require('ws');
 var isWindows = (process.platform == 'win32');
 var cas = require('./lib/add_certs');
+var tls = require('tls');
+var https = require('https');
 
 var logger = new winston.Logger({
 	transports: [
@@ -252,6 +254,26 @@ async.series([
 				logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').red);
 			return callback();
 		}
+	},
+	function(callback) {
+		const { host, protocol, port } = url.parse(nconf.get('LDAP_URL'));
+		if(protocol !== 'ldaps:') {
+			return callback();
+		}
+		logger.trying('Testing SSL connectivity to LDAP %s.', host);
+
+		tls.connect({
+			host,
+			port: port || 636,
+			ca: https.globalAgent.options.ca,
+			checkServerIdentity: nconf.get('SSL_ENABLE_EMPTY_SUBJECT') && tls.checkServerIdentity
+		}).once('secureConnect', () => {
+			logger.success('Connection to LDAP %s.', 'succeeded'.green);
+			callback()
+		}).once('error', err => {
+			logger.error('  > Error: %s', err.message.replace(/\r\n|\r|\n/, '').trim().red);
+			callback(err);
+		})
 	},
 	function(callback) {
 		logger.trying('Testing LDAP connectivity.');
