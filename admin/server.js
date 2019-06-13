@@ -1,6 +1,8 @@
 require('../lib/initConf');
 require('../lib/setupProxy');
 
+var unzipper = require('unzipper');
+var path = require('path');
 var archiver = require('archiver');
 var cas = require('../lib/add_certs');
 var os = require('os');
@@ -236,18 +238,18 @@ app.get('/export', set_current_config, function(req, res) {
     zlib: { level: 9 } // Sets the compression level.
   });
 
-  if (fs.existsSync(__dirname + '/../config.json')) {
-    archive.file(__dirname + '/../config.json', { name: 'config.json' });
-  }
-  if (fs.existsSync(__dirname + '/../lib/profileMapper.js')) {
-    archive.file(__dirname + '/../lib/profileMapper.js', { name: 'profileMapper.js' });
-  }
-  if (fs.existsSync(__dirname + '/../certs/cert.key')) {
-    archive.file(__dirname + '/../certs/cert.key', { name: 'cert.key' });
-  }
-  if (fs.existsSync(__dirname + '/../certs/cert.pem')) {
-    archive.file(__dirname + '/../certs/cert.pem', { name: 'cert.pem' });
-  }
+  const files = [
+    'config.json',
+    'lib/profileMapper.js',
+    'certs/cert.key',
+    'certs/cert.pem'
+  ];
+
+  files.forEach(name => {
+    const fullPath = path.join(__dirname, '/../', name);
+    if (!fs.existsSync(fullPath)) { return; }
+    archive.file(fullPath, { name });
+  });
 
   res.set('Content-Type', 'application/zip')
   res.set('Content-Disposition', 'attachment; filename=connector_export_' + today + '.zip');
@@ -266,21 +268,25 @@ app.post('/import', set_current_config, multipart(), function(req, res, next) {
 
   var valid_files = ['certs/cert.key', 'certs/cert.pem', 'config.json', 'lib/profileMapper.js'];
 
-  var config = new zip(req.files.IMPORT_FILE.path);
-  config.getEntries().forEach(function(entry) {
-    var entryName = entry.entryName;
-    if (valid_files.indexOf(entryName) >= 0) {
-      console.log('Extracting ' + entryName);
-
-      config.extractEntryTo(entryName, __dirname + '/../', true, true);
-    }
-  });
-
-  return restart_server(function() {
-    return res.render('index', xtend(read_current_config(), {
-      SUCCESS: true
-    }));
-  });
+  fs.createReadStream(req.files.IMPORT_FILE.path)
+    .pipe(unzipper.Parse())
+    .on('entry', (entry) => {
+      if (!valid_files.includes(entry.path)) {
+        console.error(`unknown filepath ${entry.path}`);
+        return entry.autodrain();
+      }
+      const filePath = path.join(__dirname, '/../', entry.path);
+      console.log('Extracting ' + filePath);
+      const fileWriteStream = fs.createWriteStream(filePath);
+      entry.pipe(fileWriteStream);
+    })
+    .on('close', function() {
+      restart_server(function() {
+        res.render('index', xtend(read_current_config(), {
+          SUCCESS: true
+        }));
+      });
+    });
 });
 
 app.get('/logs', function(req, res) {
@@ -375,12 +381,7 @@ app.get('/troubleshooter/export', set_current_config,
   function(req, res, next) {
     console.log('Exporting test results.');
 
-    var node_process = 'node';
-    if (process.platform === 'win32') {
-      node_process = __dirname + '/../node.exe';
-    }
-
-    run(node_process, [__dirname + '/../troubleshoot.js'], function(data) {
+    run(process.execPath, [__dirname + '/../troubleshoot.js'], function(data) {
       data = data.replace(/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]/g, '').trim();
 
       req.body.TEST_RESULTS = data;
@@ -413,28 +414,30 @@ app.get('/troubleshooter/export', set_current_config,
       .replace(/\:|\-/g, '')
       .replace('T', '-');
 
-    var exp = new zip();
-    if (fs.existsSync(__dirname + '/../config.json')) {
-      exp.addLocalFile(__dirname + '/../config.json');
-    }
-    if (fs.existsSync(__dirname + '/../lib/profileMapper.js')) {
-      exp.addLocalFile(__dirname + '/../lib/profileMapper.js');
-    }
-    if (fs.existsSync(__dirname + '/../package.json')) {
-      exp.addLocalFile(__dirname + '/../package.json');
-    }
-
-    exp.addFile("test-results.log", req.body.TEST_RESULTS);
-
-    req.body.LOG_FILES.forEach(function(file) {
-      exp.addLocalFile(__dirname + '/../' + file);
+    var archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level.
     });
 
-    var data = exp.toBuffer();
+    const files = [
+      'config.json',
+      'lib/profileMapper.js',
+      'package.json'
+    ].concat(req.body.LOG_FILES);
+
+    files.forEach(name => {
+      const fullPath = path.join(__dirname, '/../', name);
+      if (!fs.existsSync(fullPath)) { return; }
+      archive.file(fullPath, { name });
+    });
+
+    archive.append(req.body.TEST_RESULTS, {
+      name: 'test-results.log'
+    });
+
     res.set('Content-Type', 'application/zip')
     res.set('Content-Disposition', 'attachment; filename=connector_troubleshoot_' + today + '.zip');
-    res.set('Content-Length', data.length);
-    res.end(data, 'binary');
+    archive.pipe(res);
+    archive.finalize();
   });
 
 app.post('/updater/run', set_current_config, function(req, res) {

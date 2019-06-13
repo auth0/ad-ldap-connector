@@ -1,6 +1,6 @@
 {
   "name": "ad-ldap-connector",
-  "version": "4.2.2",
+  "version": "4.2.3",
   "lockfileVersion": 1,
   "requires": true,
   "dependencies": {
@@ -380,6 +380,20 @@
         "tweetnacl": "^0.14.3"
       }
     },
+    "big-integer": {
+      "version": "1.6.44",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/big-integer/-/big-integer-1.6.44.tgz",
+      "integrity": "sha1-TumuX1g5/BGt4zj+oha0UTRUpTk="
+    },
+    "binary": {
+      "version": "0.3.0",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/binary/-/binary-0.3.0.tgz",
+      "integrity": "sha1-n2BVO8XOjDOG87VTz/R0Yq3sqnk=",
+      "requires": {
+        "buffers": "~0.1.1",
+        "chainsaw": "~0.1.0"
+      }
+    },
     "bl": {
       "version": "1.2.2",
       "resolved": "http://registry.npmjs.org/bl/-/bl-1.2.2.tgz",
@@ -422,6 +436,11 @@
           }
         }
       }
+    },
+    "bluebird": {
+      "version": "3.4.7",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/bluebird/-/bluebird-3.4.7.tgz",
+      "integrity": "sha1-9y12C+Cbf3bQjtj66Ysomo0F+rM="
     },
     "body-parser": {
       "version": "1.18.3",
@@ -583,6 +602,16 @@
       "integrity": "sha512-MQcXEUbCKtEo7bhqEs6560Hyd4XaovZlO/k9V3hjVUF/zwW7KBVdSK4gIt/bzwS9MbR5qob+F5jusZsb0YQK2A==",
       "dev": true
     },
+    "buffer-indexof-polyfill": {
+      "version": "1.0.1",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/buffer-indexof-polyfill/-/buffer-indexof-polyfill-1.0.1.tgz",
+      "integrity": "sha1-qfuAbOgUXVQoUQznLyeLs2OmOL8="
+    },
+    "buffers": {
+      "version": "0.1.1",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/buffers/-/buffers-0.1.1.tgz",
+      "integrity": "sha1-skV5w77U1tOWru5tmorn9Ugqt7s="
+    },
     "bump-version": {
       "version": "0.5.0",
       "resolved": "https://registry.npmjs.org/bump-version/-/bump-version-0.5.0.tgz",
@@ -662,6 +691,14 @@
       "dev": true,
       "requires": {
         "assertion-error": "1.0.0"
+      }
+    },
+    "chainsaw": {
+      "version": "0.1.0",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/chainsaw/-/chainsaw-0.1.0.tgz",
+      "integrity": "sha1-XqtQsor+WAdNDVgpE4iCi15fvJg=",
+      "requires": {
+        "traverse": ">=0.3.0 <0.4"
       }
     },
     "chalk": {
@@ -1145,6 +1182,14 @@
       "optional": true,
       "requires": {
         "nan": "^2.3.3"
+      }
+    },
+    "duplexer2": {
+      "version": "0.1.4",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/duplexer2/-/duplexer2-0.1.4.tgz",
+      "integrity": "sha1-ixLauHjA1p4+eJEFFmKjL8a93ME=",
+      "requires": {
+        "readable-stream": "^2.0.2"
       }
     },
     "duplexer3": {
@@ -1719,6 +1764,17 @@
       "version": "1.0.0",
       "resolved": "https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz",
       "integrity": "sha1-FQStJSMVjKpA20onh8sBQRmU6k8="
+    },
+    "fstream": {
+      "version": "1.0.12",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/fstream/-/fstream-1.0.12.tgz",
+      "integrity": "sha1-Touo7i1Ivk99DeUFRVVI6uWTIEU=",
+      "requires": {
+        "graceful-fs": "^4.1.2",
+        "inherits": "~2.0.0",
+        "mkdirp": ">=0.5 0",
+        "rimraf": "2"
+      }
     },
     "ftp": {
       "version": "0.3.10",
@@ -2806,6 +2862,11 @@
           "integrity": "sha1-pcbVMr5lbiPbgg77lDofBJmNY68="
         }
       }
+    },
+    "listenercount": {
+      "version": "1.0.1",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/listenercount/-/listenercount-1.0.1.tgz",
+      "integrity": "sha1-hMinKrWcRyUyFIDJdeZQg0LnCTc="
     },
     "listify": {
       "version": "1.0.0",
@@ -4358,6 +4419,11 @@
       "integrity": "sha1-SysbJ+uAip+NzEgaWOXlb1mfP2E=",
       "dev": true
     },
+    "setimmediate": {
+      "version": "1.0.5",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/setimmediate/-/setimmediate-1.0.5.tgz",
+      "integrity": "sha1-KQy7Iy4waULX1+qbg3Mqt4VvgoU="
+    },
     "setprototypeof": {
       "version": "1.1.0",
       "resolved": "https://registry.npmjs.org/setprototypeof/-/setprototypeof-1.1.0.tgz",
@@ -5239,6 +5305,11 @@
         }
       }
     },
+    "traverse": {
+      "version": "0.3.9",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/traverse/-/traverse-0.3.9.tgz",
+      "integrity": "sha1-cXuPIgzAu3tE5AUUwisui7xw2Lk="
+    },
     "tslib": {
       "version": "1.9.3",
       "resolved": "https://registry.npmjs.org/tslib/-/tslib-1.9.3.tgz",
@@ -5334,6 +5405,56 @@
       "resolved": "https://registry.npmjs.org/unzip-response/-/unzip-response-2.0.1.tgz",
       "integrity": "sha1-0vD3N9FrBhXnKmk17QQhRXLVb5c=",
       "dev": true
+    },
+    "unzipper": {
+      "version": "0.10.0",
+      "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/unzipper/-/unzipper-0.10.0.tgz",
+      "integrity": "sha1-meDSdV3k0V+satBKnLbB/Px8Pkw=",
+      "requires": {
+        "big-integer": "^1.6.17",
+        "binary": "~0.3.0",
+        "bluebird": "~3.4.1",
+        "buffer-indexof-polyfill": "~1.0.0",
+        "duplexer2": "~0.1.4",
+        "fstream": "^1.0.12",
+        "listenercount": "~1.0.1",
+        "readable-stream": "~2.3.6",
+        "setimmediate": "~1.0.4"
+      },
+      "dependencies": {
+        "process-nextick-args": {
+          "version": "2.0.0",
+          "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/process-nextick-args/-/process-nextick-args-2.0.0.tgz",
+          "integrity": "sha1-o31zL0JxtKsa0HDTVQjoKQeI/6o="
+        },
+        "readable-stream": {
+          "version": "2.3.6",
+          "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/readable-stream/-/readable-stream-2.3.6.tgz",
+          "integrity": "sha1-sRwn2IuP8fvgcGQ8+UsMea4bCq8=",
+          "requires": {
+            "core-util-is": "~1.0.0",
+            "inherits": "~2.0.3",
+            "isarray": "~1.0.0",
+            "process-nextick-args": "~2.0.0",
+            "safe-buffer": "~5.1.1",
+            "string_decoder": "~1.1.1",
+            "util-deprecate": "~1.0.1"
+          }
+        },
+        "safe-buffer": {
+          "version": "5.1.2",
+          "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/safe-buffer/-/safe-buffer-5.1.2.tgz",
+          "integrity": "sha1-mR7GnSluAxN0fVm9/St0XDX4go0="
+        },
+        "string_decoder": {
+          "version": "1.1.1",
+          "resolved": "https://a0us.jfrog.io/a0us/api/npm/npm/string_decoder/-/string_decoder-1.1.1.tgz",
+          "integrity": "sha1-nPFhG6YmhdcDCunkujQUnDrwP8g=",
+          "requires": {
+            "safe-buffer": "~5.1.0"
+          }
+        }
+      }
     },
     "update-notifier": {
       "version": "2.5.0",
