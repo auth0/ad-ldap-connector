@@ -34,6 +34,7 @@ function add_timestamp (args) {
 
 function winston_wrap (fn, winston_fn) {
   return function() {
+    if (!arguments[0]) { return; }
     var args = add_timestamp(arguments);
     var message = util.format.apply(util, args).stripColors;
     if (!message) return;
