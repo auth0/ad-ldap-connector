@@ -74,7 +74,12 @@ connectorSetup.run(__dirname, function(err) {
 
   app.use(express.static(__dirname + '/public'));
   app.use(logger('combined'));
-
+  if(nconf.get('KERBEROS_DEBUG_USER')) {
+    app.use((req, res, next) => {
+      req.headers['x-forwarded-user'] = nconf.get('KERBEROS_DEBUG_USER');
+      next();
+    });
+  }
   app.use(cookieParser());
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended:true}));
@@ -119,7 +124,7 @@ connectorSetup.run(__dirname, function(err) {
                       console.error(err.message);
                       return process.exit(1);
                     });
-    } else if (nconf.get('WITH_KERBEROS_PROXY_FRONTEND')) {
+    } else if (nconf.get('WITH_KERBEROS_PROXY_FRONTEND') || nconf.get('KERBEROS_DEBUG_USER')) {
       var http = require('http');
       http.createServer(app).listen(options.port);
     } else {
