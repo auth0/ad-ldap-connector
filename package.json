@@ -1,6 +1,6 @@
 {
   "name": "ad-ldap-connector",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
