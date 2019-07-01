@@ -114,10 +114,7 @@ describe('users', function () {
     var profile;
     var saveValue;
 
-    before(function (done) { users._groupsCache.del('CN=Administrators,CN=Users,DC=fabrikam,DC=com', done); });
-    before(function (done) { users._groupsCache.del('CN=Domain Admins,CN=Users,DC=fabrikam,DC=com', done); });
-    before(function (done) { users._groupsCache.del('CN=Denied RODC Password Replication Group,CN=Users,DC=fabrikam,DC=com', done); });
-    before(function (done) { users._groupsCache.del('CN=Full-Admin,CN=Users,DC=fabrikam,DC=com', done); });
+    before(function () { users._groupsCache.reset(); });
 
     before(function () {
       saveValue = nconf.get('GROUP_PROPERTIES');
@@ -208,7 +205,12 @@ describe('users', function () {
     });
   });
 
-  describe('change password', function () {
+  //this test does not work with ldap:
+  const describeOrSkipChangePassword = nconf.get('LDAP_URL').startsWith('ldaps') ?
+    describe :
+    describe.skip;
+
+  describeOrSkipChangePassword('change password', function () {
     var profile;
 
     before(function (done) {
