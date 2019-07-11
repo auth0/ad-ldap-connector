@@ -331,6 +331,37 @@ describe('users', function () {
     });
   });
 
+  describe('listing users with groups from the AD server when the cache is disabled', function() {
+    var error;
+    var user;
+    var saveOmitGroups;
+
+    before(function (done) {
+      saveOmitGroups = nconf.get('LDAP_SEARCH_RESULTS_OMIT_GROUPS', false);
+      nconf.set('LDAP_SEARCH_RESULTS_OMIT_GROUPS', false);
+      var users = new Users(true);
+      users.list('john', function(err, res) {
+        error = err;
+        user = res[0];
+        done();
+      });
+    });
+
+    after(() => {
+      nconf.set('LDAP_SEARCH_RESULTS_OMIT_GROUPS', saveOmitGroups);
+    });
+
+    it('should return the groups', function() {
+      expect(error).to.not.exist;
+      expect(user.groups).to.deep.equal([
+        "Administrators",
+        "Domain Admins",
+        "Denied RODC Password Replication Group",
+        "Full-Admin"
+      ]);
+    });
+  });
+
   describe('listing groups from AD server with extended properties list', function() {
     var error;
     var response;
