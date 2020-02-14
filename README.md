@@ -10,7 +10,7 @@ You can install multiple instances of the connector for high availability and lo
 
 Configuring an AD/LDAP connection in Auth0 requires two simple steps:
 
-###1. Creating an AD/LDAP Connection in Auth0
+### 1. Creating an AD/LDAP Connection in Auth0
 
 The first step is creating a new Connection on the dashboard:
 
@@ -30,7 +30,7 @@ __Save__ the configuration. You are done on the Auth0 side! You will then be pro
 
 Keep the __TICKET URL__ at hand as you will need it later.
 
-###2. Installing the AD/LDAP Connector
+### 2. Installing the AD/LDAP Connector
 
 #### Auth0 AD LDAP Connector Setup (Windows Agent)
 On Windows, the Connector is packaged as a standard installer file (__MSI__). Run it on the machine you want to install it and follow the installation wizard:
@@ -60,7 +60,7 @@ These are credentials used by the __AD/LDAP Connector__ to authenticate itself w
 ![](https://s3.amazonaws.com/blog.auth0.com/adldap_04.PNG)
 
 
-##3. Testing your new Active Directory/LDAP connection
+### 3. Testing your new Active Directory/LDAP connection
 
 Go back to your Auth0 Dashboard and you should see a green dot next to your Connection definition:
 
@@ -74,7 +74,7 @@ If you didn't configure `Kerberos` or you are outside your intranet you will be 
 
 > Notice the __User profile__ includes the __Groups__ a user belongs to in AD. This will include any nested groups (flattened list).
 
-##4. High availability
+### 4. High availability
 
 High availability is achieved through multiple instances of the connector running simultaneously.
 
