@@ -104,6 +104,12 @@ By default the connector search using this query LDAP `(sAMAccountName={0})`, yo
 	"LDAP_USER_BY_NAME": "(cn={0})",
 ```
 
+Likewise, if you're having difficulty determining the mapping of certain attributes using the profile mapper, you can test the results using the `validate` function in the following command:
+
+```
+node -e "require('./lib/initConf'); var Users = require('./lib/users'); var users = new Users(); users.validate('the-username-you-are-trying', 'the-users-password', function (err, user) { console.log(user); } );"
+```
+
 If you get "Invalid Ticket" when configuring the connector for the first time, the most likely cause is a network issue (e.g. connector behind a proxy). Try connecting to `https://{your tenant}.auth0.com/testall` with a browser other than IE.
 
 ## Issue Reporting
