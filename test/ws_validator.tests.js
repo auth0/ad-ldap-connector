@@ -120,7 +120,6 @@ describe('ws_validator', () => {
     });
 
     mockWebSocketInstance.emit('open');
-    console.log(typeof authenticationEvent);
 
     expect(authenticationEvent).to.be.ok;
     expect(authenticationEvent.n).to.equal('authenticate');
