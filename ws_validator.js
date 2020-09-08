@@ -334,7 +334,7 @@ function setupWebsocket() {
 
     var token = jwt.sign({}, cert.key, {
       algorithm: 'RS256',
-      expiresInMinutes: 1,
+      expiresIn: '1m',
       issuer: nconf.get('CONNECTION'),
       audience: nconf.get('REALM'),
       "http://schemas.auth0.com/ad-ldap-connector/capabilites": defaultCapabilities
