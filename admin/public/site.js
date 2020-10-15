@@ -241,7 +241,9 @@
 	$("#update-run-form").submit(function(e) {
 		e.preventDefault();
 
-		$.post('/updater/run');
+		$.post('/updater/run', {
+			_csrf: document.getElementById('csrf').value,
+		});
 
 		update = 'Started';
 		$('#update-logs').text('');

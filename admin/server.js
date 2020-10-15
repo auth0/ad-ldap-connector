@@ -443,7 +443,7 @@ app.get('/troubleshooter/export', set_current_config,
     archive.finalize();
   });
 
-app.post('/updater/run', set_current_config, function(req, res) {
+app.post('/updater/run', csrfProtection, set_current_config, function(req, res) {
   run(__dirname + '/../update-connector.cmd', [], function(data) {
     res.writeHead(200, {
       "Content-Type": "text/plain"
