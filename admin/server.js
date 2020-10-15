@@ -152,7 +152,7 @@ app.post('/ldap', set_current_config, csrfProtection, function(req, res, next) {
   });
 }, merge_config);
 
-app.post('/server', multipart(), set_current_config, function(req, res, next) {
+app.post('/server', multipart(), set_current_config, csrfProtection, function(req, res, next) {
   if (req.body.PORT || req.current_config.PORT) return next();
   freeport(function(er, port) {
     req.body.PORT = port;

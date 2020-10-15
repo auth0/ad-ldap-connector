@@ -1,4 +1,5 @@
 <form class="form-horizontal" method="post" action="/server" enctype="multipart/form-data">
+  <input type="hidden" id="csrf" name="_csrf" value="<%= locals.csrfToken %>">
   <div class="control-group">
     <label class="control-label" for="SERVER_URL">Front Facing URL:</label>
     <div class="controls">
@@ -61,7 +62,7 @@
       <span class="help-block">A string of passphrase for the pfx</span>
     </div>
   </div>
-  
+
   <div class="control-group">
     <label class="control-label" for="CA_CERT">CA Certificate(s):</label>
     <div class="controls">
