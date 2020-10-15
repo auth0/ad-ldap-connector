@@ -260,7 +260,7 @@ app.get('/export', set_current_config, function(req, res) {
   archive.finalize();
 });
 
-app.post('/import', set_current_config, multipart(), function(req, res, next) {
+app.post('/import', set_current_config, csrfProtection, multipart(), function(req, res, next) {
   console.log('Importing configuration.');
 
   if (!req.files || !req.files.IMPORT_FILE || req.files.IMPORT_FILE.size === 0) {
