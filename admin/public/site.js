@@ -132,7 +132,9 @@
 	$("#logs-clear").click(function(e) {
 		e.preventDefault();
 
-		$.post('/logs/clear');
+		$.post('/logs/clear', {
+			_csrf: document.getElementById('csrf').value
+		});
 		$('#logs').text('');
 	});
 

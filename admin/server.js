@@ -315,7 +315,7 @@ app.get('/logs', function(req, res) {
   });
 });
 
-app.post('/logs/clear', function(req, res) {
+app.post('/logs/clear', csrfProtection, function(req, res) {
   fs.writeFile(__dirname + '/../logs.log', '', function(err) {
     if (err) {
       res.status(500);
