@@ -127,7 +127,7 @@ app.get('/', set_current_config, csrfProtection, function(req, res) {
   delete req.session.LDAP_RESULTS;
 });
 
-app.post('/ldap', set_current_config, function(req, res, next) {
+app.post('/ldap', set_current_config, csrfProtection, function(req, res, next) {
   // Convert ENABLE_WRITE_BACK and ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD to boolean.
   req.body.ENABLE_WRITE_BACK = !!(req.body.ENABLE_WRITE_BACK && req.body.ENABLE_WRITE_BACK === 'on');
   req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD = !!(req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD && req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD === 'on');
