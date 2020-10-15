@@ -168,7 +168,7 @@ app.post('/server', multipart(), set_current_config, function(req, res, next) {
   });
 }, merge_config);
 
-app.post('/ticket', set_current_config, function(req, res, next) {
+app.post('/ticket', set_current_config, csrfProtection, function(req, res, next) {
   if (!req.body.PROVISIONING_TICKET) {
     return res.render('index', xtend(req.current_config, {
       ERROR: 'The ticket url ' + req.body.PROVISIONING_TICKET + ' is not vaild.'

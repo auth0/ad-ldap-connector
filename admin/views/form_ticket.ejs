@@ -1,4 +1,5 @@
 <form class="form-horizontal" method="post" action="/ticket">
+  <input type="hidden" id="csrf" name="_csrf" value="<%= locals.csrfToken %>">
   <p>
     Please enter the ticket url as shown in the instructions provided in the documentation
   </p>
