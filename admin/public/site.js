@@ -86,6 +86,7 @@
 		$('#profile-mapper-alerts').html('');
 
 		$.post('/profile-mapper', {
+			_csrf: document.getElementById('csrf').value,
 			code: code.getValue()
 		}).always(function() {
 			btn.button('reset');

@@ -5,6 +5,7 @@ var unzipper = require('unzipper');
 var path = require('path');
 var archiver = require('archiver');
 var cas = require('../lib/add_certs');
+var csrf = require('csurf');
 var os = require('os');
 var fs = require('fs');
 var http = require('http');
@@ -31,7 +32,7 @@ app.use(cookieParser());
 app.use(session({
   secret: 'sojo sut ed oterces le'
 }));
-
+var csrfProtection = csrf({ cookie: true });
 var detected_settings = {};
 
 if (process.platform === 'win32') {
@@ -113,13 +114,15 @@ function run(cmd, args, callback) {
   });
 }
 
-app.get('/', set_current_config, function(req, res) {
+app.get('/', set_current_config, csrfProtection, function(req, res) {
   console.log(req.session.LDAP_RESULTS);
   res.render('index', xtend(req.current_config, {
     SUCCESS: req.query && req.query.s === '1',
     LDAP_RESULTS: req.session.LDAP_RESULTS
   }, {
     detected: detected_settings
+  }, {
+    csrfToken: req.csrfToken()
   }));
   delete req.session.LDAP_RESULTS;
 });
@@ -349,7 +352,7 @@ app.get('/profile-mapper', function(req, res) {
   });
 });
 
-app.post('/profile-mapper', function(req, res) {
+app.post('/profile-mapper', csrfProtection, function(req, res) {
   fs.writeFile(__dirname + '/../lib/profileMapper.js', req.body.code, function(err) {
     if (err) {
       res.status(500);
