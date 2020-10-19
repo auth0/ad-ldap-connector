@@ -1,7 +1,7 @@
 language: node_js
 
 node_js:
-  - "8"
+  - "12.19"
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_7b35491612ac_key -iv $encrypted_7b35491612ac_iv -in config.json.enc -out config.json -d

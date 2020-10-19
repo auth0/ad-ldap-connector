@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.0.0]
+
+### Breaking
+Node 12 update
+
 ## [5.0.14]
 
 ### Fixes

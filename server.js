@@ -102,7 +102,7 @@ connectorSetup.run(__dirname, function(err) {
 
     // SSL settings
     options.ca = nconf.get('CA_CERT');
-    options.pfx = new Buffer(nconf.get('SSL_PFX'), 'base64');
+    options.pfx = Buffer.from(nconf.get('SSL_PFX'), 'base64');
     options.passphrase = nconf.get('SSL_KEY_PASSWORD');
     options.requestCert = true;
 
