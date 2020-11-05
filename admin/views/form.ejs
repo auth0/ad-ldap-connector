@@ -1,4 +1,5 @@
 <form class="form-horizontal ldap" method="post" action="/ldap">
+  <input type="hidden" id="csrf" name="_csrf" value="<%= locals.csrfToken %>">
   <p>
     Please enter the settings to connect to your LDAP.
     This will be saved locally and never send exposed.

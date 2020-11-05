@@ -1,6 +1,6 @@
 {
   "name": "ad-ldap-connector",
-  "version": "5.0.12",
+  "version": "5.0.13",
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
@@ -32,6 +32,7 @@
     "connect-multiparty": "^2.2.0",
     "cookie-parser": "^1.4.3",
     "cookie-sessions": "github:auth0/cookie-sessions#53a8aae",
+    "csurf": "1.9.0",
     "ejs": "^2.5.5",
     "express": "^4.16.4",
     "express-passport-logout": "~0.1.0",

@@ -1,6 +1,6 @@
-<form method="post" action="/import" enctype="multipart/form-data">
+<form method="post" action="/import?_csrf=<%= locals.csrfToken %>" enctype="multipart/form-data">
   <p>
-    Import a previous configuration to the connector. 
+    Import a previous configuration to the connector.
   </p>
 
   <div class="control-group" style="border-top:0px;">

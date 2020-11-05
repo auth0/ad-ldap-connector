@@ -5,6 +5,7 @@ var unzipper = require('unzipper');
 var path = require('path');
 var archiver = require('archiver');
 var cas = require('../lib/add_certs');
+var csrf = require('csurf');
 var os = require('os');
 var fs = require('fs');
 var http = require('http');
@@ -31,7 +32,7 @@ app.use(cookieParser());
 app.use(session({
   secret: 'sojo sut ed oterces le'
 }));
-
+var csrfProtection = csrf({ cookie: true });
 var detected_settings = {};
 
 if (process.platform === 'win32') {
@@ -113,18 +114,20 @@ function run(cmd, args, callback) {
   });
 }
 
-app.get('/', set_current_config, function(req, res) {
+app.get('/', set_current_config, csrfProtection, function(req, res) {
   console.log(req.session.LDAP_RESULTS);
   res.render('index', xtend(req.current_config, {
     SUCCESS: req.query && req.query.s === '1',
     LDAP_RESULTS: req.session.LDAP_RESULTS
   }, {
     detected: detected_settings
+  }, {
+    csrfToken: req.csrfToken()
   }));
   delete req.session.LDAP_RESULTS;
 });
 
-app.post('/ldap', set_current_config, function(req, res, next) {
+app.post('/ldap', set_current_config, csrfProtection, function(req, res, next) {
   // Convert ENABLE_WRITE_BACK and ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD to boolean.
   req.body.ENABLE_WRITE_BACK = !!(req.body.ENABLE_WRITE_BACK && req.body.ENABLE_WRITE_BACK === 'on');
   req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD = !!(req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD && req.body.ENABLE_ACTIVE_DIRECTORY_UNICODE_PASSWORD === 'on');
@@ -149,7 +152,7 @@ app.post('/ldap', set_current_config, function(req, res, next) {
   });
 }, merge_config);
 
-app.post('/server', multipart(), set_current_config, function(req, res, next) {
+app.post('/server', multipart(), set_current_config, csrfProtection, function(req, res, next) {
   if (req.body.PORT || req.current_config.PORT) return next();
   freeport(function(er, port) {
     req.body.PORT = port;
@@ -165,7 +168,7 @@ app.post('/server', multipart(), set_current_config, function(req, res, next) {
   });
 }, merge_config);
 
-app.post('/ticket', set_current_config, function(req, res, next) {
+app.post('/ticket', set_current_config, csrfProtection, function(req, res, next) {
   if (!req.body.PROVISIONING_TICKET) {
     return res.render('index', xtend(req.current_config, {
       ERROR: 'The ticket url ' + req.body.PROVISIONING_TICKET + ' is not vaild.'
@@ -257,7 +260,7 @@ app.get('/export', set_current_config, function(req, res) {
   archive.finalize();
 });
 
-app.post('/import', set_current_config, multipart(), function(req, res, next) {
+app.post('/import', set_current_config, csrfProtection, multipart(), function(req, res, next) {
   console.log('Importing configuration.');
 
   if (!req.files || !req.files.IMPORT_FILE || req.files.IMPORT_FILE.size === 0) {
@@ -312,7 +315,7 @@ app.get('/logs', function(req, res) {
   });
 });
 
-app.post('/logs/clear', function(req, res) {
+app.post('/logs/clear', csrfProtection, function(req, res) {
   fs.writeFile(__dirname + '/../logs.log', '', function(err) {
     if (err) {
       res.status(500);
@@ -349,7 +352,7 @@ app.get('/profile-mapper', function(req, res) {
   });
 });
 
-app.post('/profile-mapper', function(req, res) {
+app.post('/profile-mapper', csrfProtection, function(req, res) {
   fs.writeFile(__dirname + '/../lib/profileMapper.js', req.body.code, function(err) {
     if (err) {
       res.status(500);
@@ -440,7 +443,7 @@ app.get('/troubleshooter/export', set_current_config,
     archive.finalize();
   });
 
-app.post('/updater/run', set_current_config, function(req, res) {
+app.post('/updater/run', csrfProtection, set_current_config, function(req, res) {
   run(__dirname + '/../update-connector.cmd', [], function(data) {
     res.writeHead(200, {
       "Content-Type": "text/plain"

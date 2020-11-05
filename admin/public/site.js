@@ -86,6 +86,7 @@
 		$('#profile-mapper-alerts').html('');
 
 		$.post('/profile-mapper', {
+			_csrf: document.getElementById('csrf').value,
 			code: code.getValue()
 		}).always(function() {
 			btn.button('reset');
@@ -131,7 +132,9 @@
 	$("#logs-clear").click(function(e) {
 		e.preventDefault();
 
-		$.post('/logs/clear');
+		$.post('/logs/clear', {
+			_csrf: document.getElementById('csrf').value
+		});
 		$('#logs').text('');
 	});
 
@@ -238,7 +241,9 @@
 	$("#update-run-form").submit(function(e) {
 		e.preventDefault();
 
-		$.post('/updater/run');
+		$.post('/updater/run', {
+			_csrf: document.getElementById('csrf').value,
+		});
 
 		update = 'Started';
 		$('#update-logs').text('');
