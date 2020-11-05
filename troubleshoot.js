@@ -85,11 +85,12 @@ async.series([
 			uri: connectivity_url,
 			json: true
 		}, function (err, res, body) {
-			if (err || res.statusCode !== 200) {
+			if (err || (res && res.statusCode !== 200)) {
 				logger.failed('Error connecting to Auth0.');
 				if (err)
 					logger.error('  > Error: %s', JSON.stringify(err));
-				logger.error('  > Status: %s', res.statusCode);
+				if (res)
+					logger.error('  > Status: %s', res.statusCode);
 				if (body)
 					logger.error('  > Body: %s', body.replace(/\n$/, ''));
 			} else {
