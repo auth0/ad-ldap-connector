@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.0.14]
+
+### Fixes
+Fix anonymous LDAP search detection logic.
+
 ## [Unreleased]
 Add CHANGELOG.md
 
