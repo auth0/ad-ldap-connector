@@ -129,13 +129,15 @@ exports.run = function (workingPath, callback) {
     },
     function (cb) {
       function anonymousSearchEnabled(enabled) {
-        nconf.set('ANONYMOUS_SEARCH_ENABLED',enabled);
+        nconf.set('ANONYMOUS_SEARCH_ENABLED', enabled);
+        console.log('Is Anonymous LDAP search enabled? ' + (enabled ? 'yes' : 'no'));
         connection.destroy();
         return cb();
       }
       const searchOpts = {
         filter: '(objectclass=person)',
-        scope: 'sub'
+        scope: 'sub',
+        sizeLimit: 1
       };
       const connection = createConnection();
       connection.search(nconf.get('LDAP_BASE'), searchOpts , function (err, res) {
@@ -152,7 +154,8 @@ exports.run = function (workingPath, callback) {
           anonymousSearchEnabled(isEnabled);
         })
         .once('error',function(err){
-          anonymousSearchEnabled(false);
+          // if there are more than one entry matching the search, the server returns the one entry and a SizeLimitExceededError error
+          anonymousSearchEnabled(err.name === 'SizeLimitExceededError');
         });
       });
     },
