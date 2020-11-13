@@ -21,7 +21,7 @@ $msiDependencies = @(
     } ;
     @{
         'Name'='nodejs';
-        'Url'="https://nodejs.org/dist/v4.4.7/node-v4.4.7-x86.msi";
+        'Url'="https://nodejs.org/dist/v12.19.0/node-v12.19.0-x86.msi";
         'Path' = 'C:\Program Files (x86)\nodejs'
         'Test'=@{
           'Cmd'='C:\Program Files (x86)\nodejs\node.exe';
@@ -49,7 +49,7 @@ $zipDependencies = @(
     } )
 
 $npmPackages = @(
-    @{'Name'='npm'; 'Version'="3.10.6"} ;
+    @{'Name'='npm'; 'Version'="6.14.8"} ;
     @{'Name'='node-gyp'; 'Version'="3.4.0"} 
     )
 

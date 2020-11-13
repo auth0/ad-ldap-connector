@@ -97,7 +97,6 @@ xg2fno4Ifa9Qc7w5ywI7LpbyRXNfAbvcgUWlCGDbekS+SzgosEc=
 
 describe('ws_validator', () => {
   mockNconf.set('LDAP_URL', 'ldap://ds.example.com:389/dc=example,dc=com');
-  mockNconf.set('SSL_ENABLE_EMPTY_SUBJECT', true);
   mockNconf.set('LDAP_BIND_PASSWORD', 'abc123');
   mockNconf.set('AUTH_CERT_KEY', key);
   mockNconf.set('AUTH_CERT', cert);

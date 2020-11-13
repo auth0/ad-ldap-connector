@@ -1,5 +1,4 @@
 const tls = require('tls');
-const tlsHelper = require('../lib/tls');
 const expect = require('chai').expect;
 
 describe('Connection to server with empty subject', function () {
@@ -32,28 +31,10 @@ describe('Connection to server with empty subject', function () {
     }
   });
 
-  // This test is mainly to keep track of the original Node.Js issue. When this test fails you can safely remove ../lib/tls.js
-  it('should fail when using node provided server identity verification', function(done) {
-    var socket = tls.connect({
-      port: PORT,
-      ca: cert.ca,
-      servername: 'localhost',
-      rejectUnauthorized: true
-    }, function() {
-      socket.end();
-      done(new Error('Certificate should not pass server Identity validation'));
-    });
-    socket.on('error', function(e) {
-      expect(e).to.have.property('reason','Cert is empty');
-      done();
-    });
-  });
-
   it('should connect when using connector\'s server identity verification', function(done) {
     var socket = tls.connect(PORT, {
       ca: cert.ca,
       servername: 'localhost',
-      checkServerIdentity: tlsHelper.checkServerIdentity
     }, function() {
       socket.end();
       done();

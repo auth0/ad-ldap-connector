@@ -266,7 +266,6 @@ async.series([
 			host,
 			port: port || 636,
 			ca: https.globalAgent.options.ca,
-			checkServerIdentity: nconf.get('SSL_ENABLE_EMPTY_SUBJECT') && tls.checkServerIdentity
 		}).once('secureConnect', () => {
 			logger.success('Connection to LDAP %s.', 'succeeded'.green);
 			callback()

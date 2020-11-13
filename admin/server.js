@@ -162,7 +162,7 @@ app.post('/server', multipart(), set_current_config, csrfProtection, function(re
   if (!req.files || !req.files.SSL_PFX || req.files.SSL_PFX.size === 0) return next();
   // upload pfx
   fs.readFile(req.files.SSL_PFX.path, function(err, pfxContent) {
-    req.body.SSL_PFX = new Buffer(pfxContent).toString('base64');
+    req.body.SSL_PFX = Buffer.from(pfxContent).toString('base64');
     delete req.files;
     next();
   });

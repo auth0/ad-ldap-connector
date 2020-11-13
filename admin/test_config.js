@@ -2,7 +2,6 @@ var ldap = require('ldapjs');
 var url = require('url');
 var net = require('net');
 var WebSocket = require('ws');
-var tls = require('../lib/tls');
 var _ = require('lodash');
 var nconf = require('nconf');
 var https = require('https');
@@ -111,11 +110,6 @@ module.exports = function (config, callback) {
       tlsOptions = {
         ca: cas
       };
-
-      if (nconf.get('SSL_ENABLE_EMPTY_SUBJECT')) {
-        // When enabled use the connector own verification function that fixes Node.js issue described in https://github.com/nodejs/node/issues/11771 for details
-        tlsOptions.checkServerIdentity = tls.checkServerIdentity;
-      }
     }
 
     var client = ldap.createClient({

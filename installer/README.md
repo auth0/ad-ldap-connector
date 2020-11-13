@@ -3,10 +3,10 @@ This directory contains the scripts to generate an MSI installer.
 ## Pre-requisites
 
 1.  Visual Studio 2013. Current build pipeline does not work with 2015.
-2.  Node 4.4.x for Windows. Check you have node.exe in `C:\Program Files (x86)\nodejs\node.exe`.
-3.  Update NPM to version 3.10.5
+2.  Node 12.19.x for Windows. Check you have node.exe in `C:\Program Files (x86)\nodejs\node.exe`.
+3.  Update NPM to version 6.14.8
 4.  [Wix](https://wix.codeplex.com/releases/) Binaries. Check you have the bin in `c:\Program Files (x86)\WiX Toolset v3.8\bin`
-5.  Your [node-gyp](https://github.com/TooTallNate/node-gyp/#installation) should be able to build native dependencies. Use version 3.4.0
+5.  Your [node-gyp](https://github.com/TooTallNate/node-gyp/#installation) should be able to build native dependencies. Use version 10.19.0
 6.  Download [nssm](http://nssm.cc/release/nssm-2.24.zip) and copy the content to `c:\Program Files (x86)\nssm-2.24\` folder.
 
 > If you are running on Windows 2012R2 once you have installed VS2013 you can run `iwr https://raw.githubusercontent.com/auth0/ad-ldap-connector/master/installer/prepare.ps1 -UseBasicParsing | iex` from an Elevated Powershell console and it will download and install all other components.
