@@ -101,7 +101,8 @@ describe('ws_validator', () => {
   mockNconf.set('AUTH_CERT_KEY', key);
   mockNconf.set('AUTH_CERT', cert);
   mockNconf.set('AD_HUB', 'http://test.io');
-
+  mockNconf.set('CONNECTION', 'test-ad');
+  mockNconf.set('REALM', 'urn:auth0:example');
 
   const wsValidator = proxyquire('../ws_validator', {
     'ws': MockWebSocket,
