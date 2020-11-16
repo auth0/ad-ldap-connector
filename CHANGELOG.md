@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.1.0]
+
+### Feature
+Remove deprecated crypto.createCipher and crypto.createDecipher calls
+Introduce v2 encryption that uses more securely generated IVs for new connections.
+
+Backwards compatible decryption is supported.
+
 ## [6.0.1]
 
 ### Fixes
