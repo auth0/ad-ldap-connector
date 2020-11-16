@@ -89,7 +89,8 @@ async.series([
 				logger.failed('Error connecting to Auth0.');
 				if (err)
 					logger.error('  > Error: %s', JSON.stringify(err));
-				logger.error('  > Status: %s', res.statusCode);
+				if (res)
+					logger.error('  > Status: %s', res.statusCode);
 				if (body)
 					logger.error('  > Body: %s', body.replace(/\n$/, ''));
 			} else {
@@ -119,7 +120,7 @@ async.series([
 			callback();
 		}).on('error', function (err) {
 			logger.failed('Connection to hub %s.', 'failed'.red);
-			logger.error('  > Body: %s', err.replace(/\n$/, ''));
+			logger.error('  > Body: %s', err.message.replace(/\n$/, ''));
 			ws.close();
 			callback();
 		});
@@ -256,11 +257,18 @@ async.series([
 		}
 	},
 	function(callback) {
+		logger.trying('Testing SSL connectivity to LDAP.');
+		
+		if (!nconf.get('LDAP_URL')) {
+			logger.warn('  > ' + 'LDAP_URL'.yellow + ' not set. Cannot test SSL connectivity.');
+			return callback();
+		}
+
 		const { host, protocol, port } = url.parse(nconf.get('LDAP_URL'));
 		if(protocol !== 'ldaps:') {
 			return callback();
 		}
-		logger.trying('Testing SSL connectivity to LDAP %s.', host);
+		logger.info('  > Host: ' + host);
 
 		tls.connect({
 			host,
@@ -277,7 +285,7 @@ async.series([
 	function(callback) {
 		logger.trying('Testing LDAP connectivity.');
 		if (!nconf.get("LDAP_BASE")) {
-			logger.warn('  > ' + 'LDAP_BASE'.yellow + 'not set. Cannot test connectivity.');
+			logger.warn('  > ' + 'LDAP_BASE'.yellow + ' not set. Cannot test connectivity.');
 			return callback();
 		}
 

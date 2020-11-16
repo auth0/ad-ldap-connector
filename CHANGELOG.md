@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.0.1]
+
+### Fixes
+Fix vulnerabilities reported by npm and snyk.
+
 ## [6.0.0]
 
 ### Breaking

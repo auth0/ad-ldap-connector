@@ -329,15 +329,11 @@ function setupWebsocket() {
   }
 
   function authenticate_connector() {
-    var defaultCapabilities = ['search', 'login'];
-    if (nconf.get('ENABLE_WRITE_BACK')) defaultCapabilities.push('change_password');
-
     var token = jwt.sign({}, cert.key, {
       algorithm: 'RS256',
       expiresIn: '1m',
       issuer: nconf.get('CONNECTION'),
-      audience: nconf.get('REALM'),
-      "http://schemas.auth0.com/ad-ldap-connector/capabilites": defaultCapabilities
+      audience: nconf.get('REALM')
     });
 
     ws.sendEvent('authenticate', {
