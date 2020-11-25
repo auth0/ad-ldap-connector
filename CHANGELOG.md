@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.1.1]
+
+### Refactor
+Improve LDAP heartbeat search query.
+
 ## [6.1.0]
 
 ### Feature
