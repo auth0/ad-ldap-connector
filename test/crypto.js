@@ -1,15 +1,13 @@
-const {
-    assert
-} = require('chai');
-const crypto = require('../lib/crypto');
+const { assert } = require('chai');
+const proxyquire =  require('proxyquire');
 
 const mockNconf = {
-    values: {},
-    get: (key) => mockNconf.values[key],
-    set: (key, value) => {
-        mockNconf.values[key] = value;
-    },
-    '@global': true,
+  values: {},
+  get: (key) => mockNconf.values[key],
+  set: (key, value) => {
+      mockNconf.values[key] = value;
+  },
+  '@global': true,
 }
 
 const key = `-----BEGIN RSA PRIVATE KEY-----
@@ -43,31 +41,33 @@ zW77AoGALXvpUYa/xDrYERiERH5cVE065ktt+exRPuE+u0XvLJ1l+2h7rnsFhZ51
 mockNconf.set('AUTH_CERT_KEY', key);
 
 describe('crypto deciphering', function () {
+  const crypto = proxyquire('../lib/crypto', {
+    nconf: mockNconf
+  });
 
-    it('should work for v1 encryption', function () {
-        const cipher = '03fc6b93663a571fb9d6da2b52c65240be882ca32445d87b07e45695f8e5aed8'
-        const expected = 'GoodNewsEveryone';
-        assert.equal(
-            crypto.decrypt(cipher),
-            expected
-        );
-    });
+  it('should work for v1 encryption', function () {
+    const cipher = 'cfcb8eac5d97b067dfc6544b2affbd94daf8723456d1c24b8fe8cb6f2a88e8aa'
+    const expected = 'GoodNewsEveryone';
+    assert.equal(
+      crypto.decrypt(cipher),
+      expected
+    );
+  });
 
-    it('should work for v2 encryption', function () {
-        const cipher = '$2$.ee746904e7a53d014aa643dde5315124.cf145d3c7256a073c211876ee896859e.62a15b29466375ee314f9e4f4495da5743ff6a3d0ac21f6403bc8fac3ef1bddd';
-        const expected = 'GoodNewsEveryone';
-        assert.equal(
-            crypto.decrypt(cipher),
-            expected
-        );
-    });
+  it('should work for v2 encryption', function () {
+    const cipher = '$2$.f3e9ef58a357b263c49f84aef2aea010.7ae2d5324ec8d976405e076e276f6d04.eb2507a72af23e22eab57c406e55fc43b3527ea505914eda4d541025390fab28';
+    const expected = 'GoodNewsEveryone';
+    assert.equal(
+      crypto.decrypt(cipher),
+      expected
+    );
+  });
 
-    it('encryption/decryption should work for v2 encryption', function () {
-        const expected = 'GoodNewsEveryone';
-        assert.equal(
-            crypto.decrypt(crypto.encrypt(expected)),
-            expected
-        );
-    });
-
+  it('encryption/decryption should work for v2 encryption', function () {
+    const expected = 'GoodNewsEveryone';
+    assert.equal(
+      crypto.decrypt(crypto.encrypt(expected)),
+      expected
+    );
+  });
 });
