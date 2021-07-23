@@ -23,7 +23,7 @@ ensure_file () {
 }
 
 generate_container_name () {
-  CONTAINER_NAME=${IMAGE_NAME}_${CONNECTOR_NAME}
+  CONTAINER_NAME=${IMAGE_NAME//[\/:]/_}_${CONNECTOR_NAME}
   echo "CONTAINER_NAME: ${CONTAINER_NAME}"
 }
 
