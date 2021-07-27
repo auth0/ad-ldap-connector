@@ -112,6 +112,9 @@ case ${SUB_COMMAND} in
     echo Extracting config archive...
     docker exec ${CONTAINER_NAME} tar -xzvf config.tar.gz
 
+    echo Removing config archive from container...
+    docker exec -it $CONTAINER_NAME rm config.tar.gz
+
     echo Restarting container...
     docker restart ${CONTAINER_NAME}
 

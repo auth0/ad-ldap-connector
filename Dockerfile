@@ -1,21 +1,22 @@
-FROM node:14
+FROM node:16-slim AS base
+# Install platform tools
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssl ca-certificates
 
+FROM base AS builder
 ENV AD_LDAP_CONNECTOR_VERSION=6.1.1
-
-# Create app directory
+ENV NPM_VERSION=7.20.2
 WORKDIR /opt/auth0-adldap
+# Install build tools
+RUN apt-get install -y --no-install-recommends curl tar
+# Download Connector
+RUN curl -L https://github.com/auth0/ad-ldap-connector/archive/v$AD_LDAP_CONNECTOR_VERSION.tar.gz \
+  | tar -xz --strip-components=1
+# Install Connector dependencies
+RUN npm install --loglevel warn --production
 
-# Download and install the Connector
-RUN depsRuntime=" \
-    # tools \
-    vim \
-    curl \
-  " \
-  set -x \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends $depsRuntime \
-  && curl -Lo /tmp/adldap.tar.gz https://github.com/auth0/ad-ldap-connector/archive/v$AD_LDAP_CONNECTOR_VERSION.tar.gz \
-  && tar -xzf /tmp/adldap.tar.gz -C /opt/auth0-adldap --strip-components=1 \
-  && npm install
-
-CMD [ "node", "server.js" ]
+FROM base as production
+WORKDIR /opt/auth0-adldap
+# Copy builder output
+COPY --from=builder /opt/auth0-adldap ./
+CMD [ "server.js" ]
