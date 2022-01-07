@@ -6,7 +6,7 @@
   "scripts": {
     "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec --exit",
     "snyk": "snyk test",
-    "start": "PROVISIONING_TICKET=https://ap-enterprise.us.auth0.com/p/ad/kyMsngUE3BWVAtRHqvuxoxMFucoNRHZN node server.js"
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
