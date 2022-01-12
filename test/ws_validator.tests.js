@@ -33,6 +33,16 @@ class MockWebSocket {
   }
 
   reply () {}
+
+  // mock terminate()
+  terminate() {
+    this.emit('mockTerminated')
+  }
+
+  // mock removeAllListeners()
+  removeAllListeners() {
+
+  }
 }
 
 class MockUsers {}
@@ -103,6 +113,7 @@ describe('ws_validator', () => {
   mockNconf.set('AD_HUB', 'http://test.io');
   mockNconf.set('CONNECTION', 'test-ad');
   mockNconf.set('REALM', 'urn:auth0:example');
+  mockNconf.set('WS_RECONNECT_INTERVAL_MS', 1000);
 
   const wsValidator = proxyquire('../ws_validator', {
     'ws': MockWebSocket,
@@ -131,6 +142,16 @@ describe('ws_validator', () => {
     expect(decoded).to.be.ok;
     expect(decoded.exp).to.be.ok;
     expect(decoded.exp - testStart).to.equal(60);
+  });
+
+  it('terminate socket on error', (done) => {
+    mockWebSocketInstance.on('mockTerminated', () => {
+      // terminate has been called on socket by the reconnection timer, all good.
+      done();
+    });
+    
+    // trigger error
+    mockWebSocketInstance.emit('error', new Error('test'));
   });
 
 });

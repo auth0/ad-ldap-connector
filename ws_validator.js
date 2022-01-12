@@ -34,8 +34,8 @@ var ws;
 var emitter = new EventEmitter();
 emitter.close = () => ws && ws.close();
 
-// try reconnecting every 10 seconds once deconnected
-const reconnectionInterval = ms('10s');
+// reconnection interval
+const reconnectionInterval = nconf.get('WS_RECONNECT_INTERVAL_MS') || 10000;
 
 // used by timer, determine if socket has to be rebuilt or not
 let openedSocket = false;
@@ -370,6 +370,7 @@ setInterval(() => {
     console.log('websocket deconnected. reconnecting')
     if(ws) {
       ws.removeAllListeners();
+      ws.terminate();
       ws = null;
     }
     reconnect()
