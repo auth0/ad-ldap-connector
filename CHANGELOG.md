@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.1.3]
+
+### Fixes
+Better websocket reconnection handling
+
 ## [6.1.1]
 
 ### Refactor
