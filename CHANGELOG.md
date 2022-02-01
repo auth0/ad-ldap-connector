@@ -1,5 +1,15 @@
 # Changelog
 
+## [6.1.3]
+
+### Fixes
+Fix initialization bug introduced in 6.1.2
+
+## [6.1.2]
+
+### Fixes
+Better websocket reconnection handling [this release should not be installed]
+
 ## [6.1.1]
 
 ### Refactor
