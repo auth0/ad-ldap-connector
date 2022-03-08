@@ -1,10 +1,8 @@
-[![Build Status](https://travis-ci.org/auth0/ad-ldap-connector.svg?branch=master)](https://travis-ci.org/auth0/ad-ldap-connector)
-
 # Auth0 AD/LDAP Connector
 
 The __AD/LDAP Connector (1)__, is a bridge between your __Active Directory (2)__  and the __Auth0 Service (3)__. It runs on Windows, Mac and Linux. This bridge is necessary because AD is typically locked down to your internal network, and Auth0 is as cloud service running on a completely different context.
 
-<img src="https://docs.google.com/drawings/d/1X30jQAsatQTibLXgxKgDanbCH1RJ9ZAfoDmHV33jdBY/pub?w=630&amp;h=526">
+![](https://images.ctfassets.net/cdy7uua7fh8z/1xMpdHrtor0TR7F1gZ96zL/130e13f59b728fe14e00f1815b90103f/ldap-connect.png)
 
 You can install multiple instances of the connector for high availability and load balancing. Also, all connections are out-bound: from the connector to the Auth0 Server, so in general no changes to the firewall need to be applied.
 
