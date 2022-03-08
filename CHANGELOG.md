@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.1.4]
+
+### Fixes
+Use TLS 1.2 protocol in connector updater script for Windows
+
 ## [6.1.3]
 
 ### Fixes
