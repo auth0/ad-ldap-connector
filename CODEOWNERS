@@ -1,0 +1,3 @@
+
+# Code owners are automatically requested for review when someone opens a pull request that modifies code that they own.
+*    @auth0/iam-user-management-engineer
