@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.1.5]
+### Fixes
+Fix installer creation
+
 ## [6.1.4]
 
 ### Fixes
