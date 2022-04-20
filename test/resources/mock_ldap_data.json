@@ -1,0 +1,57 @@
+{
+  "dc=example,dc=org": {
+    "dc": "example",
+    "o": "Example Inc.",
+    "objectClass": ["top", "dcObject", "organization"]
+  },
+  "cn=admin,dc=example,dc=org": {
+    "cn": "admin",
+    "description": "LDAP administrator",
+    "objectClass": ["simpleSecurityObject", "organizationalRole", "top"],
+    "userPassword": "admin"
+  },
+  "ou=groups,dc=example,dc=org": {
+    "objectClass": ["organizationalUnit", "top"],
+    "ou": "groups"
+  },
+  "cn=admin,ou=groups,dc=example,dc=org": {
+    "cn": "admin",
+    "gidNumber": "501",
+    "memberUid": "1000",
+    "objectClass": ["posixGroup", "top"]
+  },
+  "cn=users,ou=groups,dc=example,dc=org": {
+    "cn": "users",
+    "gidNumber": "500",
+    "memberUid": ["1000", "1001"],
+    "objectClass": ["posixGroup", "top"]
+  },
+  "ou=users,dc=example,dc=org": {
+    "objectClass": ["organizationalUnit", "top"],
+    "ou": "users"
+  },
+  "cn=jdoe,ou=users,dc=example,dc=org": {
+    "cn": "jdoe",
+    "gidNumber": "500",
+    "givenName": "john",
+    "homeDirectory": "/home/users/jdoe",
+    "mail": "jdoe@example.org",
+    "objectClass": ["inetOrgPerson", "posixAccount", "top"],
+    "sn": "doe",
+    "uid": "jdoe",
+    "uidNumber": "1001",
+    "userPassword": "123"
+  },
+  "cn=mdoe,ou=users,dc=example,dc=org": {
+    "cn": "mdoe",
+    "gidNumber": "500",
+    "givenName": "mary",
+    "homeDirectory": "/home/users/mdoe",
+    "mail": "mdoe@example.org",
+    "objectClass": ["inetOrgPerson", "posixAccount", "top"],
+    "sn": "doe",
+    "uid": "mdoe",
+    "uidNumber": "1000",
+    "userPassword": "123"
+  }
+}
