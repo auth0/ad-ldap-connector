@@ -14,16 +14,16 @@
     "objectClass": ["organizationalUnit", "top"],
     "ou": "groups"
   },
-  "cn=admin,ou=groups,dc=example,dc=org": {
-    "cn": "admin",
+  "cn=administrators,ou=groups,dc=example,dc=org": {
+    "cn": "administrators",
     "gidNumber": "501",
-    "memberUid": "1000",
+    "member": ["cn=jdoe,ou=users,dc=example,dc=org"],
     "objectClass": ["posixGroup", "top"]
   },
   "cn=users,ou=groups,dc=example,dc=org": {
     "cn": "users",
     "gidNumber": "500",
-    "memberUid": ["1000", "1001"],
+    "member": ["cn=jdoe,ou=users,dc=example,dc=org", "cn=mdoe,ou=users,dc=example,dc=org"],
     "objectClass": ["posixGroup", "top"]
   },
   "ou=users,dc=example,dc=org": {

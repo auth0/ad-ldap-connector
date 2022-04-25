@@ -14,8 +14,12 @@ nconf.set("LDAP_BASE", "dc=example,dc=org");
 nconf.set("LDAP_BIND_USER", "cn=admin,dc=example,dc=org");
 nconf.set("LDAP_BIND_PASSWORD", "admin");
 nconf.set("LDAP_USER_BY_NAME", "(&(objectClass=inetOrgPerson)(uid={0}))");
-nconf.set("LDAP_SEARCH_QUERY", "(&(objectClass=inetOrgPerson)(|(cn={0})(givenName={0})(sn={0})(uid={0})))");
+nconf.set(
+  "LDAP_SEARCH_QUERY",
+  "(&(objectClass=inetOrgPerson)(|(cn={0})(givenName={0})(sn={0})(uid={0})))"
+);
 nconf.set("LDAP_SEARCH_ALL_QUERY", "(objectClass=inetOrgPerson)");
+nconf.set("LDAP_SEARCH_GROUPS", "(member={0})");
 
 describe("users", function () {
   var server;
@@ -68,7 +72,7 @@ describe("users", function () {
   });
 
   describe("validate", function () {
-    describe("when username and password are valid", function () { 
+    describe("when username and password are valid", function () {
       it("should return user profile", function (done) {
         const users = new Users();
 
@@ -80,12 +84,14 @@ describe("users", function () {
           expect(profile.nickname).to.equal("jdoe");
           expect(profile.emails.length).to.equal(1);
           expect(profile.emails[0].value).to.equal("jdoe@example.org");
+          expect(profile.groups.length).to.equal(2);
+          expect(profile.groups).to.have.members(["administrators", "users"]);
           done();
         });
       });
-    }); 
+    });
 
-    describe("when user does not exist", function () { 
+    describe("when user does not exist", function () {
       it("should return wrong username error", function (done) {
         const users = new Users();
 
@@ -95,9 +101,9 @@ describe("users", function () {
           done();
         });
       });
-    }); 
+    });
 
-    describe("when password is not specified", function () { 
+    describe("when password is not specified", function () {
       it("should return wrong password error", function (done) {
         const users = new Users();
 
@@ -107,9 +113,9 @@ describe("users", function () {
           done();
         });
       });
-    }); 
+    });
 
-    describe("when password is not valid", function () { 
+    describe("when password is not valid", function () {
       it("should return wrong password error", function (done) {
         const users = new Users();
 
@@ -119,7 +125,7 @@ describe("users", function () {
           done();
         });
       });
-    }); 
+    });
   });
 
   describe("list", function () {
@@ -167,7 +173,7 @@ describe("users", function () {
       });
     });
 
-    describe("when no filter is specified", function () { 
+    describe("when no filter is specified", function () {
       describe("and it is an empty string", function () {
         it("should find all users", function (done) {
           const users = new Users();
@@ -175,20 +181,20 @@ describe("users", function () {
           users.list("", {}, function (err, users) {
             expect(err).to.be.null;
             expect(users.length).to.equal(2);
-            expect(users.map((u) => u.id)).to.have.members(["jdoe", "mdoe"]); 
+            expect(users.map((u) => u.id)).to.have.members(["jdoe", "mdoe"]);
             done();
           });
         });
       });
 
-      describe("and it is undefined", function() {
+      describe("and it is undefined", function () {
         it("should find all users", function (done) {
           const users = new Users();
 
           users.list(undefined, {}, function (err, users) {
             expect(err).to.be.null;
             expect(users.length).to.equal(2);
-            expect(users.map((u) => u.id)).to.have.members(["jdoe", "mdoe"]); 
+            expect(users.map((u) => u.id)).to.have.members(["jdoe", "mdoe"]);
             done();
           });
         });
