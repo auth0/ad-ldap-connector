@@ -43,7 +43,7 @@
     "jsonwebtoken": "^8.5.1",
     "kerberos-server": "^1.0.0",
     "ldapjs": "~1.0.1",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "lru-cache": "~2.6.3",
     "morgan": "^1.9.1",
     "ms": "^2.0.0",
