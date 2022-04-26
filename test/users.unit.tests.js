@@ -89,6 +89,25 @@ describe("users", function () {
           done();
         });
       });
+
+      describe("when username contains escaped characters", function () {
+        it("should return user profile", function (done) {
+          const users = new Users();
+
+          users.validate("jd\\28\\29e", "123", function (err, profile) {
+            expect(err).to.be.null;
+            expect(profile.id).to.equal("jd()e");
+            expect(profile.name.givenName).to.equal("john");
+            expect(profile.name.familyName).to.equal("doe");
+            expect(profile.nickname).to.equal("jd()e");
+            expect(profile.emails.length).to.equal(1);
+            expect(profile.emails[0].value).to.equal("jd()e@example.org");
+            expect(profile.groups.length).to.equal(1);
+            expect(profile.groups).to.have.members(["users"]);
+            done();
+          });
+        });
+      });
     });
 
     describe("when user does not exist", function () {
@@ -180,8 +199,12 @@ describe("users", function () {
 
           users.list("", {}, function (err, users) {
             expect(err).to.be.null;
-            expect(users.length).to.equal(2);
-            expect(users.map((u) => u.id)).to.have.members(["jdoe", "mdoe"]);
+            expect(users.length).to.equal(3);
+            expect(users.map((u) => u.id)).to.have.members([
+              "jdoe",
+              "mdoe",
+              "jd()e",
+            ]);
             done();
           });
         });
@@ -193,8 +216,12 @@ describe("users", function () {
 
           users.list(undefined, {}, function (err, users) {
             expect(err).to.be.null;
-            expect(users.length).to.equal(2);
-            expect(users.map((u) => u.id)).to.have.members(["jdoe", "mdoe"]);
+            expect(users.length).to.equal(3);
+            expect(users.map((u) => u.id)).to.have.members([
+              "jdoe",
+              "mdoe",
+              "jd()e",
+            ]);
             done();
           });
         });
