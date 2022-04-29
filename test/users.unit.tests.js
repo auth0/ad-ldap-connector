@@ -39,7 +39,7 @@ describe("users", function () {
       it("should return user if user exists", function (done) {
         const users = new Users();
 
-        users.getByUserName("jdoe", function (err, user) {
+        users.getByUserName("jdoe", {}, function (err, user) {
           expect(err).to.be.null;
           expect(user.cn).to.equal("jdoe");
           expect(user.mail).to.equal("jdoe@example.org");
@@ -50,7 +50,7 @@ describe("users", function () {
       it("should return null if user does not exist", function (done) {
         const users = new Users();
 
-        users.getByUserName("cdoe", function (err, user) {
+        users.getByUserName("cdoe", {}, function (err, user) {
           expect(err).to.be.null;
           expect(user).to.be.undefined;
           done();
@@ -62,11 +62,15 @@ describe("users", function () {
       it("should return null", function (done) {
         const users = new Users();
 
-        users.getByUserName("jsm\\t)*(", function (err, user) {
-          expect(err).to.be.null;
-          expect(user).to.be.undefined;
-          done();
-        });
+        users.getByUserName(
+          "jsm\\t)*(",
+          { escaped: true },
+          function (err, user) {
+            expect(err).to.be.null;
+            expect(user).to.be.undefined;
+            done();
+          }
+        );
       });
     });
   });
@@ -76,7 +80,7 @@ describe("users", function () {
       it("should return user profile", function (done) {
         const users = new Users();
 
-        users.validate("jdoe", "123", function (err, profile) {
+        users.validate("jdoe", "123", {}, function (err, profile) {
           expect(err).to.be.null;
           expect(profile.id).to.equal("jdoe");
           expect(profile.name.givenName).to.equal("john");
@@ -90,22 +94,51 @@ describe("users", function () {
         });
       });
 
-      describe("when username contains escaped characters", function () {
+      describe("when username contains previously escaped characters", function () {
         it("should return user profile", function (done) {
           const users = new Users();
 
-          users.validate("jd\\28\\29e", "123", function (err, profile) {
-            expect(err).to.be.null;
-            expect(profile.id).to.equal("jd()e");
-            expect(profile.name.givenName).to.equal("john");
-            expect(profile.name.familyName).to.equal("doe");
-            expect(profile.nickname).to.equal("jd()e");
-            expect(profile.emails.length).to.equal(1);
-            expect(profile.emails[0].value).to.equal("jd()e@example.org");
-            expect(profile.groups.length).to.equal(1);
-            expect(profile.groups).to.have.members(["users"]);
-            done();
-          });
+          users.validate(
+            "jd\\28\\29e",
+            "123",
+            { escaped: true },
+            function (err, profile) {
+              expect(err).to.be.null;
+              expect(profile.id).to.equal("jd()e");
+              expect(profile.name.givenName).to.equal("john");
+              expect(profile.name.familyName).to.equal("doe");
+              expect(profile.nickname).to.equal("jd()e");
+              expect(profile.emails.length).to.equal(1);
+              expect(profile.emails[0].value).to.equal("jd()e@example.org");
+              expect(profile.groups.length).to.equal(1);
+              expect(profile.groups).to.have.members(["users"]);
+              done();
+            }
+          );
+        });
+      });
+
+      describe("when username contains not previously escaped characters", function () {
+        it("should return user profile", function (done) {
+          const users = new Users();
+
+          users.validate(
+            "jd()e",
+            "123",
+            { escaped: false },
+            function (err, profile) {
+              expect(err).to.be.null;
+              expect(profile.id).to.equal("jd()e");
+              expect(profile.name.givenName).to.equal("john");
+              expect(profile.name.familyName).to.equal("doe");
+              expect(profile.nickname).to.equal("jd()e");
+              expect(profile.emails.length).to.equal(1);
+              expect(profile.emails[0].value).to.equal("jd()e@example.org");
+              expect(profile.groups.length).to.equal(1);
+              expect(profile.groups).to.have.members(["users"]);
+              done();
+            }
+          );
         });
       });
     });
@@ -150,7 +183,7 @@ describe("users", function () {
   describe("list", function () {
     describe("when the specified filter is valid", function () {
       describe("and a matching record exists", function () {
-        it("should return the user profile", function (done) {
+        it("should return the user profile when the query contains no escaped characters", function (done) {
           const users = new Users();
 
           users.list("jdoe", {}, function (err, users) {
@@ -162,6 +195,38 @@ describe("users", function () {
             expect(users[0].nickname).to.equal("jdoe");
             expect(users[0].emails.length).to.equal(1);
             expect(users[0].emails[0].value).to.equal("jdoe@example.org");
+            done();
+          });
+        });
+
+        it("should return the user profile when the query contains previously escaped characters", function (done) {
+          const users = new Users();
+
+          users.list("jd\\28\\29e", { escaped: true }, function (err, users) {
+            expect(err).to.be.null;
+            expect(users.length).to.equal(1);
+            expect(users[0].id).to.equal("jd()e");
+            expect(users[0].name.givenName).to.equal("john");
+            expect(users[0].name.familyName).to.equal("doe");
+            expect(users[0].nickname).to.equal("jd()e");
+            expect(users[0].emails.length).to.equal(1);
+            expect(users[0].emails[0].value).to.equal("jd()e@example.org");
+            done();
+          });
+        });
+
+        it("should return the user profile when the query contains non-previously escaped characters", function (done) {
+          const users = new Users();
+
+          users.list("jd()e", { escaped: false }, function (err, users) {
+            expect(err).to.be.null;
+            expect(users.length).to.equal(1);
+            expect(users[0].id).to.equal("jd()e");
+            expect(users[0].name.givenName).to.equal("john");
+            expect(users[0].name.familyName).to.equal("doe");
+            expect(users[0].nickname).to.equal("jd()e");
+            expect(users[0].emails.length).to.equal(1);
+            expect(users[0].emails[0].value).to.equal("jd()e@example.org");
             done();
           });
         });
