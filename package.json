@@ -1,6 +1,6 @@
 {
   "name": "ad-ldap-connector",
-  "version": "6.1.5",
+  "version": "6.1.6",
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
@@ -23,7 +23,7 @@
   "dependencies": {
     "@auth0/thumbprint": "0.0.6",
     "archiver": "^3.0.0",
-    "async": "~0.2.9",
+    "async": "~2.6.4",
     "binary": "^0.3.0",
     "body-parser": "^1.18.3",
     "cb": "~0.1.0",
@@ -43,7 +43,7 @@
     "jsonwebtoken": "^8.5.1",
     "kerberos-server": "^1.0.0",
     "ldapjs": "~1.0.1",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "lru-cache": "~2.6.3",
     "morgan": "^1.9.1",
     "ms": "^2.0.0",
