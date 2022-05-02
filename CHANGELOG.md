@@ -1,9 +1,20 @@
 # Changelog
 
-## [6.1.6]
-
+## [6.1.7]
 ### Fixes
 Update ldapjs library to fix bug with LDAP character escaping
+
+## [6.1.6]
+### Fixes
+Updated dependencies
+async 0.2.10 -> 2.6.4,
+ini 1.3.5 -> 1.3.8,
+path-parse 1.0.6 -> 1.0.7,
+normalize-url 4.5.0 -> 4.5.1,
+glob-parent 5.1.1 -> 5.1.2,
+lodash 4.17.20 -> 4.17.21,
+hosted-git-info 2.8.8 -> 2.8.9,
+y18n 3.2.1 ->3.2.2,
 
 ## [6.1.5]
 ### Fixes
