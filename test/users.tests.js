@@ -10,7 +10,9 @@ var PasswordComplexityError = require('../lib/errors/PasswordComplexityError');
 var async = require('async');
 
 /*
- * These tests needs a config.json file in place pointing to our test-AD
+ * These integration tests needs a config.json file in place pointing to our test-AD.
+ *
+ * They have been disabled for now since this test-AD does not exist anymore.
  */
 
 describe.skip('users', function () {

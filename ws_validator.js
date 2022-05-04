@@ -154,7 +154,11 @@ function setupWebsocket() {
 
         log('Starting authentication attempt.');
 
-        users.validate(payload.username, payload.password, function (err, user) {
+        const options = {
+          escaped: !!payload.escaped,
+        };
+
+        users.validate(payload.username, payload.password, options, function (err, user) {
           if (err) {
             if (err instanceof AccountDisabled) {
               log("Authentication attempt failed. Reason: " + "account disabled".red);
@@ -251,8 +255,9 @@ function setupWebsocket() {
 
         console.log('Searching users.');
 
-        var options = {
-          limit: payload.limit
+        const options = {
+          limit: payload.limit,
+          escaped: !!payload.escaped,
         };
 
         users.list(payload.search, options, function (err, users) {
@@ -304,7 +309,11 @@ function setupWebsocket() {
 
           log('Attempting change_password.');
 
-          users.changePassword(payload.username, payload.password, function (err, profile) {
+          const options = {
+            escaped: !!payload.escaped,
+          };
+          
+          users.changePassword(payload.username, payload.password, options, function (err, profile) {
             if (err) {
               if (err instanceof InsufficientAccessRightsError || err instanceof PasswordComplexityError) {
                 log("Change Password attempt failed. Reason: " + err.message.red);

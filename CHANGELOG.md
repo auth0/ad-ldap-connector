@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.1.7]
+### Fixes
+Update ldapjs library to fix bug with LDAP character escaping
+
 ## [6.1.6]
 ### Fixes
 Updated dependencies
