@@ -54,7 +54,7 @@
     "passport-ssl-certificate": "https://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
     "passport-windowsauth": "^3.0.0",
     "request": "^2.88.0",
-    "rimraf": "~2.5.2",
+    "rimraf": "~2.7.1",
     "selfsigned": "^1.10.4",
     "stream-rotate": "crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
     "tunnel": "~0.0.3",
