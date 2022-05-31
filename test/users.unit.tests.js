@@ -43,6 +43,7 @@ describe("users", function () {
           expect(err).to.be.null;
           expect(user.cn).to.equal("jdoe");
           expect(user.mail).to.equal("jdoe@example.org");
+          expect(user.magicPassword).to.equal("hello77");
           done();
         });
       });
@@ -56,6 +57,35 @@ describe("users", function () {
           done();
         });
       });
+
+      it("should return requested attribute only for existing user", function (done) {
+        nconf.set("LDAP_USER_BY_NAME_ATTRS", ['magicPassword']);
+        const users = new Users();
+
+        users.getByUserName("jdoe", {}, function (err, user) {
+          nconf.set("LDAP_USER_BY_NAME_ATTRS", null); // reset.
+          expect(err).to.be.null;
+          expect(user.cn).to.be.undefined;
+          expect(user.mail).to.be.undefined;
+          expect(user.magicPassword).to.equal("hello77");
+          done();
+        });
+      });
+
+      it("should return requested default and specific attributes for existing user", function (done) {
+        nconf.set("LDAP_USER_BY_NAME_ATTRS", ['*', 'magicPassword']);
+        const users = new Users();
+
+        users.getByUserName("jdoe", {}, function (err, user) {
+          nconf.set("LDAP_USER_BY_NAME_ATTRS", null); // reset.
+          expect(err).to.be.null;
+          expect(user.cn).to.equal("jdoe");
+          expect(user.mail).to.equal("jdoe@example.org");
+          expect(user.magicPassword).to.equal("hello77");
+          done();
+        });
+      });
+
     });
 
     describe("when username is not valid", function () {
@@ -73,6 +103,7 @@ describe("users", function () {
         );
       });
     });
+
   });
 
   describe("validate", function () {

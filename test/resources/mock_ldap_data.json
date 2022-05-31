@@ -44,7 +44,8 @@
     "sn": "doe",
     "uid": "jdoe",
     "uidNumber": "1000",
-    "userPassword": "123"
+    "userPassword": "123",
+    "magicPassword": "hello77"
   },
   "cn=mdoe,ou=users,dc=example,dc=org": {
     "cn": "mdoe",
