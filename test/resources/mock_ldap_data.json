@@ -44,7 +44,8 @@
     "sn": "doe",
     "uid": "jdoe",
     "uidNumber": "1000",
-    "userPassword": "123"
+    "userPassword": "123",
+    "extraAttribute": "extra-val-666"
   },
   "cn=mdoe,ou=users,dc=example,dc=org": {
     "cn": "mdoe",
