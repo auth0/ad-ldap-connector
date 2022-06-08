@@ -25,7 +25,7 @@
     "archiver": "^3.0.0",
     "async": "~2.6.4",
     "binary": "^0.3.0",
-    "body-parser": "^1.18.3",
+    "body-parser": "^1.20.0",
     "cb": "~0.1.0",
     "colors": "~0.6.0-1",
     "commander": "~1.1.1",
