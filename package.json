@@ -44,7 +44,7 @@
     "kerberos-server": "^1.0.0",
     "ldapjs": "^2.3.2",
     "lodash": "^4.17.21",
-    "lru-cache": "~2.6.3",
+    "lru-cache": "~2.7.3",
     "morgan": "^1.9.1",
     "ms": "^2.0.0",
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
