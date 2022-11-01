@@ -49,7 +49,7 @@
     "ms": "^2.0.0",
     "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
     "object-sizeof": "^1.4.0",
-    "passport": "~0.1.16",
+    "passport": "~0.6.0",
     "passport-local": "~0.1.6",
     "passport-ssl-certificate": "https://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
     "passport-windowsauth": "^3.0.0",
