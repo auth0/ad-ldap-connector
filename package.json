@@ -55,7 +55,7 @@
     "passport-windowsauth": "^3.0.0",
     "request": "^2.88.0",
     "rimraf": "~2.7.1",
-    "selfsigned": "^1.10.4",
+    "selfsigned": "^1.10.14",
     "stream-rotate": "crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
     "tunnel": "~0.0.3",
     "unzipper": "^0.10.0",
