@@ -6,7 +6,7 @@
   "scripts": {
     "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec --exit",
     "snyk": "snyk test",
-    "start": "node server.js"
+    "start": "PROVISIONING_TICKET=https://punchdeck.us.auth0.com/p/ad/lSbmOvo3QQYJ1luGqlNSXSRx5KDGZvtB node server.js"
   },
   "repository": {
     "type": "git",
@@ -76,6 +76,6 @@
   },
   "optionalDependencies": {},
   "engines": {
-    "node": "^12.19"
+    "node": "^18.16.0"
   }
 }
