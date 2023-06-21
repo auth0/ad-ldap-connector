@@ -6,7 +6,8 @@
   "scripts": {
     "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec --exit",
     "snyk": "snyk test",
-    "start": "node server.js"
+    "start": "node server.js",
+    "start-local": "source .env && npm run start"
   },
   "repository": {
     "type": "git",
