@@ -6,7 +6,7 @@
   "scripts": {
     "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec --exit",
     "snyk": "snyk test",
-    "start": "PROVISIONING_TICKET=https://punchdeck.us.auth0.com/p/ad/lSbmOvo3QQYJ1luGqlNSXSRx5KDGZvtB node server.js"
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
     "archiver": "^3.0.0",
     "async": "~2.6.4",
     "binary": "^0.3.0",
-    "body-parser": "^1.18.3",
+    "body-parser": "^1.19.2",
     "cb": "~0.1.0",
     "colors": "~0.6.0-1",
     "commander": "~1.1.1",
@@ -74,7 +74,14 @@
     "sinon": "^9.0.3",
     "snyk": "^1.381.1"
   },
-  "optionalDependencies": {},
+  "overrides": {
+    "connect-multiparty@^2.2.0": {
+      "qs": "^6.5.3"
+    },
+    "request@^2.88.0": {
+      "qs": "^6.5.3"
+    }
+  },
   "engines": {
     "node": "^18.16.0"
   }
