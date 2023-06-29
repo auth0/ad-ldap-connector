@@ -40,7 +40,7 @@ connectorSetup.run(__dirname, function(err) {
 
   if (!nconf.get('LDAP_BIND_USER') || !nconf.get('LDAP_BIND_CREDENTIALS')) {
     if(nconf.get("LDAP_PREFER_BIND_CREDENTIALS")){
-      console.error('LDAP_PREFER_BIND_CREDENTIALS is set. Please edit config.json and add LDAP_BIND_USER to add LDAP_BIND_PASSWORD');
+      console.error('LDAP_PREFER_BIND_CREDENTIALS is set. Please edit config.json to add LDAP_BIND_USER and LDAP_BIND_PASSWORD');
       return exit(1);
     }
     else if (!nconf.get('ANONYMOUS_SEARCH_ENABLED')){
