@@ -104,6 +104,12 @@ By default the connector search using this query LDAP `(sAMAccountName={0})`, yo
 
 If you get "Invalid Ticket" when configuring the connector for the first time, the most likely cause is a network issue (e.g. connector behind a proxy). Try connecting to `https://{your tenant}.auth0.com/testall` with a browser other than IE.
 
+Under FreeIPA, it is necessary to prefer the use of the `LDAP_BIND_USER` and `LDAP_BIND_PASSWORD` over anonymous search even when anonymous search is enabled on the FreeIPA server, otherwise, email authentication will not work. You can set the connector to prefer using the bind credentials in the config.json file:
+
+```
+    "LDAP_PREFER_BIND_CREDENTIALS": true,
+```
+
 ## Issue Reporting
 
 If you have found a bug or if you have a feature request, please report them 
