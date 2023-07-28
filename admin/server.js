@@ -2,6 +2,10 @@ require('../lib/initConf');
 require('../lib/setupProxy');
 
 const axios = require('axios');
+const multer = require('multer');
+const { Readable } = require('stream');
+const memoryStorage = multer.memoryStorage();
+const upload = multer({ memoryStorage });
 var unzipper = require('unzipper');
 var path = require('path');
 var archiver = require('archiver');
@@ -14,13 +18,11 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
-var logger = require('morgan');
 var xtend = require('xtend');
 var urlJoin = require('url-join');
 var exec = require('child_process').exec;
 var app = express();
 var freeport = require('freeport');
-var multipart = require('connect-multiparty');
 var test_config = require('./test_config');
 var Users = require('../lib/users');
 
@@ -184,7 +186,7 @@ app.post(
 
 app.post(
   '/server',
-  multipart(),
+  upload.single('SSL_PFX'),
   set_current_config,
   csrfProtection,
   function (req, res, next) {
@@ -195,14 +197,11 @@ app.post(
     });
   },
   function (req, res, next) {
-    if (!req.files || !req.files.SSL_PFX || req.files.SSL_PFX.size === 0)
+    if (!req.file || req.file.buffer.length === 0)
       return next();
     // upload pfx
-    fs.readFile(req.files.SSL_PFX.path, function (err, pfxContent) {
-      req.body.SSL_PFX = Buffer.from(pfxContent).toString('base64');
-      delete req.files;
-      next();
-    });
+    req.body.SSL_PFX = req.file.buffer.toString('base64');
+    next();
   },
   merge_config
 );
@@ -350,14 +349,13 @@ app.post(
   '/import',
   set_current_config,
   csrfProtection,
-  multipart(),
+  upload.single('IMPORT_FILE'),
   function (req, res, next) {
     console.log('Importing configuration.');
 
     if (
-      !req.files ||
-      !req.files.IMPORT_FILE ||
-      req.files.IMPORT_FILE.size === 0
+      !req.file ||
+      req.file.buffer.length === 0
     ) {
       return res.render(
         'index',
@@ -374,7 +372,7 @@ app.post(
       'lib/profileMapper.js',
     ];
 
-    fs.createReadStream(req.files.IMPORT_FILE.path)
+    Readable.from(req.file.buffer)
       .pipe(unzipper.Parse())
       .on('entry', (entry) => {
         if (!valid_files.includes(entry.path)) {
@@ -395,6 +393,14 @@ app.post(
             })
           );
         });
+      }).on('error', err => {
+        console.error(err);
+        return res.render(
+          'index',
+          xtend(req.current_config, {
+            ERROR: 'Upload a valid zip file.',
+          })
+        );
       });
   }
 );
