@@ -78,14 +78,6 @@
     "sinon": "^9.0.3",
     "snyk": "^1.381.1"
   },
-  "overrides": {
-    "connect-multiparty@^2.2.0": {
-      "qs": "^6.5.3"
-    },
-    "request@^2.88.0": {
-      "qs": "^6.5.3"
-    }
-  },
   "engines": {
     "node": "^18.16.0"
   }
