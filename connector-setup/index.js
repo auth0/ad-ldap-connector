@@ -49,12 +49,6 @@ exports.run = function (workingPath, callback) {
         axios
           .get(info_url)
           .then((response) => {
-            if (response.status == 404) {
-              return cb(
-                new Error('Wrong ticket. Does this connection still exist?')
-              );
-            }
-
             var unexpected_response =
               response.status !== 200 ||
               !~(response.headers['content-type'] || '').indexOf(
@@ -78,9 +72,15 @@ exports.run = function (workingPath, callback) {
           })
           .catch((err) => {
             if (err) {
+              if (err.request.res.statusCode === 404) {
+                return cb(
+                  new Error('Wrong ticket. Does this connection still exist?')
+                );
+              }
+
               switch (err.code) {
               case 'ECONNREFUSED':
-                console.log('Unable to reach Auth0 at ' + ticket);
+                console.log('Unable to reach Auth0 at ' + provisioningTicket);
                 break;
               case 'UNABLE_TO_VERIFY_LEAF_SIGNATURE':
               case 'CERT_UNTRUSTED':

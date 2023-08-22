@@ -90,7 +90,7 @@ async.series(
         .then((response) => {
           if (response.status !== 200) {
             logger.failed('Error connecting to Auth0.');
-            logger.error('  > Status: %s', res.status);
+            logger.error('  > Status: %s', response.status);
             logger.error('  > Body: %s', response.data.replace(/\n$/, ''));
           } else {
             logger.success(
@@ -101,7 +101,7 @@ async.series(
           callback();
         })
         .catch((err) => {
-          logger.error('  > Error: %s', JSON.stringify(err));
+          logger.error('  > Error: %s', JSON.stringify(err, null, 2));
         });
     },
     function (callback) {
@@ -180,7 +180,7 @@ async.series(
           }
         })
         .catch((err) => {
-          logger.failed('Error calling the test endpoint.');
+          logger.failed('Error calling the test endpoint.', err);
         })
         .finally(() => {
           return callback();
