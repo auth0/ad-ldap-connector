@@ -227,7 +227,7 @@ app.post(
       .get(info_url)
       .then((response) => {
         const body = response.data;
-        if (response.status !== 200 || !body || !body.adHub) {
+        if (!body || !body.adHub) {
           return res.render(
             'index',
             xtend(req.current_config, {
@@ -253,7 +253,9 @@ app.post(
         }
       })
       .catch((err) => {
-        if (err.code === 'ECONNREFUSED') {
+        console.error(err);
+
+        if (err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND') {
           console.error('Unable to reach auth0 at: ' + info_url);
           return res.render(
             'index',
@@ -291,8 +293,17 @@ app.post(
             'index',
             xtend(req.current_config, {
               ERROR:
-                'The Auth0 server is using a selg-signed certificate. Go to https://auth0.com/docs/connector/ca-certificates for instructions on how to install your certificate. \n' +
+                'The Auth0 server is using a self-signed certificate. Go to https://auth0.com/docs/connector/ca-certificates for instructions on how to install your certificate. \n' +
                 err.message,
+            })
+          );
+        }
+
+        if (err.response?.status !== 200) {
+          return res.render(
+            'index',
+            xtend(req.current_config, {
+              ERROR: 'Wrong ticket url.',
             })
           );
         }

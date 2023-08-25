@@ -49,20 +49,11 @@ exports.run = function (workingPath, callback) {
         axios
           .get(info_url)
           .then((response) => {
-            var unexpected_response =
-              response.status !== 200 ||
-              !~(response.headers['content-type'] || '').indexOf(
-                'application/json'
-              );
-
-            if (unexpected_response) {
+            if (!~(response.headers['content-type'] || '').indexOf('application/json')) {
               var message =
                 'Unexpected response from ticket information endpoint. ' +
-                'Status code: ' +
-                response.status +
-                ' Content-Type: ' +
-                response.headers['content-type'] +
-                '.';
+                'Status code: ' + response.status +
+                ' Content-Type: ' + response.headers['content-type'] + '.';
               return cb(new Error(message));
             }
 
@@ -72,10 +63,19 @@ exports.run = function (workingPath, callback) {
           })
           .catch((err) => {
             if (err) {
-              if (err.request.res.statusCode === 404) {
+
+              if (err.response?.status === 404) {
                 return cb(
                   new Error('Wrong ticket. Does this connection still exist?')
                 );
+              }
+
+              if (err.response && err.response.status !== 200) {
+                var message =
+                'Unexpected response from ticket information endpoint. ' +
+                'Status code: ' + err.response.status +
+                ' Content-Type: ' + err.response.headers['content-type'] + '.';
+                return cb(new Error(message));
               }
 
               switch (err.code) {

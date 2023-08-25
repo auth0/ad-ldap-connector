@@ -88,20 +88,20 @@ async.series(
       axios
         .get(connectivity_url)
         .then((response) => {
-          if (response.status !== 200) {
-            logger.failed('Error connecting to Auth0.');
-            logger.error('  > Status: %s', response.status);
-            logger.error('  > Body: %s', response.data.replace(/\n$/, ''));
-          } else {
-            logger.success(
-              'Connection to test endpoint %s.',
-              'succeeded'.green
-            );
-          }
+          logger.success(
+            'Connection to test endpoint %s.',
+            'succeeded'.green
+          );
           callback();
         })
         .catch((err) => {
-          logger.error('  > Error: %s', JSON.stringify(err, null, 2));
+          if (err.response && err.response.status !== 200) {
+            logger.failed('Error connecting to Auth0.');
+            logger.error('  > Status: %s', err.response.status);
+            logger.error('  > Body: %s', err.response.data.replace(/\n$/, ''));
+          } else {
+            logger.error('  > Error: %s', JSON.stringify(err, null, 2));
+          }
         });
     },
     function (callback) {
@@ -229,22 +229,14 @@ async.series(
         axios
           .get(info_url)
           .then((response) => {
-            if (response.status !== 200) {
+            var thumbprints = response.data.thumbprints;
+            if (!thumbprints || thumbprints.length === 0) {
               logger.error(
-                ' > Error loading certificate from Auth0: %s',
-                response.status
+                ' > No thumbprints available in the connection information. Cannot compare certificates.'
               );
-              logger.warn('  > Cannot compare with connection thumbprint.');
             } else {
-              var thumbprints = response.data.thumbprints;
-              if (!thumbprints || thumbprints.length === 0) {
-                logger.error(
-                  ' > No thumbprints available in the connection information. Cannot compare certificates.'
-                );
-              } else {
-                server_thumbprint = response.data.thumbprints[0];
-                logger.info('  > Server thumbprint: ' + server_thumbprint);
-              }
+              server_thumbprint = response.data.thumbprints[0];
+              logger.info('  > Server thumbprint: ' + server_thumbprint);
             }
 
             if (local_thumbprint && server_thumbprint) {
@@ -258,8 +250,16 @@ async.series(
             }
           })
           .catch((err) => {
-            logger.error(' > Error loading certificate from Auth0: %s', err);
-            logger.warn('  > Cannot compare with connection thumbprint.');
+            if(err.response && err.response.status !== 200) {
+              logger.error(
+                ' > Error loading certificate from Auth0: %s',
+                err.response.status
+              );
+              logger.warn('  > Cannot compare with connection thumbprint.');
+            } else {
+              logger.error(' > Error loading certificate from Auth0: %s', err);
+              logger.warn('  > Cannot compare with connection thumbprint.');
+            }
           })
           .finally(() => {
             return callback();

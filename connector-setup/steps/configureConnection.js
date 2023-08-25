@@ -53,13 +53,6 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
       agentVersion: require('../../package').version,
     })
     .then((response) => {
-      if (response.status !== 200) {
-        console.log(
-          'Unexpected status while configuring connection: ' + response.status
-        );
-        return cb(new Error(response.data));
-      }
-
       nconf.set('SERVER_URL', serverUrl);
       nconf.set('LAST_SENT_THUMBPRINT', getCurrentThumbprint(workingPath));
       nconf.set('TENANT_SIGNING_KEY', response.data.signingKey || '');
@@ -70,6 +63,13 @@ module.exports = function (program, workingPath, connectionInfo, ticket, cb) {
       cb();
     })
     .catch((err) => {
+      if (err.response && err.response.status !== 200) {
+        console.log(
+          'Unexpected status while configuring connection: ' + err.response.status
+        );
+        return cb(new Error(err.response.data));
+      }
+
       if (err.code === 'ECONNREFUSED') {
         console.log('Unable to reach Auth0 at ' + ticket);
       } else {
