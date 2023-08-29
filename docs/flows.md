@@ -58,7 +58,6 @@ sequenceDiagram
 ### Authenticate User
 
 - Event: `authenticate_user`
-- 
 ```mermaid
 sequenceDiagram
   Auth0 ->> Connector : Authenticate User
