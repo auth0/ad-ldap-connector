@@ -64,7 +64,7 @@ exports.run = function (workingPath, callback) {
           .catch((err) => {
             if (err) {
 
-              if (err.response?.status === 404) {
+              if (err.response && err.response.status === 404) {
                 return cb(
                   new Error('Wrong ticket. Does this connection still exist?')
                 );
