@@ -1,12 +1,15 @@
 {
   "name": "ad-ldap-connector",
-  "version": "6.1.8",
+  "version": "6.2.0",
   "description": "ADLDAP Federation Connector",
   "main": "server.js",
   "scripts": {
+    "lint:check": "npx eslint admin/**/*.js connector-setup/**/*.js lib/** test/**/*.js",
+    "lint:fix": "npx eslint admin/** connector-setup/** lib/** test/** --fix",
     "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec --exit",
     "snyk": "snyk test",
-    "start": "node server.js"
+    "start": "node server.js",
+    "start-local": "source .env && npm run start"
   },
   "repository": {
     "type": "git",
@@ -24,12 +27,12 @@
     "@auth0/thumbprint": "0.0.6",
     "archiver": "^3.0.0",
     "async": "~2.6.4",
+    "axios": "^1.6.4",
     "binary": "^0.3.0",
-    "body-parser": "^1.18.3",
+    "body-parser": "^1.19.2",
     "cb": "~0.1.0",
     "colors": "~0.6.0-1",
     "commander": "~1.1.1",
-    "connect-multiparty": "^2.2.0",
     "cookie-parser": "^1.4.3",
     "cookie-sessions": "github:auth0/cookie-sessions#53a8aae",
     "csurf": "1.9.0",
@@ -47,13 +50,13 @@
     "lru-cache": "~2.7.3",
     "morgan": "^1.9.1",
     "ms": "^2.0.0",
-    "nconf": "https://github.com/jfromaniello/nconf/tarball/master",
+    "multer": "^1.4.5-lts.1",
+    "nconf": "^0.12.1",
     "object-sizeof": "^1.4.0",
     "passport": "~0.1.16",
     "passport-local": "~0.1.6",
     "passport-ssl-certificate": "https://github.com/jaredhanson/passport-ssl-certificate.git#826c16d040841ec4b20db1a4cfe8bac81c931462",
     "passport-windowsauth": "^3.0.0",
-    "request": "^2.88.0",
     "rimraf": "~2.7.1",
     "selfsigned": "^1.10.4",
     "stream-rotate": "crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
@@ -69,13 +72,16 @@
   "devDependencies": {
     "bump-version": "^0.5.0",
     "chai": "~1.7.2",
+    "eslint": "^8.45.0",
     "mocha": "^8.2.1",
     "proxyquire": "^2.1.3",
     "sinon": "^9.0.3",
     "snyk": "^1.381.1"
   },
-  "optionalDependencies": {},
+  "overrides": {
+    "ansi-regex": "3.0.1"
+  },
   "engines": {
-    "node": "^12.19"
+    "node": "^18.16.0"
   }
 }
