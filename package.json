@@ -37,7 +37,7 @@
     "cookie-sessions": "github:auth0/cookie-sessions#53a8aae",
     "csurf": "1.9.0",
     "diff_match_patch": "^0.1.1",
-    "ejs": "^2.5.5",
+    "ejs": "^3.1.10",
     "evp_bytestokey": "^1.0.3",
     "express": "^4.18.1",
     "express-passport-logout": "~0.1.0",
