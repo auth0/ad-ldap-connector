@@ -61,7 +61,7 @@
     "selfsigned": "^1.10.4",
     "stream-rotate": "crigot/stream-rotate#31fe967e6b1d5fdbaf641091877e39e54ae0dd8c",
     "tunnel": "~0.0.3",
-    "unzipper": "^0.10.0",
+    "unzipper": "^0.12.1",
     "url-join": "^0.0.1",
     "win-ca": "^3.0.4",
     "winston": "~2.2.0",
