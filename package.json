@@ -27,7 +27,7 @@
     "@auth0/thumbprint": "0.0.6",
     "archiver": "^3.0.0",
     "async": "~2.6.4",
-    "axios": "^1.6.4",
+    "axios": "^1.8.3",
     "binary": "^0.3.0",
     "body-parser": "^1.19.2",
     "cb": "~0.1.0",
