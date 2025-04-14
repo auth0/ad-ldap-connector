@@ -27,9 +27,9 @@
     "@auth0/thumbprint": "0.0.6",
     "archiver": "^3.0.0",
     "async": "~2.6.4",
-    "axios": "^1.6.4",
+    "axios": "^1.8.4",
     "binary": "^0.3.0",
-    "body-parser": "^1.19.2",
+    "body-parser": "^1.20.3",
     "cb": "~0.1.0",
     "colors": "~0.6.0-1",
     "commander": "~1.1.1",
@@ -37,13 +37,13 @@
     "cookie-sessions": "github:auth0/cookie-sessions#53a8aae",
     "csurf": "1.9.0",
     "diff_match_patch": "^0.1.1",
-    "ejs": "^2.5.5",
+    "ejs": "^3.1.10",
     "evp_bytestokey": "^1.0.3",
-    "express": "^4.18.1",
+    "express": "^4.21.2",
     "express-passport-logout": "~0.1.0",
     "express-session": "^1.15.6",
     "freeport": "~1.0.2",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "kerberos-server": "^1.0.0",
     "ldapjs": "^2.3.2",
     "lodash": "^4.17.21",
@@ -66,7 +66,7 @@
     "win-ca": "^3.0.4",
     "winston": "~2.2.0",
     "ws": "^1.1.5",
-    "wsfed": "^6.0.0",
+    "wsfed": "^7.0.0",
     "xtend": "~2.1.1"
   },
   "devDependencies": {
@@ -82,6 +82,6 @@
     "ansi-regex": "3.0.1"
   },
   "engines": {
-    "node": "^18.16.0"
+    "node": "^22.11.0"
   }
 }

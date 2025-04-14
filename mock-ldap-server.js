@@ -21,6 +21,10 @@ nconf.set('LDAP_SEARCH_GROUPS', '(member={0})');
 const server = ldap.createServer();
 
 server.bind(BASE_DN, function (req, res, next) {
+  if (!req.credentials || req.credentials === '') {
+    return next(new ldap.InvalidCredentialsError());
+  }
+  
   var dn = req.dn.format({ skipSpace: true });
   if (!db[dn]) return next(new ldap.NoSuchObjectError(dn));
 
