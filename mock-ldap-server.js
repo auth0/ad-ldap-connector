@@ -31,7 +31,7 @@ server.bind(BASE_DN, function (req, res, next) {
   if (!db[dn].userPassword)
     return next(new ldap.NoSuchAttributeError('userPassword'));
 
-  if (db[dn].userPassword.indexOf(req.credentials) === -1)
+  if (db[dn].userPassword !== req.credentials)
     return next(new ldap.InvalidCredentialsError());
 
   res.end();
