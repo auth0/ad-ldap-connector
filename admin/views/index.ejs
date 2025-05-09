@@ -30,7 +30,7 @@
           <div id="update-available" class="alert alert-success">
             A new update for the AD LDAP Connector is available. Go to the <a id="update-show" href="#update">Update tab</a> to install v<span id="update-version"></span>.
           </div>
-          <% include header_alerts %>
+          <%- include('header_alerts') -%>
 
           <ul class="nav nav-tabs">
             <li class="active">
@@ -63,13 +63,13 @@
                 </div>
                 <div class="widget-content">
                   <% if (locals.PROVISIONING_TICKET) { %>
-                  <% include form %>
+                  <%- include('form') -%>
                   <% } else { %>
-                  <% include form_ticket %>
+                  <%- include('form_ticket') -%>
                   <% } %>
 
                   <% if (locals.LDAP_RESULTS) { %>
-                  <% include test_result %>
+                  <%- include('test_result') -%>
                   <% } %></div>
               </div>
 
@@ -79,7 +79,7 @@
                   <h5>Advanced Settings</h5>
                 </div>
                 <div class="widget-content">
-                  <% include form_server %></div>
+                  <%- include('form_server') -%></div>
               </div>
               <% } %>
             </div>
@@ -90,7 +90,7 @@
                   <h5>Editor</h5>
                 </div>
                 <div class="widget-content">
-                  <% include form_profilemapper %>
+                  <%- include('form_profilemapper') -%>
                 </div>
               </div>
             </div>
@@ -101,7 +101,7 @@
                   <h5>Import</h5>
                 </div>
                 <div class="widget-content">
-                  <% include form_import %>
+                  <%- include('form_import') -%>
                 </div>
               </div>
               <div class="widget-box">
@@ -109,7 +109,7 @@
                   <h5>Export</h5>
                 </div>
                 <div class="widget-content">
-                  <% include form_export %>
+                  <%- include('form_export') -%>
                 </div>
               </div>
             </div>
@@ -120,7 +120,7 @@
                   <h5>Troubleshooter</h5>
                 </div>
                 <div class="widget-content">
-                  <% include troubleshooter %>
+                  <%- include('troubleshooter') -%>
                 </div>
               </div>
               <div class="widget-box">
@@ -128,7 +128,7 @@
                   <h5>Logs</h5>
                 </div>
                 <div class="widget-content">
-                  <% include logs %>
+                  <%- include('logs') -%>
                 </div>
               </div>
             </div>
@@ -139,7 +139,7 @@
                   <h5>Find User by Login</h5>
                 </div>
                 <div class="widget-content">
-                  <% include find_user_login %>
+                  <%- include('find_user_login') -%>
                 </div>
               </div>
               <div class="widget-box">
@@ -147,7 +147,7 @@
                   <h5>Search Users</h5>
                 </div>
                 <div class="widget-content">
-                  <% include search_users %>
+                  <%- include('search_users') -%>
                 </div>
               </div>
             </div>
@@ -159,7 +159,7 @@
                   <h5>Updater</h5>
                 </div>
                 <div class="widget-content">
-                  <% include update_run %>
+                  <%- include('update_run') -%>
                 </div>
               </div>
               <div id="update-logs-widget" class="widget-box" style="display: none">
@@ -167,7 +167,7 @@
                   <h5>Update Logs</h5>
                 </div>
                 <div class="widget-content">
-                  <% include update_logs %>
+                  <%- include('update_logs') -%>
                 </div>
               </div>
             </div>

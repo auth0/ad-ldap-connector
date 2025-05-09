@@ -299,7 +299,7 @@ app.post(
           );
         }
 
-        if (err.response?.status !== 200) {
+        if (!err.response || err.response.status !== 200) {
           return res.render(
             'index',
             xtend(req.current_config, {
