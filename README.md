@@ -93,8 +93,15 @@ If you still want to try it out behind a proxy you need an environment variable 
 If you always get invalid username or password, try to search a profile by password with the following command:
 
 ```
-node -e "require('./lib/initConf'); var Users = require('./lib/users'); var users = new Users(); users._queue.push(function(){users.getByUserName('the-username-you-are-trying', function (err, user) { console.log(user); } ); });"
+node -e "require('./lib/initConf'); var Users = require('./lib/users'); var users = new Users(); users.getByUserName('the-username-you-are-trying', function (err, user) { console.log('user found: ', user); process.exit(); } );"
 ```
+
+To test out the `LDAP_SEARCH_QUERY` configuration, you can run the following command:
+
+```
+node -e "require('./lib/initConf');var Users = require('./lib/users');var users = new Users();users.list('the-username-you-are-trying', function (err, user) { console.log('user found:', user); process.exit(); });"
+```
+
 
 By default the connector search using this query LDAP `(sAMAccountName={0})`, you can override this in the config.json file:
 
