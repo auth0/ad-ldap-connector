@@ -14,8 +14,7 @@ jobs:
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: Install pre-requisites
         run: | 
-          choco install nvm.install
-          choco install wixtoolset
+          choco install nvm
           refreshenv
           nvm install
       - name: Install node dependencies
