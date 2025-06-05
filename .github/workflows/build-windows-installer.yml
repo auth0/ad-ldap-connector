@@ -2,7 +2,7 @@ name: Build AD-LDAP Connector Windows Installer
 run-name: ${{ github.actor }} is building windows installer for AD-LDAP connector
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  Build Windows Installer:
     runs-on: windows-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
@@ -15,8 +15,9 @@ jobs:
       - name: Install pre-requisites
         run: | 
           choco install nvm.install
-          nvm install
           choco install wixtoolset
+          refreshenv
+          nvm install
       - name: Install node dependencies
         run: |
           npm ci
