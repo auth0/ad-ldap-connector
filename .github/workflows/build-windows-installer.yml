@@ -16,6 +16,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+      - name: Install WIX
+        run: |
+          choco install wixtoolset
       - name: Install node dependencies
         run: |
           npm ci
+      - name: Build Installer
+        run: |
+          cd installer
+          ./build.ps1
