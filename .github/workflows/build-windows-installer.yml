@@ -15,7 +15,7 @@ jobs:
       - name: Install node
         uses: actions/setup-node@v4
         with:
-          node-version-file: .npmrc
+          node-version-file: .nvmrc
       - name: Install node dependencies
         run: |
           npm ci
