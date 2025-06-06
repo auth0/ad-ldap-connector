@@ -13,13 +13,11 @@ jobs:
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: Install pre-requisites
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .npmrc
         run: | 
-          choco install nvm
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
-          [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";C:\ProgramData\chocolatey\lib", [EnvironmentVariableTarget]::User);
-          refreshenv
-          $Env:PATH
       - name: Install node dependencies
         run: |
-          nvm install
           npm ci
