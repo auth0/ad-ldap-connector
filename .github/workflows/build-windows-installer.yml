@@ -22,6 +22,7 @@ jobs:
       - name: Install node dependencies
         run: |
           npm ci
+          npm i -g rimraf
       - name: Build Installer
         run: |
           cd installer
