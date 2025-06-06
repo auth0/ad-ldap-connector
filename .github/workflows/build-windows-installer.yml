@@ -36,6 +36,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ad-ldap-connector
-          path: adldap.msi
+          path: installer/output/adldap.msi
           retention-days: 1
 
