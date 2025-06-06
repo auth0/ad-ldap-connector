@@ -17,7 +17,7 @@ jobs:
           choco install nvm
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
           refreshenv
-          nvm install
       - name: Install node dependencies
         run: |
+          nvm install
           npm ci
