@@ -32,4 +32,10 @@ jobs:
           ./build.ps1
           cd output
           ls -al
+      - name: Upload Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ad-ldap-connector
+          path: adldap.msi
+          retention-days: 1
 
