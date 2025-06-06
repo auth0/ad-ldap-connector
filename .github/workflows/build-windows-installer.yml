@@ -16,7 +16,7 @@ jobs:
         run: | 
           choco install nvm
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
-          $Env:PATH
+          [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";C:\\ProgramData\\chocolatey\\lib", "Machine");
           refreshenv
           $Env:PATH
       - name: Install node dependencies
