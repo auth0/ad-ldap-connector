@@ -16,9 +16,9 @@ jobs:
         run: | 
           choco install nvm
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
-          echo %PATH%
+          Get-ChildItem -Path Env:
           refreshenv
-          echo %PATH%
+          Get-ChildItem -Path Env:
       - name: Install node dependencies
         run: |
           nvm install
