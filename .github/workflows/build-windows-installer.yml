@@ -22,7 +22,6 @@ jobs:
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
           refreshenv
           $Env:PATH
-            - name: Install node dependencies
       - name: Install Node Dependencies
         run: |
           npm ci
