@@ -22,8 +22,6 @@ jobs:
           choco install nssm
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
           refreshenv
-          $Env:PATH
-          Get-Command nssm.exe
       - name: Install Node Dependencies
         run: |
           npm ci
@@ -32,4 +30,6 @@ jobs:
         run: |
           cd installer
           ./build.ps1
+          cd output
+          ls -al
 

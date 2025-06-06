@@ -3,9 +3,9 @@ $ErrorActionPreference = "Stop"
 
 $ProjectPath = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\") -replace "\\$"
 $ProjectPathUnix = $ProjectPath.replace("\", "/")
-$InstallerPath = "$ProjectPath\Installer"
+$InstallerPath = "$ProjectPath\installer"
 
-echo "installer path is $InstallerPath"
+echo "Installer path is $InstallerPath"
 
 # remember to manually remove this after npm install... it fails because the path is too long.
 # rimraf "..\node_modules\jsonwebtoken\node_modules\jws\node_modules\base64url\node_modules\tap"
