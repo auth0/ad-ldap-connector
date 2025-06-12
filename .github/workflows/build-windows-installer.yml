@@ -32,10 +32,7 @@ jobs:
           ./build.ps1
           cd output
           ls -force
-      - name: Upload Installer
-        uses: actions/upload-artifact@v4
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: ad-ldap-connector
-          path: installer/output/adldap.msi
-          retention-days: 1
-
+          files: installer/output/adldap.msi
