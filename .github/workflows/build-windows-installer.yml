@@ -1,6 +1,9 @@
 name: Build AD-LDAP Connector Windows Installer
-run-name: ${{ github.actor }} is building windows installer for AD-LDAP connector
-on: [push]
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
 jobs:
   Build-Windows-Installer:
     runs-on: windows-latest
