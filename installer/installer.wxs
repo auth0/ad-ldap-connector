@@ -88,7 +88,7 @@
         <File Id="node" KeyPath="yes" Source="$(var.NodeBin)" />
       </Component>
       <Component Id="nssm_component" Guid="{07D39AAA-CBB2-4F3F-BC22-EC7AE4963FFF}" Directory="INSTALLDIR">
-        <File Id="nssm" KeyPath="yes" Source="C:\Program Files (x86)\nssm-2.24\win32\nssm.exe" />
+        <File Id="nssm" KeyPath="yes" Source="$(var.NssmExe)" />
 <!--         <RemoveFile Id="RemoveConfigJson"
                  Name="config.json"
                  On="uninstall" /> -->
