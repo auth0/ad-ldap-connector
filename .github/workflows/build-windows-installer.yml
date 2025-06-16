@@ -19,6 +19,7 @@ jobs:
       - name: Installer Dependencies
         run: |
           choco install wixtoolset
+          cd installer
           ./prepare.ps1
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
           refreshenv
@@ -28,7 +29,6 @@ jobs:
           npm i -g rimraf
       - name: Build
         run: |
-          cd installer
           ./build.ps1
           cd output
           ls -force
