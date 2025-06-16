@@ -58,6 +58,7 @@ $version = $version.Trim()
 $nodeBin = (gcm node).Path
 $nssmExe = (gcm nssm).Path
 
+echo $nodeBin
 echo $nssmExe
 
 #Generate the installer

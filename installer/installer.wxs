@@ -89,10 +89,6 @@
       </Component>
       <Component Id="nssm_component" Guid="{07D39AAA-CBB2-4F3F-BC22-EC7AE4963FFF}" Directory="INSTALLDIR">
         <File Id="nssm" KeyPath="yes" Source="$(var.NssmExe)" />
-<!--         <RemoveFile Id="RemoveConfigJson"
-                 Name="config.json"
-                 On="uninstall" /> -->
-
         <ServiceControl Id="ControlAdminService"
                  Name="Auth0 ADLDAP Admin"
                  Remove="uninstall"
