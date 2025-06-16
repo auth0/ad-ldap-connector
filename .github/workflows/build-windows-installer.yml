@@ -1,9 +1,6 @@
 name: Build AD-LDAP Connector Windows Installer
 
-on:
-  push:
-    tags:
-      - "v*.*.*"
+on: [push]
 jobs:
   Build-Windows-Installer:
     runs-on: windows-latest
@@ -36,7 +33,9 @@ jobs:
           ./build.ps1
           cd output
           ls -force
-      - name: Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload InstallerMore actions
+        uses: actions/upload-artifact@v4
         with:
-          files: installer/output/adldap.msi
+          name: ad-ldap-connector
+          path: installer/output/adldap.msi
+          retention-days: 1
