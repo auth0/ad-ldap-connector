@@ -29,6 +29,7 @@ jobs:
           npm i -g rimraf
       - name: Build
         run: |
+          cd installer
           ./build.ps1
           cd output
           ls -force
