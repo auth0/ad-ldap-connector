@@ -3,9 +3,9 @@ $ErrorActionPreference = "Stop"
 
 $ProjectPath = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\") -replace "\\$"
 $ProjectPathUnix = $ProjectPath.replace("\", "/")
-$InstallerPath = "$ProjectPath\Installer"
+$InstallerPath = "$ProjectPath\installer"
 
-echo "installer path is $InstallerPath"
+echo "Installer path is $InstallerPath"
 
 # remember to manually remove this after npm install... it fails because the path is too long.
 # rimraf "..\node_modules\jsonwebtoken\node_modules\jws\node_modules\base64url\node_modules\tap"
@@ -58,11 +58,9 @@ $version = $version.Trim()
 $nodeBin = (gcm node).Path
 
 #Generate the installer
-$wix_dir="c:\Program Files (x86)\WiX Toolset v3.11\bin"
-
-. "$wix_dir\heat.exe" dir $tmp_dir -srd -dr INSTALLDIR -cg MainComponentGroup -out $InstallerPath\directory.wxs -ke -sfrag -gg -var var.SourceDir -sreg -scom
-. "$wix_dir\candle.exe" -dNodeBin="$nodeBin" -dSourceDir="$tmp_dir" -dProductVersion="$version" -dRTMProductVersion="0.0.0" -dUpgradeCode="{1072AB9E-1842-4AFA-9CF2-545462CD60E2}" $InstallerPath\*.wxs -o $InstallerPath\output\ -ext WiXUtilExtension
-. "$wix_dir\light.exe" -o $InstallerPath\output\adldap.msi $InstallerPath\output\*.wixobj -cultures:en-US -ext WixUIExtension.dll -ext WiXUtilExtension -ext WiXNetFxExtension
+. "heat.exe" dir $tmp_dir -srd -dr INSTALLDIR -cg MainComponentGroup -out $InstallerPath\directory.wxs -ke -sfrag -gg -var var.SourceDir -sreg -scom
+. "candle.exe" -dNodeBin="$nodeBin" -dSourceDir="$tmp_dir" -dProductVersion="$version" -dRTMProductVersion="0.0.0" -dUpgradeCode="{1072AB9E-1842-4AFA-9CF2-545462CD60E2}" $InstallerPath\*.wxs -o $InstallerPath\output\ -ext WiXUtilExtension
+. "light.exe" -o $InstallerPath\output\adldap.msi $InstallerPath\output\*.wixobj -cultures:en-US -ext WixUIExtension.dll -ext WiXUtilExtension -ext WiXNetFxExtension
 # . "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe" sign /n "Auth0" $InstallerPath\output\adldap.msi
 
 #Remove the temp
