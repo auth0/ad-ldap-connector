@@ -67,7 +67,4 @@ else
     
     #reloads path to execute NPM
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-
-    Write-Host "Adding Python path to NPM"
-    Start-Process -FilePath "npm" -ArgumentList @("config";"set";"python";"C:\Python27\python.exe") -Wait -NoNewWindow
 }
