@@ -8,7 +8,7 @@
     "lint:fix": "npx eslint admin/** connector-setup/** lib/** test/** --fix",
     "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec --exit",
     "snyk": "snyk test",
-    "start": "node server.js",
+    "start": "node --max-http-header-size=64000 server.js",
     "start-local": "source .env && npm run start"
   },
   "repository": {

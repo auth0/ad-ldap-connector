@@ -7,7 +7,7 @@
       Impersonate="no"  
       Execute="deferred" 
       FileKey='nssm'
-      ExeCommand='install "Auth0 ADLDAP Admin" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\admin\server.js\""'
+      ExeCommand='install "Auth0 ADLDAP Admin" "[INSTALLDIR]\node.exe" "--max-http-header-size=64000" "\"[INSTALLDIR]\admin\server.js\""'
       Return='asyncWait' />
 
     <CustomAction
@@ -15,7 +15,7 @@
       Impersonate="no"  
       Execute="deferred" 
       FileKey='nssm'
-      ExeCommand='install "Auth0 ADLDAP" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\server.js\""'
+      ExeCommand='install "Auth0 ADLDAP" "[INSTALLDIR]\node.exe" "--max-http-header-size=64000" "\"[INSTALLDIR]\server.js\""'
       Return='asyncWait' />
 
   </Fragment>
