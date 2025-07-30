@@ -87,5 +87,6 @@
   },
   "release": {
     "branches": [ "master", "semver-latest-tag" ]
-  }
+  },
+  "private": true
 }
