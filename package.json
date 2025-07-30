@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/auth0/ad-ldap-connector.git"
+    "url": "https://github.com/lostinauth0/ad-ldap-connector.git"
   },
   "keywords": [
     "sql",
