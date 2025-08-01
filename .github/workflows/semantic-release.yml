@@ -26,4 +26,6 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npx semantic-release
+      - name: Tag Latest
+        uses: EndBug/latest-tag@latest
 
