@@ -14,28 +14,20 @@ jobs:
       - run: echo "🔎 The name of your branch is ${{ github.ref }} + ${{ github.event.base_ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: Node
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - name: Installer Dependencies
-        run: |
-          choco install wixtoolset
-          cd installer
-          ./prepare.ps1
-          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
-          refreshenv
       - name: Application Dependencies
         run: |
           npm ci
-          npm i -g rimraf
-      - name: Build
-        run: |
-          cd installer
-          ./build.ps1
       - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: installer/output/adldap.msi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
+
