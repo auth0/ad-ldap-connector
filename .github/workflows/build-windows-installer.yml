@@ -2,7 +2,8 @@ name: Build AD-LDAP Connector Windows Installer
 
 on:
   push:
-    tags: [ "v*.*.*", "latest" ]
+    tags:
+      - 'v*.*.*'
 jobs:
   Build-Windows-Installer:
     runs-on: windows-latest
