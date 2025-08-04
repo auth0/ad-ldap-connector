@@ -1,13 +1,13 @@
 name: Build AD-LDAP Connector Windows Installer
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  release:
+    types: [published]
+permissions:
+  contents: write
 jobs:
   Build-Windows-Installer:
     runs-on: windows-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/') && github.event.base_ref == 'refs/heads/master' }}
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -31,14 +31,13 @@ jobs:
         run: |
           npm ci
           npm i -g rimraf
-      - name: Build
-        id: build_installer
+      - name: Build + Upload
         run: |
           cd installer
           ./build.ps1
           $packageVersion = $(node -e "console.log(require('./package.json').version);")
-          echo "packageVersion='$packageVersion'" >> $GITHUB_OUTPUT
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: "installer/output/adldap-${{ steps.build_installer.outputs.packageVersion }}.msi"
+          echo "Package version is $packageVersion"
+          move adldap.msi "adldap-$packageVersion.msi"
+          gh release upload ${{github.event.release.tag_name}} "adldap-$packageVersion.msi"
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
