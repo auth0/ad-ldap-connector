@@ -1,19 +1,19 @@
-name: Build AD-LDAP Connector Windows Installer
-
+name: Semantic Release
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - master
 jobs:
-  Build-Windows-Installer:
+  Semantic-Release:
     runs-on: windows-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/') && github.event.base_ref == 'refs/heads/master' }}
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} + ${{ github.event.base_ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: Node
@@ -31,11 +31,25 @@ jobs:
         run: |
           npm ci
           npm i -g rimraf
-      - name: Build
+      - name: Semantic Release
+        id: semantic_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release
+          $packageVersion = $(node -e "console.log(require('./package.json').version);")
+          echo "packageVersion='$packageVersion'" >> $GITHUB_OUTPUT
+          echo "Package version is $packageVersion"
+      - name: Build Installer
+        env:
+          packageVersion: ${{ steps.build_installer.outputs.packageVersion }}
+          GITHUB_TOKEN: ${{ github.TOKEN }}
         run: |
           cd installer
           ./build.ps1
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: installer/output/adldap.msi
+          mv output/adldap.msi "output/adldap-v$packageVersion.msi"
+          ls "output/adlap*"
+          gh release upload "$packageVersion" "output/adldap-v$packageVersion.msi"
+      - name: Tag Latest
+        uses: EndBug/latest-tag@latest
+
