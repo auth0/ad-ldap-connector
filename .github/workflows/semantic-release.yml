@@ -20,13 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - name: Installer Dependencies
-        run: |
-          choco install wixtoolset
-          cd installer
-          ./prepare.ps1
-          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
-          refreshenv
       - name: Application Dependencies
         run: |
           npm ci
@@ -37,7 +30,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx semantic-release
+          $packageVersion = $(node -e "console.log(require('./package.json').version);")
+          echo "PACKAGE_VERSION='$packageVersion'" >> $env:GITHUB_OUTPUT
+      - name: Installer Dependencies
+        if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
+        run: |
+          choco install wixtoolset
+          cd installer
+          ./prepare.ps1
+          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
+          refreshenv
       - name: Build Installer
+        if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         run: |
@@ -49,5 +53,7 @@ jobs:
           ls output
           gh release upload "v$packageVersion" "output/adldap-v$packageVersion.msi"
       - name: Tag Latest
+        if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
         uses: EndBug/latest-tag@latest
+        
 
