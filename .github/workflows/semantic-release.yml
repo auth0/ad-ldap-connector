@@ -42,13 +42,13 @@ jobs:
           echo "Package version is $packageVersion"
       - name: Build Installer
         env:
-          packageVersion: ${{ steps.build_installer.outputs.packageVersion }}
+          packageVersion: ${{ steps.semantic_release.outputs.packageVersion }}
           GITHUB_TOKEN: ${{ github.TOKEN }}
         run: |
           cd installer
           ./build.ps1
           mv output/adldap.msi "output/adldap-v$packageVersion.msi"
-          ls "output/adlap*"
+          ls output
           echo "Release version is $packageVersion"
           gh release upload "$packageVersion" "output/adldap-v$packageVersion.msi"
       - name: Tag Latest
