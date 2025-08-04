@@ -39,6 +39,7 @@ jobs:
           npx semantic-release
           $packageVersion = $(node -e "console.log(require('./package.json').version);")
           echo "packageVersion='$packageVersion'" >> $GITHUB_OUTPUT
+          echo "Package version is $packageVersion"
       - name: Build Installer
         env:
           packageVersion: ${{ steps.build_installer.outputs.packageVersion }}
