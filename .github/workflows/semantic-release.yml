@@ -31,27 +31,36 @@ jobs:
         run: |
           npx semantic-release
           $packageVersion = $(node -e "console.log(require('./package.json').version);")
-          echo "PACKAGE_VERSION='$packageVersion'" >> $env:GITHUB_OUTPUT
+          echo "PACKAGE_VERSION=$packageVersion" >> $env:GITHUB_OUTPUT
+          echo "Release version is $packageVersion"
+        shell: pwsh
       - name: Installer Dependencies
+        env:
+          PACKAGE_VERSION: ${{ steps.semantic_release.outputs.PACKAGE_VERSION }}
         if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
         run: |
+          $packageVersion = $env:PACKAGE_VERSION
+          echo "Release version is $packageVersion"
           choco install wixtoolset
           cd installer
           ./prepare.ps1
           Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
           refreshenv
+        shell: pwsh
       - name: Build Installer
         if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
+          PACKAGE_VERSION: ${{ steps.semantic_release.outputs.PACKAGE_VERSION }}
         run: |
-          $packageVersion = $(node -e "console.log(require('./package.json').version);")
+          $packageVersion = $env:PACKAGE_VERSION
           echo "Release version is $packageVersion"
           cd installer
           ./build.ps1
           mv output/adldap.msi "output/adldap-v$packageVersion.msi"
           ls output
           gh release upload "v$packageVersion" "output/adldap-v$packageVersion.msi"
+        shell: pwsh
       - name: Tag Latest
         if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
         uses: EndBug/latest-tag@latest
