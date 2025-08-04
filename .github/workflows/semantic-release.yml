@@ -42,12 +42,12 @@ jobs:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         run: |
           $packageVersion = $(node -e "console.log(require('./package.json').version);")
+          echo "Release version is $packageVersion"
           cd installer
           ./build.ps1
           mv output/adldap.msi "output/adldap-v$packageVersion.msi"
           ls output
-          echo "Release version is $packageVersion"
-          gh release upload "$packageVersion" "output/adldap-v$packageVersion.msi"
+          gh release upload "v$packageVersion" "output/adldap-v$packageVersion.msi"
       - name: Tag Latest
         uses: EndBug/latest-tag@latest
 
