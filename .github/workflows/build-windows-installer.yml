@@ -1,8 +1,6 @@
 name: Build AD-LDAP Connector Windows Installer
 
-on:
-  release:
-    types: [published]
+on: [release]
 permissions:
   contents: write
 jobs:
