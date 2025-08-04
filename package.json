@@ -87,7 +87,7 @@
   },
   "release": {
     "branches": [ "master", "latest-semantic-release" ],
-    "plugins": ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator"],
+    "plugins": ["@semantic-release/commit-analyzer", "@semantic-release/git"],
     "debug": true
   },
   "private": true
