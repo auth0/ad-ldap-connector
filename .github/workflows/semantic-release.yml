@@ -43,6 +43,7 @@ jobs:
       - name: Build Installer
         env:
           packageVersion: ${{ steps.build_installer.outputs.packageVersion }}
+          GITHUB_TOKEN: ${{ github.TOKEN }}
         run: |
           cd installer
           ./build.ps1
