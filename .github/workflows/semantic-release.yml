@@ -5,7 +5,7 @@ on:
       - master
 jobs:
   Semantic-Release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -20,15 +20,33 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+      - name: Installer Dependencies
+        run: |
+          choco install wixtoolset
+          cd installer
+          ./prepare.ps1
+          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
+          refreshenv
       - name: Application Dependencies
         run: |
           npm ci
-      - name: Release
+          npm i -g rimraf
+      - name: Semantic Release
+        id: semantic_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npx semantic-release
+          $packageVersion = $(node -e "console.log(require('./package.json').version);")
+          echo "packageVersion='$packageVersion'" >> $GITHUB_OUTPUT
+      - name: Build Installer
+        env:
+          packageVersion: ${{ steps.build_installer.outputs.packageVersion }}
+        run: |
+          cd installer
+          ./build.ps1
+          mv output/adldap.msi "output/adldap-v$packageVersion.msi"
+          gh release upload "v$packageVersion" "output/adldap-v$packageVersion.msi"
       - name: Tag Latest
         uses: EndBug/latest-tag@latest
 
