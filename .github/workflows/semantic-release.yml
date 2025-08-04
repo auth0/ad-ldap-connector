@@ -49,6 +49,7 @@ jobs:
           ./build.ps1
           mv output/adldap.msi "output/adldap-v$packageVersion.msi"
           ls "output/adlap*"
+          echo "Release version is $packageVersion"
           gh release upload "$packageVersion" "output/adldap-v$packageVersion.msi"
       - name: Tag Latest
         uses: EndBug/latest-tag@latest
