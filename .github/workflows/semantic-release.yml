@@ -72,8 +72,8 @@ jobs:
           $packageVersion = $env:PACKAGE_VERSION
           echo "Release version is $packageVersion"
           pwd
-          ls output/*msi
+          ls installer/output/*msi
           gh release delete latest -y
-          gh release create latest output/*.msi --generate-notes --latest
+          gh release create latest installer/output/*.msi --generate-notes --latest
         
 
