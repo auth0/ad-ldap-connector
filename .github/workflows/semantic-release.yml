@@ -63,19 +63,17 @@ jobs:
         shell: pwsh
       - name: Tag Latest
         if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
+        uses: EndBug/latest-tag@latest
+      - name: Update Latest Release
+        if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         run: |
           $packageVersion = $env:PACKAGE_VERSION
           echo "Release version is $packageVersion"
-          cd ..
-          git checkout -b "release-$packageVersion"
-          git add -u
-          git commit -m "chore: release $packageVersion"
-          git push origin "release-$packageVersion"
-          git tag -f latest
-          git push origin --tags
+          pwd
+          ls output/*msi
           gh release delete latest -y
-          gh release create latest installer/output/*.msi --generate-notes --latest
+          gh release create latest output/*.msi --generate-notes --latest
         
 
