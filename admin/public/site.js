@@ -5,15 +5,16 @@
 
 		$('#connector-version').text('v' + p);
 
-		$.get('https://cdn.auth0.com/connector/windows/latest.json?_=' + new Date().getTime(), function(data) {
+		$.get('https://github.com/lostinauth0/ad-ldap-connector/releases/download/latest/version.txt?_=' + new Date().getTime(), function(data) {
 			var tab = $('#update-tab');
 			if (tab.length > 0) {
 				tab.show();
 				tab.css('display', 'block');
 
+				const latestVersion = data.trim();
 				// New version available.
-				if (p !== data.version) {
-					$('#update-version').text(data.version);
+				if (p !== latestVersion) {
+					$('#update-version').text(latestVersion);
 					$('#update-available').show();
 				}
 			}
