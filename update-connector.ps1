@@ -61,9 +61,9 @@ If (Test-Path $packageLocation){
 
 # Get latest version.
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12  # TLS 1.0 and 1.1 are no longer supported
-$latest = Invoke-RestMethod -Uri "https://cdn.auth0.com/connector/windows/latest.json" -Method Get;
-$latestVersion = $latest.version
-$latestUrl =  $latest.url
+$latest = Invoke-RestMethod -Uri "https://github.com/auth0/ad-ldap-connector/releases/download/latest/version.txt" -Method Get;
+$latestVersion = $latest.Trim()
+$latestUrl =  "https://github.com/auth0/ad-ldap-connector/releases/download/latest/adldap-v$latestVersion.txt"
 Log "Latest version: $latestVersion"
 
 # Update not required?
