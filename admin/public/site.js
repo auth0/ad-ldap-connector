@@ -5,15 +5,17 @@
 
 		$('#connector-version').text('v' + p);
 
-		$.get('https://cdn.auth0.com/connector/windows/latest.json?_=' + new Date().getTime(), function(data) {
+		$.get('https://api.github.com/repos/auth0/ad-ldap-connector/releases/latest?_=' + new Date().getTime(), function(data) {
 			var tab = $('#update-tab');
+			const installer = data.assets.find(asset => asset.name.endsWith('.msi'));
+			const latestVersion = installer.name.replace('adldap-v', '').replace('.msi', '');
 			if (tab.length > 0) {
 				tab.show();
 				tab.css('display', 'block');
 
 				// New version available.
-				if (p !== data.version) {
-					$('#update-version').text(data.version);
+				if (p !== latestVersion) {
+					$('#update-version').text(latestVersion);
 					$('#update-available').show();
 				}
 			}

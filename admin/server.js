@@ -109,9 +109,15 @@ function merge_config(req, res) {
 }
 
 function run(cmd, args, callback) {
-  var spawn = require('child_process').spawn;
-  var command = spawn(cmd, args);
-  var result = '';
+  const spawn = require('child_process').spawn;
+  const dir = path.dirname(cmd);
+  const processName = path.basename(cmd);
+  const options = { shell: true };
+  if (dir !== '.') {
+    options.cwd = dir;
+  }
+  const command = spawn(processName, args, options);
+  let result = '';
   command.stderr.on('data', function (data) {
     result += data.toString();
   });
