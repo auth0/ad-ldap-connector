@@ -15,7 +15,7 @@
       Impersonate="no"  
       Execute="deferred" 
       FileKey='nssm'
-      ExeCommand='install "Auth0 ADLDAP" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\server.js\""'
+      ExeCommand='install "Auth0 ADLDAP" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\server.js\"" --max-http-header-size=%AUTH0_LDAP_CONNECTOR_MAX_HEADER_SIZE%'
       Return='asyncWait' />
 
   </Fragment>
