@@ -89,7 +89,7 @@
       </Component>
       <Component Id="nssm_component" Guid="{07D39AAA-CBB2-4F3F-BC22-EC7AE4963FFF}" Directory="INSTALLDIR">
         <File Id="nssm" KeyPath="yes" Source="C:\Program Files (x86)\nssm-2.24\win32\nssm.exe" />
-        <Environment Id="AUTH0_LDAP_CONNECTOR_MAX_HEADER_SIZE" Name="AUTH0_LDAP_CONNECTOR_MAX_HEADER_SIZE" Value="16384" Permanent="no" Action="set" System="yes" />
+        <Environment Id="AUTH0_LDAP_CONNECTOR_MAX_HEADER_SIZE" Name="AUTH0_LDAP_CONNECTOR_MAX_HEADER_SIZE" Value="16384" Permanent="yes" Action="create" System="yes" />
         <ServiceControl Id="ControlAdminService"
                  Name="Auth0 ADLDAP Admin"
                  Remove="uninstall"
