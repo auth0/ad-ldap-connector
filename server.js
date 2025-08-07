@@ -5,6 +5,8 @@ require('./lib/add_certs');
 require('./lib/setupProxy');
 var exit = require('./lib/exit');
 
+console.log('Maximum header size = ' + require('http').maxHeaderSize);
+
 function end () {
   console.log('Got SIGTERM, exiting now.');
   if (ws_client) {
