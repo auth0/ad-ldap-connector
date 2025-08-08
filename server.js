@@ -4,7 +4,12 @@ require('./eventlog');
 require('./lib/add_certs');
 require('./lib/setupProxy');
 var exit = require('./lib/exit');
-const http = require('node:http');
+
+console.log('');
+console.log('');
+console.log('');
+console.log('======================== STARTING AD-LDAP CONNECTOR ========================');
+console.log('Maximum header size = ' + require('http').maxHeaderSize);
 
 function end () {
   console.log('Got SIGTERM, exiting now.');
@@ -25,8 +30,6 @@ process.on('uncaughtException', function(err) {
 
 var nconf = require('nconf');
 var ws_client;
-
-console.log('HTTP Max Header Size = ' + http.maxHeaderSize);
 
 var connectorSetup = require('./connector-setup');
 

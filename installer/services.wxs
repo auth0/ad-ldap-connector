@@ -15,7 +15,15 @@
       Impersonate="no"  
       Execute="deferred" 
       FileKey='nssm'
-      ExeCommand='install "Auth0 ADLDAP" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\server.js\"" -- --max-http-header-size=%AUTH0_LDAP_CONNECTOR_MAX_HEADER_SIZE%'
+      ExeCommand='install "Auth0 ADLDAP" powershell ./start-connector.ps1'
+      Return='asyncWait' />
+
+    <CustomAction
+      Id='SetupConnectorServicePath'
+      Impersonate="no"
+      Execute="deferred"
+      FileKey='nssm'
+      ExeCommand='set "Auth0 ADLDAP" AppDirectory \"[INSTALLDIR]"'
       Return='asyncWait' />
 
   </Fragment>
