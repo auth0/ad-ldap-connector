@@ -5,6 +5,7 @@ require('./lib/add_certs');
 require('./lib/setupProxy');
 var exit = require('./lib/exit');
 
+console.log('======================== STARTING AD-LDAP CONNECTOR ========================');
 console.log('Maximum header size = ' + require('http').maxHeaderSize);
 
 function end () {
