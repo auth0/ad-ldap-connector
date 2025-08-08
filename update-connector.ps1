@@ -63,7 +63,7 @@ If (Test-Path $packageLocation){
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12  # TLS 1.0 and 1.1 are no longer supported
 $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/auth0/ad-ldap-connector/releases/latest" -Method Get;
 $installer = $latest.assets | where name -like "*.msi"
-$latestVersion = $installer.name.Replace("adldap-v", "").Replace(".msi", "");
+$latestVersion = $latest.tag_name.Substring(1);
 $latestUrl = $installer.browser_download_url
 Log "Latest version: $latestVersion"
 

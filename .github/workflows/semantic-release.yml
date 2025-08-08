@@ -61,17 +61,3 @@ jobs:
           ls output
           gh release upload "v$packageVersion" "output/adldap-v$packageVersion.msi"
         shell: pwsh
-      - name: Tag Latest
-        if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
-        uses: EndBug/latest-tag@latest
-      - name: Update Latest Release
-        if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
-        env:
-          GITHUB_TOKEN: ${{ github.TOKEN }}
-          PACKAGE_VERSION: ${{ steps.semantic_release.outputs.PACKAGE_VERSION }}
-        run: |
-          $packageVersion = $env:PACKAGE_VERSION
-          echo "Release version is $packageVersion"
-          gh release view "v$packageVersion" --json body -q '.body' > notes.txt
-          gh release delete latest -y
-          gh release create latest installer/output/*.msi --latest -F notes.txt
