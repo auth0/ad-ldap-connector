@@ -1,0 +1,63 @@
+name: Semantic Release
+on:
+  push:
+    branches:
+      - master
+jobs:
+  Semantic-Release:
+    runs-on: windows-latest
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} + ${{ github.event.base_ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@e3d2460bbb42d7710191569f88069044cfb9d8cf #4.2.2
+        with:
+          fetch-depth: 0
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 #4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Application Dependencies
+        run: |
+          npm ci
+          npm i -g rimraf
+      - name: Semantic Release
+        id: semantic_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release
+          $packageVersion = $(node -e "console.log(require('./package.json').version);")
+          echo "PACKAGE_VERSION=$packageVersion" >> $env:GITHUB_OUTPUT
+          echo "Release version is $packageVersion"
+        shell: pwsh
+      - name: Installer Dependencies
+        env:
+          PACKAGE_VERSION: ${{ steps.semantic_release.outputs.PACKAGE_VERSION }}
+        if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
+        run: |
+          $packageVersion = $env:PACKAGE_VERSION
+          echo "Release version is $packageVersion"
+          choco install wixtoolset
+          cd installer
+          ./prepare.ps1
+          Import-Module "$env:ChocolateyInstall/helpers/chocolateyInstaller.psm1"
+          refreshenv
+        shell: pwsh
+      - name: Build Installer
+        if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' }}
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+          PACKAGE_VERSION: ${{ steps.semantic_release.outputs.PACKAGE_VERSION }}
+        run: |
+          $packageVersion = $env:PACKAGE_VERSION
+          echo "Release version is $packageVersion"
+          cd installer
+          ./build.ps1
+          mv output/adldap.msi "output/adldap-v$packageVersion.msi"
+          ls output
+          gh release upload "v$packageVersion" "output/adldap-v$packageVersion.msi"
+        shell: pwsh
