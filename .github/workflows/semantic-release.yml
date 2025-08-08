@@ -74,6 +74,6 @@ jobs:
           echo "Release version is $packageVersion"
           gh release view "v$packageVersion" --json body -q '.body' > notes.txt
           gh release delete latest -y
-          gh release create latest version.txt installer/output/*.msi --latest -F notes.txt
+          gh release create latest installer/output/*.msi --latest -F notes.txt
         
 
