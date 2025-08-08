@@ -23,7 +23,7 @@
       Impersonate="no"
       Execute="deferred"
       FileKey='nssm'
-      ExeCommand='set "Auth0 ADLDAP" AppDirectory &quot;[INSTALLDIR]&quot;'
+      ExeCommand='set "Auth0 ADLDAP" AppDirectory \"[INSTALLDIR]"'
       Return='asyncWait' />
 
   </Fragment>
