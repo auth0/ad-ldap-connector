@@ -88,6 +88,10 @@ We discourage running the connector behind an http proxy.
 
 If you still want to try it out behind a proxy you need an environment variable `http_proxy` or `HTTP_PROXY` set to `http://my-proxy:8080`.
 
+## Docker support
+
+There are some use cases where it makes sense to run the connector within a Docker container. For more information, [click here](./DOCKER.md).
+
 ## Troubleshooting
 
 If you always get invalid username or password, try to search a profile by password with the following command:
