@@ -74,8 +74,6 @@
               Before='StartServices'>NOT Installed</Custom>
       <Custom Action='RegisterConnectorService'
               Before='StartServices'>NOT Installed</Custom>
-      <Custom Action='SetupConnectorServicePath'
-              Before='StartServices'>NOT Installed</Custom>
       <Custom Action="LaunchBrowser"
               OnExit="success">NOT Installed</Custom>
       <Custom Action="PreventDowngrading"

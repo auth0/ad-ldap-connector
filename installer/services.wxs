@@ -15,15 +15,7 @@
       Impersonate="no"  
       Execute="deferred" 
       FileKey='nssm'
-      ExeCommand='install "Auth0 ADLDAP" powershell ./start-connector.ps1'
-      Return='asyncWait' />
-
-    <CustomAction
-      Id='SetupConnectorServicePath'
-      Impersonate="no"
-      Execute="deferred"
-      FileKey='nssm'
-      ExeCommand='set "Auth0 ADLDAP" AppDirectory \"[INSTALLDIR]"'
+      ExeCommand='install "Auth0 ADLDAP" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\server.js\""'
       Return='asyncWait' />
 
   </Fragment>
