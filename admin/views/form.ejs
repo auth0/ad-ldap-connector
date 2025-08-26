@@ -58,6 +58,18 @@
   </div>
 
   <div class="control-group">
+    <label class="control-label" for="MAX_HEADER_SIZE">Maximum Header Size (bytes):</label>
+    <div class="controls">
+      <input type="text"
+          name="MAX_HEADER_SIZE"
+          id="MAX_HEADER_SIZE"
+          value="<%= locals.MAX_HEADER_SIZE || '' %>"
+          placeholder="16384">
+      <span class="help-block">Maximum header size in bytes. Default is 16384.</span>
+    </div>
+  </div>
+
+  <div class="control-group">
     <label class="control-label" for="ENABLE_WRITE_BACK">Enable Write Back:</label>
     <div class="controls">
       <input type="checkbox"

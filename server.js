@@ -27,6 +27,15 @@ var ws_client;
 
 var connectorSetup = require('./connector-setup');
 
+let maxHeaderSize = Number(nconf.get('MAX_HEADER_SIZE'));
+maxHeaderSize = maxHeaderSize > 0 ? maxHeaderSize : 16834;
+
+console.log('');
+console.log('');
+console.log('');
+console.log('======================== STARTING AD-LDAP CONNECTOR ========================');
+console.log('Maximum header size = ' + maxHeaderSize);
+
 connectorSetup.run(__dirname, function(err) {
   if(err) {
     console.log(err.message);
@@ -44,7 +53,7 @@ connectorSetup.run(__dirname, function(err) {
       return exit(1);
     }
     else{
-      console.log('Anonymous LDAP search is enabled. LDAP_BIND_USER is not required')
+      console.log('Anonymous LDAP search is enabled. LDAP_BIND_USER is not required');
     }
   }
 
@@ -93,7 +102,8 @@ connectorSetup.run(__dirname, function(err) {
 
   var options = {
     port: nconf.get('PORT'),
-    test_user: nconf.get('KERBEROS_DEBUG_USER')
+    test_user: nconf.get('KERBEROS_DEBUG_USER'),
+    maxHeaderSize,
   };
 
   // client certificate-based authentication
@@ -126,7 +136,7 @@ connectorSetup.run(__dirname, function(err) {
                     });
     } else if (nconf.get('WITH_KERBEROS_PROXY_FRONTEND') || nconf.get('KERBEROS_DEBUG_USER')) {
       var http = require('http');
-      http.createServer(app).listen(options.port);
+      http.createServer({ maxHeaderSize }, app).listen(options.port);
     } else {
       return console.log('Detected KERBEROS_AUTH in config, but this platform doesn\'t support it.');
     }
