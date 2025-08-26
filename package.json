@@ -86,8 +86,7 @@
     "node": "^22.11.0"
   },
   "release": {
-    "branches": [ "master" ],
-    "debug": true
+    "branches": [ "master" ]
   },
   "private": true
 }
