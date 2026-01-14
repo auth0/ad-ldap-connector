@@ -25,7 +25,7 @@ __Save__ the configuration. You are done on the Auth0 side! You will then be pro
 ![](https://cdn.auth0.com/docs/media/articles/connections/enterprise/active-directory/ldap-create-3.png)
 
 > We ship different versions of the Connector to install it on multiple platforms: Windows, Linux and OS X
-
+testing
 Keep the __TICKET URL__ at hand as you will need it later.
 
 ### 2. Installing the AD/LDAP Connector
