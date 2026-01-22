@@ -1,7 +1,7 @@
 $zipDependencies = @(
     @{
         'Name'='nssm';
-        'Url'="http://nssm.cc/release/nssm-2.24.zip";
+        'Url'="https://nssm.cc/release/nssm-2.24.zip";
         'Path'= "C:\Program Files (x86)\"
         'Test'=@{
           'Path'='C:\Program Files (x86)\nssm-2.24\win32\nssm.exe'
