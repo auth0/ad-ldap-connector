@@ -22,7 +22,7 @@ jobs:
           node-version-file: .nvmrc
       - name: Application Dependencies
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm i -g rimraf
       - name: Semantic Release
         id: semantic_release
