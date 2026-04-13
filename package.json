@@ -9,7 +9,8 @@
     "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 50000 --reporter spec --exit",
     "snyk": "snyk test",
     "start": "node server.js",
-    "start-local": "source .env && npm run start"
+    "start-local": "source .env && node server.js",
+    "start-mock": "node --env-file=mock-ldap-server.env mock-ldap-server.js"
   },
   "repository": {
     "type": "git",
