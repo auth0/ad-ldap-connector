@@ -58,12 +58,14 @@ First-time install dialog sequence:      Maintenance dialog sequence:
             <Publish Dialog="DirDialog" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
             <Publish Dialog="DirDialog" Control="Next" Event="DoAction" Value="WixUIValidatePath" Order="2">NOT WIXUI_DONTVALIDATEPATH</Publish>
             <Publish Dialog="DirDialog" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
-            <Publish Dialog="DirDialog" Control="Next" Event="NewDialog" Value="AdminPasswordDlg" Order="4">WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID="1"</Publish>
+            <Publish Dialog="DirDialog" Control="Next" Event="NewDialog" Value="AdminPasswordDlg" Order="4">(WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID="1") AND ADMIN_PASSWORD="" AND SILENT_UPDATE=""</Publish>
+            <Publish Dialog="DirDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="5"><![CDATA[(WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID="1") AND (ADMIN_PASSWORD<>"" OR SILENT_UPDATE<>"")]]></Publish>
 
             <Publish Dialog="DirDialog" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
             <Publish Dialog="DirDialog" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
 
-            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="AdminPasswordDlg" Order="1">1</Publish>
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="AdminPasswordDlg" Order="1">ADMIN_PASSWORD="" AND SILENT_UPDATE=""</Publish>
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="DirDialog" Order="2"><![CDATA[ADMIN_PASSWORD<>"" OR SILENT_UPDATE<>""]]></Publish>
 
             <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
 

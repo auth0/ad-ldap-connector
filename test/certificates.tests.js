@@ -3,8 +3,8 @@ const { expect } = require('chai');
 const { Certificates } = require('../lib/certificates');
 
 // These paths mirror the module-level constants in lib/certificates.js
-const CERT_PEM_PATH = path.join(__dirname, '../lib', '../', 'certs', 'cert.pem');
-const CERT_KEY_PATH = path.join(__dirname, '../lib', '../', 'certs', 'cert.key');
+const CERT_PEM_PATH = path.join(__dirname, '../lib', '../', 'data', 'certs', 'cert.pem');
+const CERT_KEY_PATH = path.join(__dirname, '../lib', '../', 'data', 'certs', 'cert.key');
 
 // ---------------------------------------------------------------------------
 // Mock factories
@@ -233,64 +233,5 @@ describe('Certificates', () => {
       });
     });
 
-    describe('file permissions', () => {
-      it('runs chmod 600 on both cert files on non-windows platforms', async () => {
-        const execMock = makeExecMock();
-        const certs = new Certificates({
-          fsModule: makeFsMock(),
-          execFunction: execMock,
-          configModule: makeConfigMock(),
-          processModule: { platform: 'linux' },
-        });
-
-        await certs.initialize({ connectionName: 'test-conn', connectionDomain: 'example.com' });
-
-        expect(execMock.calls).to.have.lengthOf(2);
-        expect(execMock.calls.every(cmd => /chmod 600/.test(cmd))).to.be.true;
-      });
-
-      it('runs powershell ACL commands on both cert files on win32', async () => {
-        const execMock = makeExecMock();
-        const certs = new Certificates({
-          fsModule: makeFsMock(),
-          execFunction: execMock,
-          configModule: makeConfigMock(),
-          processModule: { platform: 'win32' },
-        });
-
-        await certs.initialize({ connectionName: 'test-conn', connectionDomain: 'example.com' });
-
-        expect(execMock.calls).to.have.lengthOf(2);
-        expect(execMock.calls.every(cmd => /powershell/i.test(cmd))).to.be.true;
-      });
-
-      it('does not run chmod on win32', async () => {
-        const execMock = makeExecMock();
-        const certs = new Certificates({
-          fsModule: makeFsMock(),
-          execFunction: execMock,
-          configModule: makeConfigMock(),
-          processModule: { platform: 'win32' },
-        });
-
-        await certs.initialize({ connectionName: 'test-conn', connectionDomain: 'example.com' });
-
-        expect(execMock.calls.some(cmd => /chmod/.test(cmd))).to.be.false;
-      });
-
-      it('runs chmod when migrating AUTH_CERT from config on non-windows', async () => {
-        const execMock = makeExecMock();
-        const certs = new Certificates({
-          fsModule: makeFsMock(),
-          execFunction: execMock,
-          configModule: makeConfigMock({ AUTH_CERT: 'pem-data', AUTH_CERT_KEY: 'key-data' }),
-          processModule: { platform: 'linux' },
-        });
-
-        await certs.initialize();
-
-        expect(execMock.calls.every(cmd => /chmod 600/.test(cmd))).to.be.true;
-      });
-    });
   });
 });

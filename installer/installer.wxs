@@ -32,6 +32,10 @@
         <![CDATA[Installed OR NETFRAMEWORK45]]>
     </Condition>
 
+    <Condition Message="Silent install run improperly. Please run the installer normally or contact Auth0 support.">
+        <![CDATA[Installed OR UILevel >= 3 OR SILENT_UPDATE <> ""]]>
+    </Condition>
+
     <Upgrade Id="$(var.UpgradeCode)">
       <UpgradeVersion Minimum="$(var.ProductVersion)"
                       IncludeMinimum="no"
@@ -64,6 +68,24 @@
     <CustomAction Id="PreventDowngrading"
               Error="Newer version already installed." />
 
+    <!-- These must run BEFORE RemoveExistingProducts (which is scheduled early, right after
+         InstallInitialize) so the customer's custom profile mapper is backed up before the old
+         install is wiped. That ordering requires them to be *immediate* actions — a deferred action
+         cannot execute in the pre-RemoveExistingProducts window (doing so triggers MSI error 2613).
+         The interactive user's SID that an impersonated mkdir stamps onto data\profileMapper is
+         scrubbed later by Limit-FilePermissions.ps1, which rebuilds the DACL from scratch as SYSTEM. -->
+    <CustomAction Id="SaveCustomProfileMapper"
+          Directory="INSTALLDIR"
+          Execute="immediate"
+          Return="ignore"
+          ExeCommand="cmd.exe /c if not exist &quot;[INSTALLDIR]data\profileMapper\custom.js&quot; (mkdir &quot;[INSTALLDIR]data\profileMapper&quot; 2&gt;nul &amp; copy /y &quot;[INSTALLDIR]lib\profileMapper.js&quot; &quot;[INSTALLDIR]data\profileMapper\custom.js&quot;)" />
+
+    <CustomAction Id="DeleteOldProfileMapper"
+          Directory="INSTALLDIR"
+          Execute="immediate"
+          Return="ignore"
+          ExeCommand="cmd.exe /c del /f /q &quot;[INSTALLDIR]lib\profileMapper.js&quot;" />
+
     <CustomAction Id="LaunchBrowser"
           ExeCommand="explorer.exe &quot;http://localhost:8357/&quot;"
           Directory="INSTALLDIR"
@@ -71,20 +93,22 @@
     </CustomAction>
 
     <InstallExecuteSequence>
-      <Custom Action='RegisterAdminService'
-              Before='StartServices'>NOT Installed</Custom>
-      <Custom Action='ConfigureAdminServiceStdout'
-              After='RegisterAdminService'>NOT Installed</Custom>
-      <Custom Action='ConfigureAdminServiceStderr'
-              After='ConfigureAdminServiceStdout'>NOT Installed</Custom>
-      <Custom Action='RegisterConnectorService'
-              Before='StartServices'>NOT Installed</Custom>
-      <Custom Action="WriteAdminPasswordFile"
+      <Custom Action="SetInstallConnectorServicesData"
+              After="InstallInitialize">NOT Installed</Custom>
+      <Custom Action="SetWriteAdminPasswordFileData"
               After="InstallFiles"><![CDATA[ADMIN_PASSWORD <> ""]]></Custom>
+      <Custom Action="WriteAdminPasswordFile"
+              After="SetWriteAdminPasswordFileData"><![CDATA[ADMIN_PASSWORD <> ""]]></Custom>
+      <Custom Action="InstallConnectorServices"
+              After="WriteAdminPasswordFile">NOT Installed</Custom>
       <Custom Action="LaunchBrowser"
               OnExit="success">NOT Installed</Custom>
       <Custom Action="PreventDowngrading"
           After="FindRelatedProducts">NEWPRODUCTFOUND</Custom>
+      <Custom Action="SaveCustomProfileMapper"
+              Before="RemoveExistingProducts">1</Custom>
+      <Custom Action="DeleteOldProfileMapper"
+              After="SaveCustomProfileMapper">1</Custom>
       <RemoveExistingProducts After="InstallInitialize" />
     </InstallExecuteSequence>
 
@@ -117,6 +141,14 @@
     <Property Id="ADMIN_PASSWORD_CONFIRM" Hidden="yes" Secure="yes" />
     <Property Id="ADMIN_PASSWORD_ERROR" Hidden="yes" Secure="yes" />
 
+    <!-- WriteAdminPasswordFile holds a command line with the admin password interpolated into it.
+         HideTarget on the deferred CA hides its CustomActionData, but the immediate
+         SetWriteAdminPasswordFileData SetProperty action would otherwise log the value in cleartext
+         under verbose logging (msiexec /l*v). Declaring the property Hidden="yes" makes WiX add it to
+         MsiHiddenProperties (that special property cannot be authored directly), suppressing the log. -->
+    <Property Id="WriteAdminPasswordFile" Hidden="yes" />
+    <Property Id="SILENT_UPDATE" Hidden="yes" Secure="yes" />
+
     <CustomAction Id="ValidateAdminPassword" Script="jscript" Return="ignore"><![CDATA[
       try {
         var password = Session.Property("ADMIN_PASSWORD");
@@ -135,12 +167,23 @@
       }
     ]]></CustomAction>
 
+    <!-- Wrapped in powershell.exe (the same launch pattern InstallConnectorServices uses and which
+         is proven to run here) so that ALL output — including a node launch failure that happens
+         before setAdminPassword.js can write its own log — is redirected via *> to a file for
+         diagnosis. All [..] tokens resolve in this immediate SetProperty action, so the deferred CA
+         receives a fully literal command line. -->
+    <CustomAction Id="SetWriteAdminPasswordFileData"
+      Property="WriteAdminPasswordFile"
+      Value="&quot;powershell.exe&quot; -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command &quot;&amp; '[#node]' '[ADMINFOLDER]setAdminPassword.js' '[ADMIN_PASSWORD]' *&gt; '[INSTALLDIR]write-admin-password-ca.log'&quot;"
+      Execute="immediate"
+    />
+
     <CustomAction Id="WriteAdminPasswordFile"
       Directory="ADMINFOLDER"
-      Execute="commit"
+      Execute="deferred"
       Impersonate="no"
       Return="check"
-      ExeCommand="&quot;[#node]&quot; set-admin-password.js &quot;[ADMIN_PASSWORD]&quot;"
+      ExeCommand="[WriteAdminPasswordFile]"
       HideTarget="yes"
     />
 

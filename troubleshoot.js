@@ -15,26 +15,35 @@ const cas = require('./lib/add_certs');
 const tls = require('tls');
 const https = require('https');
 
-const logger = new winston.Logger({
+// winston v3: build the console output from composable formats. splat() enables the
+// printf-style %s interpolation used throughout this file (e.g. logger.error('> %s', x)),
+// and the printf format reproduces the previous "HH:mm:ss message" console layout.
+const logger = winston.createLogger({
+  level: 'debug',
+  exitOnError: false,
   transports: [
     new winston.transports.Console({
-      timestamp: function () {
-        var date = new Date();
-        var hour = date.getHours();
-        hour = (hour < 10 ? '0' : '') + hour;
-        var min = date.getMinutes();
-        min = (min < 10 ? '0' : '') + min;
-        var sec = date.getSeconds();
-        sec = (sec < 10 ? '0' : '') + sec;
-        return hour + ':' + min + ':' + sec;
-      },
-      level: 'debug',
       handleExceptions: true,
-      json: false,
-      colorize: true,
+      format: winston.format.combine(
+        winston.format.splat(),
+        winston.format.timestamp({
+          format: function () {
+            var date = new Date();
+            var hour = date.getHours();
+            hour = (hour < 10 ? '0' : '') + hour;
+            var min = date.getMinutes();
+            min = (min < 10 ? '0' : '') + min;
+            var sec = date.getSeconds();
+            sec = (sec < 10 ? '0' : '') + sec;
+            return hour + ':' + min + ':' + sec;
+          },
+        }),
+        winston.format.printf(function (info) {
+          return info.timestamp + ' - ' + info.message;
+        })
+      ),
     }),
   ],
-  exitOnError: false,
 });
 logger.trying = function (message, arg) {
   if (!arg) arg = '';

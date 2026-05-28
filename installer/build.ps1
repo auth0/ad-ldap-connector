@@ -1,3 +1,7 @@
+param (
+    [String] $ForceVersion
+)
+
 $ErrorActionPreference = "Stop"
 
 $ProjectPath = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\") -replace "\\$"
@@ -5,7 +9,9 @@ $ProjectPathUnix = $ProjectPath.replace("\", "/")
 $InstallerPath = "$ProjectPath\installer"
 
 $version = ((. "node" -e "console.log(require('$ProjectPathUnix/package.json').version);") | Out-String).Trim()
-
+if ($ForceVersion) {
+    $version = $ForceVersion
+}
 if ($version -eq "0.0.0") {
     throw "Invalid or default version in package.json: $version. If you are building this locally, update the version field in package.json temporarily to a valid version above 0.0.0"
 }
@@ -31,10 +37,10 @@ npm --no-color prune --production
 $itemsToCopy = @(
     'admin',
     'mock-ldap',
-    'connector-setup',
     'lib',
     'node_modules',
     'public',
+    'setup',
     'views',
     '.nvmrc',
     '.npmrc',
@@ -51,8 +57,6 @@ $itemsToCopy = @(
     'server.js',
     'troubleshoot.cmd',
     'troubleshoot.js',
-    'update-connector.cmd',
-    'update-connector.ps1',
     'ws_validator.js'
 )
 foreach ($item in $itemsToCopy) {
@@ -65,8 +69,8 @@ $nssmBin = "$InstallerPath\nssm.exe"
 
 #Generate the installer
 . "heat.exe" dir $tmpInstallSourcesDir -srd -dr INSTALLDIR -cg MainComponentGroup -out $InstallerPath\directory.wxs -ke -sfrag -gg -var var.SourceDir -sreg -scom
-. "candle.exe" -dNodeBin="$nodeBin" -dNssmBin="$nssmBin" -dSourceDir="$tmpInstallSourcesDir" -dProductVersion="$version" -dRTMProductVersion="0.0.0" -dUpgradeCode="{1072AB9E-1842-4AFA-9CF2-545462CD60E2}" $InstallerPath\*.wxs -o $InstallerPath\output\ -ext WiXUtilExtension
-. "light.exe" -o $InstallerPath\output\adldap.msi $InstallerPath\output\*.wixobj -cultures:en-US -ext WixUIExtension.dll -ext WiXUtilExtension -ext WiXNetFxExtension
+. "candle.exe" -dNodeBin="$nodeBin" -dNssmBin="$nssmBin" -dSourceDir="$tmpInstallSourcesDir" -dProductVersion="$version" -dRTMProductVersion="0.0.0" -dUpgradeCode="{1072AB9E-1842-4AFA-9CF2-545462CD60E2}" $InstallerPath\*.wxs -o $InstallerPath\output\ -ext WixUIExtension -ext WiXUtilExtension
+. "light.exe" -o $InstallerPath\output\adldap.msi $InstallerPath\output\*.wixobj -cultures:en-US -ext WixUIExtension -ext WiXUtilExtension -ext WiXNetFxExtension
 
 #Remove the temp
 echo "removing temp folder"

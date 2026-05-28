@@ -2,37 +2,20 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <Fragment>
-    <CustomAction
-      Id='RegisterAdminService'
-      Impersonate="no"
-      Execute="deferred"
-      FileKey='nssm'
-      ExeCommand='install "Auth0 ADLDAP Admin" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\admin\server.js\""'
-      Return='check' />
+    <!-- Immediate: resolves [INSTALLDIR] and stores the full command line as CustomActionData -->
+    <CustomAction Id="SetInstallConnectorServicesData"
+      Property="InstallConnectorServices"
+      Value="&quot;powershell.exe&quot; -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command &quot;&amp; '[INSTALLDIR]setup\Install-Services.ps1' *&gt; '[INSTALLDIR]install-services.log'&quot;"
+    />
 
-    <CustomAction
-      Id='RegisterConnectorService'
-      Impersonate="no"
+    <!-- Deferred: WixQuietExec reads CustomActionData (set above) as the command to run -->
+    <CustomAction Id="InstallConnectorServices"
+      BinaryKey="WixCA"
+      DllEntry="WixQuietExec"
       Execute="deferred"
-      FileKey='nssm'
-      ExeCommand='install "Auth0 ADLDAP" "[INSTALLDIR]\node.exe" "\"[INSTALLDIR]\server.js\""'
-      Return='asyncWait' />
-
-    <CustomAction
-      Id='ConfigureAdminServiceStdout'
       Impersonate="no"
-      Execute="deferred"
-      FileKey='nssm'
-      ExeCommand='set "Auth0 ADLDAP Admin" AppStdout "[INSTALLDIR]admin-service.log"'
-      Return='check' />
-
-    <CustomAction
-      Id='ConfigureAdminServiceStderr'
-      Impersonate="no"
-      Execute="deferred"
-      FileKey='nssm'
-      ExeCommand='set "Auth0 ADLDAP Admin" AppStderr "[INSTALLDIR]admin-service.log"'
-      Return='check' />
+      Return="check"
+    />
 
   </Fragment>
 </Wix>

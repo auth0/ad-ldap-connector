@@ -92,7 +92,7 @@ jobs:
         run: |
           $packageVersion = $env:PACKAGE_VERSION
           echo "Release version is $packageVersion"
-          gh release upload "v$packageVersion" "output/adldap-v$packageVersion.msi"
+          gh release upload "v$packageVersion" "installer/output/adldap-v$packageVersion.msi"
         shell: pwsh
       - name: Upload Installer Artifact (non-master)
         if: ${{ steps.semantic_release.outputs.PACKAGE_VERSION != '0.0.0' && github.ref != 'refs/heads/master' }}

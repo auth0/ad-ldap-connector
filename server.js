@@ -5,13 +5,18 @@ const express  = require('express');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
 const passport = require('passport');
+const session = require('express-session');
 
 require('./eventlog');
 require('./lib/setupProxy');
 const exit = require('./lib/exit');
 const config = require('./lib/config');
 const certificates = require('./lib/certificates');
+const connectorServiceSecretsBridge = require('./lib/connectorServiceSecretsBridge');
 const endpoints = require('./endpoints');
+const secureStorage = require('./lib/secureStorage');
+const { loadProvisioningTicket } = require('./lib/provisioningTicket');
+const { configureConnection } = require('./lib/configureConnection');
 
 function end () {
   console.log('Got SIGTERM, exiting now.');
@@ -30,11 +35,7 @@ process.on('uncaughtException', function(err) {
   .once('SIGINT', end);
 
 
-var ws_client;
-const connectorSetup = require('./connector-setup');
-const session = require('express-session');
-const secureStorage = require('./lib/secureStorage');
-
+let ws_client;
 let maxHeaderSize = Number(config.get('MAX_HEADER_SIZE'));
 maxHeaderSize = maxHeaderSize > 0 ? maxHeaderSize : 16834;
 
@@ -46,25 +47,76 @@ console.log('Maximum header size = ' + maxHeaderSize);
 
 (async () => {
   try {
+    await connectorServiceSecretsBridge.processBridgeFile();
     await config.initialize();
-    await certificates.initialize();
-    await connectorSetup.run();
   } catch (err) {
     console.log(err.message);
     return exit(2);
   }
 
-  if(!config.get('LDAP_URL')) {
-    console.error('edit config.json and add your LDAP URL');
-    return exit(1);
+  const requiredConfigKeys = [
+    'PROVISIONING_TICKET',
+    'LDAP_URL',
+    'LDAP_BASE'
+  ];
+
+  const throwImproperInstallError = (reason) => {
+    if (process.platform === 'win32') {
+      console.error(`${reason}. Please re-run the installer (.msi) to set these values.`.red);
+    } else {
+      console.error(`${reason}. Please run the installation script under setup/index.js to set these values.`.red);
+    }
+    process.exit(1);
+  };
+
+  for (const key of requiredConfigKeys) {
+    if (!config.get(key)) {
+      throwImproperInstallError(`Missing required config value: ${key}`);
+    }
   }
 
-  if (!config.get('ANONYMOUS_SEARCH_ENABLED') && !config.get('LDAP_BIND_USER')) {
-    console.error('Anonymous LDAP search is not enabled. Please edit config.json to add LDAP_BIND_USER');
-    return exit(1);
+  if (!config.get('ANONYMOUS_SEARCH_ENABLED')) {
+    if (!config.get('LDAP_BIND_USER') || !await secureStorage.get(secureStorage.keys.LDAP_BIND_PASSWORD)) {
+      throwImproperInstallError('Anonymous LDAP search is not enabled, and LDAP bind user or password is not set');
+    }
   }
 
   try {
+    let provisioningTicket = config.get('PROVISIONING_TICKET');
+    const ticketInfo = await loadProvisioningTicket(provisioningTicket);
+
+    // Update config
+    config.set('AD_HUB', ticketInfo.adHub);
+    config.set('PROVISIONING_TICKET', provisioningTicket);
+    config.set('WSFED_ISSUER', ticketInfo.connectionDomain);
+    config.set('CONNECTION', ticketInfo.connectionName);
+    config.set('CLIENT_CERT_AUTH', ticketInfo.certAuth);
+    config.set('KERBEROS_AUTH', ticketInfo.kerberos);
+    config.set('REALM', ticketInfo.realm.name);
+    config.set('SITE_NAME', config.get('SITE_NAME') || ticketInfo.connectionName);
+    config.set(ticketInfo.realm.name, ticketInfo.realm.postTokenUrl);
+
+    // Generate self-signed certificates if needed
+    console.log('Generating self-signed certificates...');
+    await certificates.initialize({
+      connectionDomain: ticketInfo.connectionDomain,
+      connectionName: ticketInfo.connectionName,
+    });
+
+    // Configure connection using the provisioning ticket
+    console.log('Configuring connection ' + ticketInfo.connectionName + '.');
+    const { serverUrl, certThumbprint, tenantSigningKey } = await configureConnection({
+      provisioningTicket,
+      connectionName: ticketInfo.connectionName,
+    });
+
+    config.set('SERVER_URL', serverUrl);
+    config.set('LAST_SENT_THUMBPRINT', certThumbprint);
+    config.set('TENANT_SIGNING_KEY', tenantSigningKey);
+
+    // Save config to file
+    await config.save();
+
     await require('./lib/ldap').initialize();
   } catch (e) {
     console.error(e.message);
@@ -77,7 +129,6 @@ console.log('Maximum header size = ' + maxHeaderSize);
   latency_test.run_many(10);
 
   if (!config.get('KERBEROS_AUTH') && !config.get('CLIENT_CERT_AUTH')) {
-    console.error('Neither KERBEROS_AUTH nor CLIENT_CERT_AUTH is enabled. Please edit config.json to enable at least one authentication method.');
     return;
   }
 
@@ -130,7 +181,7 @@ console.log('Maximum header size = ' + maxHeaderSize);
     // SSL settings
     options.ca = config.get('CA_CERT');
     options.pfx = Buffer.from(config.get('SSL_PFX'), 'base64');
-    options.passphrase = config.get('SSL_KEY_PASSWORD');
+    options.passphrase = await secureStorage.get(secureStorage.keys.CUSTOM_SSL_PFX_PASSWORD);
     options.requestCert = true;
 
     if (!config.get('KERBEROS_AUTH')) {

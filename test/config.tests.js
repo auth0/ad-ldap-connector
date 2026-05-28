@@ -13,13 +13,6 @@ function makeFsMock() {
   };
 }
 
-function makeExecMock() {
-  const calls = [];
-  const fn = async (cmd) => { calls.push(cmd); };
-  fn.calls = calls;
-  return fn;
-}
-
 /**
  * fileStore: values considered to be on disk (nconf.stores.file)
  * store:     values visible to nconf.get() (env overrides, memory, etc.)
@@ -259,20 +252,17 @@ describe('Config', () => {
   });
 
   describe('save()', () => {
-    it('is a no-op in memory mode — does not write or exec', async () => {
+    it('is a no-op in memory mode — does not write any files', async () => {
       const fsMock = makeFsMock();
-      const execMock = makeExecMock();
       const config = new Config({
         fsModule: fsMock,
         nconfModule: makeNconfMock(),
-        execFunction: execMock,
         processModule: makeProcessMock({ OVERRIDE_CONFIG: 'false' }),
       });
 
       await config.save();
 
       expect(Object.keys(fsMock._written)).to.be.empty;
-      expect(execMock.calls).to.be.empty;
     });
 
     it('writes JSON containing allow-listed file-store keys', async () => {
@@ -280,8 +270,7 @@ describe('Config', () => {
       const config = new Config({
         fsModule: fsMock,
         nconfModule: makeNconfMock({ fileStore: { LDAP_URL: 'ldap://localhost', PORT: 4000 } }),
-        execFunction: makeExecMock(),
-        processModule: makeProcessMock({}, 'linux'),
+        processModule: makeProcessMock(),
       });
 
       await config.save();
@@ -299,8 +288,7 @@ describe('Config', () => {
           fileStore: { LDAP_URL: 'ldap://localhost' },
           store:     { LDAP_URL: 'ldap://localhost', PORT: 9000 }, // PORT is env-only
         }),
-        execFunction: makeExecMock(),
-        processModule: makeProcessMock({}, 'linux'),
+        processModule: makeProcessMock(),
       });
 
       await config.save();
@@ -315,8 +303,7 @@ describe('Config', () => {
       const config = new Config({
         fsModule: fsMock,
         nconfModule: makeNconfMock({ fileStore: { LDAP_URL: 'ldap://localhost', SOME_SECRET: 'hunter2' } }),
-        execFunction: makeExecMock(),
-        processModule: makeProcessMock({}, 'linux'),
+        processModule: makeProcessMock(),
       });
 
       await config.save();
@@ -326,48 +313,5 @@ describe('Config', () => {
       expect(parsed).to.not.have.key('SOME_SECRET');
     });
 
-    it('runs chmod 600 on non-windows platforms', async () => {
-      const execMock = makeExecMock();
-      const config = new Config({
-        fsModule: makeFsMock(),
-        nconfModule: makeNconfMock({ fileStore: { PORT: 4000 } }),
-        execFunction: execMock,
-        processModule: makeProcessMock({}, 'linux'),
-      });
-
-      await config.save();
-
-      expect(execMock.calls).to.have.lengthOf(1);
-      expect(execMock.calls[0]).to.match(/chmod 600/);
-    });
-
-    it('runs a powershell ACL command on win32', async () => {
-      const execMock = makeExecMock();
-      const config = new Config({
-        fsModule: makeFsMock(),
-        nconfModule: makeNconfMock({ fileStore: { PORT: 4000 } }),
-        execFunction: execMock,
-        processModule: makeProcessMock({}, 'win32'),
-      });
-
-      await config.save();
-
-      expect(execMock.calls).to.have.lengthOf(1);
-      expect(execMock.calls[0]).to.match(/powershell/i);
-    });
-
-    it('does not run chmod on win32', async () => {
-      const execMock = makeExecMock();
-      const config = new Config({
-        fsModule: makeFsMock(),
-        nconfModule: makeNconfMock({ fileStore: { PORT: 4000 } }),
-        execFunction: execMock,
-        processModule: makeProcessMock({}, 'win32'),
-      });
-
-      await config.save();
-
-      expect(execMock.calls[0]).to.not.match(/chmod/);
-    });
   });
 });

@@ -68,10 +68,6 @@
     }
   });
 
-  $('#update-show').click(function (e) {
-    $('.nav-tabs a[href="/#update"]').tab('show');
-  });
-
   $('.nav-tabs a').click(function(e) {
     $(this).tab('show');
   });
@@ -170,10 +166,10 @@
     $.get('/users/by-login?_=' + new Date().getTime() + '&' + $.param({ query: $('#user-by-login-input').val() }), function(data) {
       $('#user-by-login-results').show();
       if (data === '') {
-        $('#user-by-login-results').html('User not found.');
+        $('#user-by-login-results').text('User not found.');
       }
       else {
-        $('#user-by-login-results').html(JSON.stringify(data, null, 2));
+        $('#user-by-login-results').text(JSON.stringify(data, null, 2));
       }
     })
       .done(function() {
@@ -198,7 +194,7 @@
 
     $.get('/users/search?_=' + new Date().getTime() + '&' + $.param({ query: $('#users-search-input').val() }), function(data) {
       $('#users-search-results').show();
-      $('#users-search-results').html(JSON.stringify(data, null, 2));
+      $('#users-search-results').text(JSON.stringify(data, null, 2));
     })
       .done(function() {
         btn.button('reset');
@@ -240,51 +236,5 @@
       });
     });
   });
-
-  var update = 'None';
-
-  $('#update-run-form').submit(function(e) {
-    e.preventDefault();
-
-    $.post('/updater/run', {
-      _csrf: document.getElementById('csrf').value,
-    });
-
-    update = 'Started';
-    $('#update-logs').text('');
-    $('#update-progress').show();
-    $('#update-available').hide();
-  });
-
-  function getUpdaterLogs() {
-    $.get('/updater/logs?_=' + new Date().getTime(), function(data) {
-      if (data && data.length > 0) {
-        $('#update-logs').html(sanitizeHtml(data)
-          .replace(/\DEBUG\:/g, '<span class="troubleshoot-info">DEBUG</span>:')
-          .replace(/\INFO\:/g, '<span class="troubleshoot-success">INFO</span>:')
-          .replace(/\ERROR\:/g, '<span class="troubleshoot-error">ERROR</span>:'));
-        $('#update-logs-widget').show();
-
-        if (data.indexOf('(Installation-Stop)') >= 0) {
-          update = 'None';
-          $('#update-progress').hide();
-        }
-      }
-    })
-      .done(function() {
-        if (update === 'Busy') {
-          update = 'None';
-          $('#update-progress').hide();
-        }
-      })
-      .fail(function(err) {
-        if (update === 'Started') {
-          update = 'Busy';
-        }
-      });
-  }
-
-  setInterval(getUpdaterLogs, 2500);
-  getUpdaterLogs();
 
 }(jQuery));

@@ -29,7 +29,7 @@
 
         <div class="container-fluid flat">
           <div id="update-available" class="alert alert-success">
-            A new update for the AD LDAP Connector is available. Go to the <a id="update-show" href="#update">Update tab</a> to install v<span id="update-version"></span>.
+            A new update for the AD LDAP Connector is available. Go to <a href="https://github.com/auth0/ad-ldap-connector/releases/latest" target="_blank">https://github.com/auth0/ad-ldap-connector/releases/latest</a> to install the latest version (v<span id="update-version"></span>).
           </div>
           <%- include('header_alerts') -%>
 
@@ -49,11 +49,6 @@
             <li>
               <a href="/#search-users">Search</a>
             </li>
-            <% if (process.platform === 'win32') { %>
-            <li>
-              <a id="update-tab" href="/#update">Update</a>
-            </li>
-            <% } %>
             <li>
               <a href="/#security">Security</a>
             </li>
@@ -155,27 +150,6 @@
                 </div>
               </div>
             </div>
-
-            <% if (process.platform === 'win32') { %>
-            <div class="tab-pane" id="update">
-              <div class="widget-box">
-                <div class="widget-title">
-                  <h5>Updater</h5>
-                </div>
-                <div class="widget-content">
-                  <%- include('update_run') -%>
-                </div>
-              </div>
-              <div id="update-logs-widget" class="widget-box" style="display: none">
-                <div class="widget-title">
-                  <h5>Update Logs</h5>
-                </div>
-                <div class="widget-content">
-                  <%- include('update_logs') -%>
-                </div>
-              </div>
-            </div>
-            <% } %>
 
             <div class="tab-pane" id="security">
               <div class="widget-box">
