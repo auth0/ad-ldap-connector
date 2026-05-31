@@ -1,5 +1,5 @@
 var xmlCrypto = require('xml-crypto'),
-    xmldom = require('xmldom');
+    xmldom = require('@xmldom/xmldom');
     
 exports.verifySignature = function(assertion, cert) {
   var doc = new xmldom.DOMParser().parseFromString(assertion);

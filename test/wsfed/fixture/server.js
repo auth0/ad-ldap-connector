@@ -1,6 +1,6 @@
 var express = require('express');
 var http = require('http');
-var wsfed = require('../../lib');
+var wsfed = require('../../../lib/wsfed');
 var xtend = require('xtend');
 var fs = require('fs');
 var path = require('path');
@@ -50,15 +50,6 @@ module.exports.start = function(options, callback){
       wsfed.metadata({
         cert:   options.credentials.cert,
         issuer: 'fixture-test'
-      }));
-
-  app.get('/wsfed/adfs/fs/federationserverservice.asmx',
-      wsfed.federationServerService.wsdl);
-
-  app.post('/wsfed/adfs/fs/federationserverservice.asmx',
-      wsfed.federationServerService.thumbprint({
-        pkcs7: options.credentials.pkcs7,
-        cert:  options.credentials.cert
       }));
 
   function getPostURL (wtrealm, wreply, req, callback) {

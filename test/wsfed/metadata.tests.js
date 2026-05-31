@@ -1,7 +1,7 @@
 var expect = require('chai').expect;
 var server = require('./fixture/server');
-var request = require('request');
-var xmldom = require('xmldom');
+var get = require('./get');
+var xmldom = require('@xmldom/xmldom');
 
 function certToPem (cert) {
   var pem = /-----BEGIN CERTIFICATE-----([^-]*)-----END CERTIFICATE-----/g.exec(cert.toString());
@@ -23,10 +23,7 @@ describe('wsfed metadata', function () {
   describe('request to metadata', function (){
     var doc, content;
     before(function (done) {
-      request.get({
-        jar: request.jar(),
-        uri: 'http://localhost:5050/wsfed/FederationMetadata/2007-06/FederationMetadata.xml'
-      }, function (err, response, b){
+      get('http://localhost:5050/wsfed/FederationMetadata/2007-06/FederationMetadata.xml', function (err, response, b){
         if(err) return done(err);
         content = b;
         doc = new xmldom.DOMParser().parseFromString(b).documentElement;
@@ -64,8 +61,7 @@ describe('wsfed metadata', function () {
   describe('request to metadata with proxy', function (){
     var doc, content;
     before(function (done) {
-      request.get({
-        jar: request.jar(),
+      get({
         uri: 'http://localhost:5050/wsfed/FederationMetadata/2007-06/FederationMetadata.xml',
         headers: {
           'X-Forwarded-Host': 'myserver.com'

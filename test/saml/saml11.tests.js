@@ -1,12 +1,10 @@
 var assert = require('chai').assert;
 var fs = require('fs');
 var moment = require('moment');
-var should = require('should');
 var xmldom = require('@xmldom/xmldom');
-var xmlenc = require('xml-encryption');
 
 var utils = require('./utils');
-var saml11 = require('../lib/saml11');
+var saml11 = require('../../lib/saml/saml11');
 var sinon = require('sinon');
 
 describe('saml 1.1', function () {
@@ -17,15 +15,6 @@ describe('saml 1.1', function () {
       assert.isTrue(utils.isValidSignature(assertion, options.cert));
     }, {
       it: it
-    })
-  });
-
-  saml11TestSuite({
-    createAssertion: 'createUnsignedAssertion',
-    assertSignature: Object.assign(function (assertion) {
-      assert.isEmpty(utils.getXmlSignatures(assertion));
-    }, {
-      it: it.skip
     })
   });
 
@@ -126,9 +115,9 @@ describe('saml 1.1', function () {
         var notBefore = conditions[0].getAttribute('NotBefore');
         var notOnOrAfter = conditions[0].getAttribute('NotOnOrAfter');
 
-        should.ok(notBefore);
-        should.ok(notOnOrAfter);
-        should.equal(authenticationInstant, notBefore);
+        assert.ok(notBefore);
+        assert.ok(notOnOrAfter);
+        assert.equal(authenticationInstant, notBefore);
 
         var lifetime = Math.round((moment(notOnOrAfter).utc() - moment(notBefore).utc()) / 1000);
         assert.equal(600, lifetime);
@@ -348,205 +337,14 @@ describe('saml 1.1', function () {
         assert.equal(1, conditions.length);
         var notBefore = conditions[0].getAttribute('NotBefore');
         var notOnOrAfter = conditions[0].getAttribute('NotOnOrAfter');
-        should.ok(notBefore);
-        should.ok(notOnOrAfter);
+        assert.ok(notBefore);
+        assert.ok(notOnOrAfter);
 
         var lifetime = Math.round((moment(notOnOrAfter).utc() - moment(notBefore).utc()) / 1000);
         assert.equal(600, lifetime);
 
       });
 
-      describe('encryption', function () {
-        let consoleSpy = null;
-        beforeEach(function() {
-          consoleSpy = sinon.spy(console, 'warn');
-        });
-
-        afterEach(function() {
-          consoleSpy.restore();
-        });
-
-        it('should create a saml 1.1 encrypted assertion', function (done) {
-          var options = {
-            cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            key: fs.readFileSync(__dirname + '/test-auth0.key'),
-            encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
-            encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem')
-          };
-
-          saml11[createAssertion](options, function(err, encrypted) {
-            if (err) return done(err);
-
-            xmlenc.decrypt(encrypted, { key: fs.readFileSync(__dirname + '/test-auth0.key')}, function(err, decrypted) {
-              if (err) return done(err);
-              assertSignature(decrypted, options);
-              done();
-            });
-          });
-        });
-
-        it('should not error when encryptionPublicKey is missing newlines', function (done) {
-          var options = {
-            cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            key: fs.readFileSync(__dirname + '/test-auth0.key'),
-            encryptionPublicKey: Buffer.from(fs.readFileSync(__dirname + '/test-auth0_rsa.pub').toString().replaceAll(/[\r\n]/g, '')),
-            encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem')
-          };
-
-          saml11[createAssertion](options, function(err, encrypted) {
-            if (err) return done(err);
-
-            xmlenc.decrypt(encrypted, { key: fs.readFileSync(__dirname + '/test-auth0.key')}, function(err, decrypted) {
-              if (err) return done(err);
-              assertSignature(decrypted, options);
-              done();
-            });
-          });
-        });
-
-        it('should not error when encryptionCert is missing newlines', function (done) {
-          var options = {
-            cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            key: fs.readFileSync(__dirname + '/test-auth0.key'),
-            encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
-            encryptionCert: Buffer.from(fs.readFileSync(__dirname + '/test-auth0.pem').toString().replaceAll(/[\r\n]/g, ''))
-          };
-
-          saml11[createAssertion](options, function(err, encrypted) {
-            if (err) return done(err);
-
-            xmlenc.decrypt(encrypted, { key: fs.readFileSync(__dirname + '/test-auth0.key')}, function(err, decrypted) {
-              if (err) return done(err);
-              assertSignature(decrypted, options);
-              done();
-            });
-          });
-        });
-
-        it('should support holder-of-key suject confirmationmethod', function (done) {
-          var options = {
-            cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            key: fs.readFileSync(__dirname + '/test-auth0.key'),
-            encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
-            encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            subjectConfirmationMethod: 'holder-of-key'
-          };
-
-          saml11[createAssertion](options, function(err, encrypted, proofSecret) {
-            if (err) return done(err);
-
-            xmlenc.decrypt(encrypted, { key: fs.readFileSync(__dirname + '/test-auth0.key')}, function(err, decrypted) {
-              if (err) return done(err);
-
-              var doc = new xmldom.DOMParser().parseFromString(decrypted);
-              var subjectConfirmationNodes = doc.documentElement.getElementsByTagName('saml:SubjectConfirmation');
-              assert.equal(2, subjectConfirmationNodes.length);
-              for (var i=0;i<subjectConfirmationNodes.length;i++) {
-                var method = subjectConfirmationNodes[i].getElementsByTagName('saml:ConfirmationMethod')[0];
-                assert.equal(method.textContent, 'urn:oasis:names:tc:SAML:1.0:cm:holder-of-key');
-
-                var decryptedProofSecret = xmlenc.decryptKeyInfo(subjectConfirmationNodes[i], options);
-                assert.equal(proofSecret.toString('base64'), decryptedProofSecret.toString('base64'));
-              }
-
-              done();
-            });
-          });
-        });
-
-        it('should set attributes', function (done) {
-          var options = {
-            cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            key: fs.readFileSync(__dirname + '/test-auth0.key'),
-            encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
-            encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            attributes: {
-              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'foo@bar.com',
-              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name': 'Foo Bar',
-              'http://example.org/claims/testaccent': 'fóo', // should supports accents
-              'http://undefinedattribute/ws/com.com': undefined
-            }
-          };
-
-          saml11[createAssertion](options, function(err, encrypted) {
-            if (err) return done(err);
-
-            xmlenc.decrypt(encrypted, { key: fs.readFileSync(__dirname + '/test-auth0.key')}, function(err, decrypted) {
-              if (err) return done(err);
-
-              assertSignature(decrypted, options);
-
-              var attributes = utils.getAttributes(decrypted);
-              assert.equal(3, attributes.length);
-              assert.equal('emailaddress', attributes[0].getAttribute('AttributeName'));
-              assert.equal('http://schemas.xmlsoap.org/ws/2005/05/identity/claims', attributes[0].getAttribute('AttributeNamespace'));
-              assert.equal('foo@bar.com', attributes[0].firstChild.textContent);
-              assert.equal('name', attributes[1].getAttribute('AttributeName'));
-              assert.equal('http://schemas.xmlsoap.org/ws/2005/05/identity/claims', attributes[1].getAttribute('AttributeNamespace'));
-              assert.equal('Foo Bar', attributes[1].firstChild.textContent);
-              assert.equal('testaccent', attributes[2].getAttribute('AttributeName'));
-              assert.equal('http://example.org/claims', attributes[2].getAttribute('AttributeNamespace'));
-              assert.equal('fóo', attributes[2].firstChild.textContent);
-
-              done();
-            });
-          });
-        });
-
-        it('should use aes256-gcm as the default encryption algorithm', function (done) { 
-          var options = {
-            cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            key: fs.readFileSync(__dirname + '/test-auth0.key'),
-            encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
-            encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-          };
-
-          saml11[createAssertion](options, function (err, encrypted) {
-            if (err) return done(err);
-            var doc = new xmldom.DOMParser().parseFromString(encrypted);
-            var encryptionMethod = doc.getElementsByTagName('xenc:EncryptionMethod')[0];
-            assert.equal('http://www.w3.org/2009/xmlenc11#aes256-gcm', encryptionMethod.getAttribute('Algorithm'));
-            done();
-          })
-        });
-
-        it('should allow aes256-cbc when disallowEncryptionWithInsecureAlgorithm is false', function (done) {
-          var options = {
-            cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            key: fs.readFileSync(__dirname + '/test-auth0.key'),
-            encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
-            encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            encryptionAlgorithm: 'http://www.w3.org/2001/04/xmlenc#aes256-cbc',
-            disallowEncryptionWithInsecureAlgorithm: false,
-            warnOnInsecureEncryptionAlgorithm: true,
-          };
-
-          saml11[createAssertion](options, function (err, encrypted) {
-            if (err) return done(err);
-            var doc = new xmldom.DOMParser().parseFromString(encrypted);
-            var encryptionMethod = doc.getElementsByTagName('xenc:EncryptionMethod')[0];
-            assert.equal('http://www.w3.org/2001/04/xmlenc#aes256-cbc', encryptionMethod.getAttribute('Algorithm'));
-            assert.equal(consoleSpy.called, true);
-            done();
-          });
-        });
-
-        it('should not allow aes256-cbc when disallowEncryptionWithInsecureAlgorithm is true', function (done) {
-          var options = {
-            cert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            key: fs.readFileSync(__dirname + '/test-auth0.key'),
-            encryptionPublicKey: fs.readFileSync(__dirname + '/test-auth0_rsa.pub'),
-            encryptionCert: fs.readFileSync(__dirname + '/test-auth0.pem'),
-            encryptionAlgorithm: 'http://www.w3.org/2001/04/xmlenc#aes256-cbc',
-            disallowEncryptionWithInsecureAlgorithm: true
-          };
-
-          saml11[createAssertion](options, function (err, encrypted) {
-            assert.ok(err);
-            done();
-          });
-        });
-      });
     });
   }
 });

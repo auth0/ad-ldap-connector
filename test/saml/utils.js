@@ -81,36 +81,3 @@ exports.getNameIdentifier = function(assertion) {
   return doc.documentElement
             .getElementsByTagName('saml:NameIdentifier')[0];
 };
-
-
-//SAML2.0
-
-exports.getNameID = function(assertion) {
-  var doc = new xmldom.DOMParser().parseFromString(assertion);
-  return doc.documentElement
-            .getElementsByTagName('saml:NameID')[0];
-};
-
-exports.getSaml2Issuer = function(assertion) {
-  var doc = new xmldom.DOMParser().parseFromString(assertion);
-  return doc.documentElement
-            .getElementsByTagName('saml:Issuer')[0];
-};
-
-exports.getAuthnContextClassRef = function(assertion) {
-  var doc = new xmldom.DOMParser().parseFromString(assertion);
-  return doc.documentElement
-            .getElementsByTagName('saml:AuthnContextClassRef')[0];
-};
-
-exports.getSubjectConfirmation = function(assertion) {
-  var doc = new xmldom.DOMParser().parseFromString(assertion);
-  return doc.documentElement
-            .getElementsByTagName('saml:getSubjectConfirmation');
-};
-
-exports.getEncryptedData = function(encryptedAssertion) {
-  var doc = new xmldom.DOMParser().parseFromString(encryptedAssertion);
-  return doc.documentElement
-            .getElementsByTagName('xenc:EncryptedData')[0];
-};

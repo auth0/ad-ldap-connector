@@ -1,5 +1,5 @@
 const assert = require("assert"),
-    utils = require("../lib/utils");
+    utils = require("../../lib/saml/utils");
 const fs = require("fs");
 const {createPublicKey} = require('crypto')
 

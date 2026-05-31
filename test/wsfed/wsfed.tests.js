@@ -1,6 +1,6 @@
 const expect = require('chai').expect;
 const server = require('./fixture/server');
-const request = require('request');
+const get = require('./get');
 const cheerio = require('cheerio');
 const xmlhelper = require('./xmlhelper');
 
@@ -17,10 +17,7 @@ describe('wsfed', function () {
     let body, $, signedAssertion, attributes;
 
     before(function (done) {
-      request.get({
-        jar: request.jar(), 
-        uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:the-super-client-id'
-      }, function (err, response, b){
+      get('http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:the-super-client-id', function (err, response, b){
         if(err) return done(err);
         body = b;
         $ = cheerio.load(body);
@@ -104,10 +101,7 @@ describe('wsfed', function () {
 
     before(function (done) {
       server.options = { nameIdentifierFormat: fakeNameIdentifierFomat };
-      request.get({
-        jar: request.jar(),
-        uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:the-super-client-id'
-      }, function (err, response, b){
+      get('http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:the-super-client-id', function (err, response, b){
           if(err) return done(err);
           body = b;
           $ = cheerio.load(body);
@@ -127,10 +121,7 @@ describe('wsfed', function () {
 
   describe('when the audience has colon(:)', function (){
     it('should work', function (done) {
-      request.get({
-        jar: request.jar(), 
-        uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:auth0:superclient'
-      }, function (err, response, b){
+      get('http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:auth0:superclient', function (err, response, b){
         if(err) return done(err);
         const body = b;
         const $ = cheerio.load(body);
@@ -149,10 +140,7 @@ describe('wsfed', function () {
     it('should return escaped Context value', function (done) {
       const wctx = encodeURIComponent('rm=0&id=passive&ru=%2f');
 
-      request.get({
-        jar: request.jar(), 
-        uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=' + wctx + '&wtrealm=urn:auth0:superclient'
-      }, function (err, response, b){
+      get('http://localhost:5050/wsfed?wa=wsignin1.0&wctx=' + wctx + '&wtrealm=urn:auth0:superclient', function (err, response, b){
         if(err) return done(err);
         const body = b;
         const $ = cheerio.load(body);
@@ -169,10 +157,7 @@ describe('wsfed', function () {
   describe('when attribute has ampersand(&)', function (){
     it('should return escaped value', function (done) {
       server.fakeUser.attribute_with_ampersand = 'http://foo?foo&foo';
-      request.get({
-        jar: request.jar(), 
-        uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wtrealm=urn:auth0:superclient'
-      }, function (err, response, b){
+      get('http://localhost:5050/wsfed?wa=wsignin1.0&wtrealm=urn:auth0:superclient', function (err, response, b){
         if(err) return done(err);
         const body = b;
         const $ = cheerio.load(body);
@@ -189,10 +174,7 @@ describe('wsfed', function () {
 
   describe('when using an invalid callback url', function () {
     it('should return error', function(done){
-      request.get({
-        jar: request.jar(), 
-        uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:auth0:superclient&wreply=http://google.comcomcom'
-      }, function (err, response){
+      get('http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:auth0:superclient&wreply=http://google.comcomcom', function (err, response){
         if(err) return done(err);
         expect(response.statusCode)
           .to.equal(400);
@@ -229,10 +211,7 @@ describe('wsfed', function () {
       });
 
       function createRequest(done) {
-        request.get({
-          jar: request.jar(),
-          uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:the-super-client-id'
-        }, function (err, response, b) {
+        get('http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:the-super-client-id', function (err, response, b) {
           if (err) return done(err);
           body = b;
           $ = cheerio.load(body);
@@ -305,10 +284,7 @@ describe('wsfed', function () {
       });
 
       it('should return an error', function(done){
-        request.get({
-          jar: request.jar(),
-          uri: 'http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:the-super-client-id'
-        }, function (err, response){
+        get('http://localhost:5050/wsfed?wa=wsignin1.0&wctx=123&wtrealm=urn:the-super-client-id', function (err, response){
           if(err) return done(err);
           expect(response.statusCode).to.equal(400);
           expect(response.body).to.equal('No attribute was found to generate the nameIdentifier');
