@@ -6,11 +6,13 @@ npm-debug.log
 config.json
 config.json*
 config*.json
+config.tar.gz
 installer/output/*
 installer/adldap.msi
 installer/directory.wxs
 installer/log.log
 node_modules/*
+profileMapper.js
 *.log
 cache.db/
 .DS_store*
