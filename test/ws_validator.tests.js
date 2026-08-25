@@ -45,7 +45,25 @@ class MockWebSocket {
   }
 }
 
-class MockUsers {}
+class MockUsers {
+  validate (username, password, options, callback) {
+    callback(null, { username });
+  }
+}
+
+// Records the calls ws_validator makes into the signing key module.
+const mockSigningKeys = {
+  refreshOnReconnectCalls: 0,
+  verifyCalls: [],
+  refreshOnReconnect: async function () {
+    this.refreshOnReconnectCalls++;
+    return true;
+  },
+  verify: function (token, callback) {
+    this.verifyCalls.push(token);
+    callback(null, { username: 'jsmith', pid: 'a-pid' });
+  }
+};
 
 const mockConfig = {
   values: {},
@@ -118,6 +136,13 @@ describe('ws_validator', () => {
     'ws': MockWebSocket,
     './lib/config': mockConfig,
     './lib/users': MockUsers,
+    './lib/signingKeys': mockSigningKeys,
+    // ws_validator reads the connector's own key from disk via lib/certificates, so the in-memory
+    // config above is not enough to let it sign the authenticate token.
+    './lib/certificates': {
+      getPrivateKey: () => key,
+      getCertificate: () => cert,
+    },
   });
   
   it('authenticate_connector', () => {
@@ -143,14 +168,39 @@ describe('ws_validator', () => {
     expect(decoded.exp - testStart).to.equal(60);
   });
 
+  it('re-fetches the tenant signing key on the initial connect', () => {
+    // reconnect() runs at module load, so by now the refresh has already been requested.
+    expect(mockSigningKeys.refreshOnReconnectCalls).to.be.at.least(1);
+  });
+
+  it('verifies hub messages through the signing key module', () => {
+    const before = mockSigningKeys.verifyCalls.length;
+
+    mockWebSocketInstance.emit('authenticate_user', { jwt: 'a-hub-token' });
+
+    expect(mockSigningKeys.verifyCalls.length).to.equal(before + 1);
+    expect(mockSigningKeys.verifyCalls[before]).to.equal('a-hub-token');
+  });
+
   it('terminate socket on error', (done) => {
     mockWebSocketInstance.on('mockTerminated', () => {
       // terminate has been called on socket by the reconnection timer, all good.
       done();
     });
-    
+
     // trigger error
     mockWebSocketInstance.emit('error', new Error('test'));
+  });
+
+  it('re-fetches the tenant signing key on reconnect', (done) => {
+    const before = mockSigningKeys.refreshOnReconnectCalls;
+
+    // The reconnection timer rebuilds the socket after WS_RECONNECT_INTERVAL_MS, which must
+    // refresh the signing key before connecting again.
+    setTimeout(() => {
+      expect(mockSigningKeys.refreshOnReconnectCalls).to.be.above(before);
+      done();
+    }, 2500);
   });
 
 });
