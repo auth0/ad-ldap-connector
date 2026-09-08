@@ -1,24 +1,65 @@
 require('colors');
 
+const os = require('os');
 const path = require('path');
+const fs = require('fs/promises');
 
 const config = require('../lib/config');
 const cas = require('../lib/add_certs');
-const firewall = require('../lib/firewall');
 const createConnection = require('../lib/ldap').createConnection;
-const certificates = require('../lib/certificates');
 const secureStorage = require('../lib/secureStorage');
 
-const { input, password } = require('@inquirer/prompts');
+const { input, password, confirm } = require('@inquirer/prompts');
 
 const { loadProvisioningTicket } = require('../lib/provisioningTicket');
-const { configureConnection } = require('./steps/configureConnection');
+const migrateData = require('./migrateData');
 const adLdapSettings = require('../lib/adLdapSettings');
 
-exports.run = async function() {
+const INSTALL_DIR = path.join(__dirname, '../');
+
+function printTitle(title) {
+  console.log('');
+  console.log('-'.repeat(100));
+  console.log('| ' + title + ' '.repeat(100 - 2 - title.length - 1) + '|');
+  console.log('-'.repeat(100));
+  console.log('');
+}
+
+(async () => {
+
+  console.log('');
+  console.log('='.repeat(100));
+  console.log('Auth0 ADLDAP Connector Setup');
+  console.log('='.repeat(100));
+  console.log('');
+
+  // Prevent running on windows platform
+  if (process.platform === 'win32') {
+    console.error('This setup script is meant to be used on non-windows platforms like *nix and MacOS. For windows platforms, use the installer (.msi) provided.');
+    process.exit(1);
+  }
+
+  const username = os.userInfo().username;
+  const startInstall = await confirm({
+    message: `This installer should be run under the same user as the one used to run the connector itself. 
+    It is currently being run under [${username}]. Continue?`,
+    default: false
+  });
+
+  if (!startInstall) {
+    process.exit(0);
+  }
+
+  // Migrate any legacy data
+  printTitle('Migrating data from older installs...');
+  await migrateData();
 
   // Inject CA certificates
+  printTitle('Importing certificates...');
   await cas.injectAsync();
+
+  // Initialize existing config
+  await config.initialize();
 
   // Get provisioning ticket from user input if not already set
   let provisioningTicket = config.get('PROVISIONING_TICKET');
@@ -31,6 +72,7 @@ exports.run = async function() {
   }
 
   // Load options / settings from the provisioning ticket
+  printTitle('Testing provisioning ticket...');
   const ticketInfo = await loadProvisioningTicket(provisioningTicket);
 
   // Discover AD/LDAP settings if not already set
@@ -57,14 +99,10 @@ exports.run = async function() {
     config.set('LDAP_BASE', ldapBase);
   }
 
-  // Inject winston into console
-  if (console.inject) {
-    console.inject();
-  }
-
   // Check if Anonymous LDAP search is enabled
   const ldapClient = createConnection();
   const anonymousSearchEnabled = await adLdapSettings.isAnonymousSearchEnabled(ldapClient, ldapBase);
+  ldapClient.destroy();
   config.set('ANONYMOUS_SEARCH_ENABLED', anonymousSearchEnabled);
   console.log(`Is Anonymous LDAP search enabled? ${anonymousSearchEnabled ? 'yes' : 'no'}`);
 
@@ -85,49 +123,14 @@ exports.run = async function() {
     await secureStorage.store(secureStorage.keys.LDAP_BIND_PASSWORD, ldapBindPassword);
   }
 
-  // Add firewall rule on windows platforms with kerberos auth enabled
-  const shouldConfigureFirewall = ticketInfo.kerberos && process.platform === 'win32';
-  if (shouldConfigureFirewall) {
-    console.log('Adding firewall rule for Kerberos Proxy.');
-    await firewall.addRule({
-      name: 'Auth0ConnectorKerberos',
-      program: path.resolve(
-        path.join(
-          __dirname,
-          '/../node_modules/kerberos-server/kerberosproxy.net/KerberosProxy/bin/Debug/KerberosProxy.exe'
-        )
-      ),
-      profile: 'private'
-    });
-  }
-
-  // Update config
-  config.set('AD_HUB', ticketInfo.adHub);
-  config.set('PROVISIONING_TICKET', provisioningTicket);
-  config.set('WSFED_ISSUER', ticketInfo.connectionDomain);
-  config.set('CONNECTION', ticketInfo.connectionName);
-  config.set('CLIENT_CERT_AUTH', ticketInfo.certAuth);
-  config.set('KERBEROS_AUTH', ticketInfo.kerberos);
-  config.set('REALM', ticketInfo.realm.name);
-  config.set('SITE_NAME', config.get('SITE_NAME') || ticketInfo.connectionName);
-  config.set(ticketInfo.realm.name, ticketInfo.realm.postTokenUrl);
-
   // Save config to file
   await config.save();
 
-  // Generate self-signed certificates if needed
-  await certificates.initialize({
-    connectionDomain: ticketInfo.connectionDomain,
-    connectionName: ticketInfo.connectionName,
-  });
+  // Restrict file permissions to owner and group
+  printTitle('Restricting file permissions...');
+  await fs.chown(INSTALL_DIR, os.userInfo().uid, os.userInfo().gid);
+  await fs.chmod(INSTALL_DIR, 0o700);
+  console.log(`Restricted install directory to owner [${username}] and group, with permissions 700.`);
 
-  // Configure connection using the provisioning ticket
-  await configureConnection({
-    provisioningTicket,
-    connectionName: ticketInfo.connectionName,
-  });
-
-  // Save config to file
-  await config.save();
-  console.log('Connector setup complete.');
-};
+  printTitle('Connector setup complete.');
+})();

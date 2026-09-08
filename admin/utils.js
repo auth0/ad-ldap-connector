@@ -1,29 +1,29 @@
 const exec = require('child_process').exec;
-const execAsync = require('util').promisify(exec);
+const execFile = require('child_process').execFile;
+const { promisify } = require('util');
+const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+
 const path = require('path');
 const process = require('node:process');
 const secureStorage = require('../lib/secureStorage');
 
 /**
  * Restarts the Auth0 ADLDAP service on windows. On other platforms, it's a no-op.
- *
- * @param cb
- * @return {*}
  */
-function restartServer(cb) {
-  if (process.platform === 'win32') {
-    console.log('Restarting Auth0 ADLDAP Service...');
-    return exec('net stop "Auth0 ADLDAP"', function () {
-      exec('net start "Auth0 ADLDAP"', function () {
-        console.log('Done.');
-        setTimeout(function () {
-          return cb();
-        }, 2000);
-      });
-    });
+
+async function restartConnectorService() {
+  if (process.platform !== 'win32') {
+    return;
   }
 
-  cb();
+  console.log('Restarting Auth0 ADLDAP Service...');
+  const isRunning = await isServiceRunning('Auth0 ADLDAP');
+  if (isRunning) {
+    await execAsync('net stop "Auth0 ADLDAP"');
+  }
+  await execAsync('net start "Auth0 ADLDAP"');
+  console.log('Done.');
 }
 
 /**
@@ -55,7 +55,7 @@ function run(cmd, args, callback) {
 }
 
 /**
- * Tries to detect LDAP settings on windows using the settings_detector.exe.
+ * Tries to detect LDAP settings on windows using the settings_detector.exe. Windows only.
  *
  * Note: No idea what this executable is and where the source for it is.
  * TODO: figure out if we can just stop using this and require users to input LDAP settings manually
@@ -96,9 +96,45 @@ async function getHashedAdminPassword() {
   }
 }
 
+/**
+ * Checks to see if a service with the given name is running. Windows only.
+ *
+ * @param serviceName
+ * @return {Promise<*|boolean>}
+ */
+async function isServiceRunning(serviceName) {
+  try {
+    const { stdout } = await execFileAsync('sc.exe', ['query', serviceName]);
+    return stdout.includes('RUNNING');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Starts the service with the given name. Windows only.
+ * @param serviceName
+ * @return {Promise<void>}
+ */
+async function startService(serviceName) {
+  await execFileAsync('sc.exe', ['start', serviceName]);
+}
+
+/**
+ * Stops the service with the given name. Windows only.
+ * @param serviceName
+ * @return {Promise<void>}
+ */
+async function stopService(serviceName) {
+  await execFileAsync('sc.exe', ['stop', serviceName]);
+}
+
 module.exports = {
-  restartServer,
+  restartConnectorService,
   run,
   detectLdapSettings,
-  getHashedAdminPassword
+  getHashedAdminPassword,
+  isServiceRunning,
+  startService,
+  stopService
 };

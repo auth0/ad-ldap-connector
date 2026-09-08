@@ -1,6 +1,6 @@
 const xtend = require('xtend');
 const config = require('../lib/config');
-const { restartServer, getHashedAdminPassword } = require('./utils');
+const { restartConnectorService, getHashedAdminPassword } = require('./utils');
 
 /**
  * Middleware to require authentication for admin routes. If no admin password is set, redirects to the setup page.
@@ -65,7 +65,7 @@ async function mergeConfig(req, res, next) {
     await config.save();
 
     if (req.body.LDAP_URL || req.body.PORT || req.body.SERVER_URL) {
-      return restartServer(function () {
+      return restartConnectorService().then(() => {
         return res.redirect('/?s=1');
       });
     }

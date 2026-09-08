@@ -11,7 +11,6 @@ const archiver = require('archiver');
 const cas = require('../lib/add_certs');
 const cookieParser = require('cookie-parser');
 const csrf = require('csurf');
-const os = require('os');
 const fs = require('fs');
 const http = require('http');
 const express = require('express');
@@ -30,10 +29,13 @@ const secureStorage = require('../lib/secureStorage');
 const certificates = require('../lib/certificates');
 const { loadProvisioningTicket } = require('../lib/provisioningTicket');
 const adLdapSettings = require('../lib/adLdapSettings');
-const { run, restartServer, getHashedAdminPassword, detectLdapSettings } = require('./utils');
+const connectorServiceSecretsBridge = require('../lib/connectorServiceSecretsBridge');
+const { run, restartConnectorService, getHashedAdminPassword, detectLdapSettings } = require('./utils');
+const profileMapper = require('../lib/profileMapper');
 
 const BCRYPT_SALT_ROUNDS = 12;
 const SERVER_PORT = 8357;
+const CONNECTOR_LOGS_FILE = path.join(__dirname, '../data/logs/connector/logs.log');
 
 const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -191,19 +193,21 @@ async function registerRoutes(app) {
         next();
       });
     },
-    function (req, res, next) {
+    async function (req, res, next) {
       var password = req.body.LDAP_BIND_PASSWORD;
-      if (!password) return next();
-      secureStorage.store(secureStorage.keys.LDAP_BIND_PASSWORD, password)
-        .then(function () {
-          ldap.resetCredentials();
-          next();
-        })
-        .catch(function (err) {
-          res.redirectWithError({
-            errorMessage: err.message
-          });
+      if (!password) {
+        return next();
+      }
+      try {
+        await connectorServiceSecretsBridge.store(secureStorage.keys.LDAP_BIND_PASSWORD, password);
+        ldap.resetCredentials();
+        await restartConnectorService();
+        next();
+      } catch (err) {
+        res.redirectWithError({
+          errorMessage: err.message
         });
+      }
     },
     mergeConfig
   );
@@ -220,12 +224,20 @@ async function registerRoutes(app) {
         next();
       });
     },
-    function (req, res, next) {
-      if (!req.file || req.file.buffer.length === 0)
-        return next();
-      // upload pfx
-      req.body.SSL_PFX = req.file.buffer.toString('base64');
-      next();
+    async function (req, res, next) {
+      try {
+        if (!req.file || req.file.buffer.length === 0)
+          return next();
+        // upload pfx
+        req.body.SSL_PFX = req.file.buffer.toString('base64');
+
+        // save SSL_KEY_PASSWORD from form to secure storage
+        await connectorServiceSecretsBridge.store(secureStorage.keys.CUSTOM_SSL_PFX_PASSWORD, req.body.SSL_KEY_PASSWORD || '');
+        await restartConnectorService();
+        next();
+      } catch (err) {
+        next(err);
+      }
     },
     mergeConfig
   );
@@ -269,10 +281,10 @@ async function registerRoutes(app) {
     });
 
     const files = [
-      'config.json',
-      'lib/profileMapper.js',
-      'certs/cert.key',
-      'certs/cert.pem',
+      'data/config.json',
+      'data/profileMapper/custom.js',
+      'data/certs/cert.key',
+      'data/certs/cert.pem',
     ];
 
     files.forEach((name) => {
@@ -311,9 +323,10 @@ async function registerRoutes(app) {
       }
 
       var valid_files = [
-        'certs/cert.key',
-        'certs/cert.pem',
-        'config.json',
+        'data/certs/cert.key',
+        'data/certs/cert.pem',
+        'data/config.json',
+        'data/profileMapper/custom.js',
         'lib/profileMapper.js',
       ];
 
@@ -330,9 +343,16 @@ async function registerRoutes(app) {
           entry.pipe(fileWriteStream);
         })
         .on('close', function () {
-          restartServer(function () {
+          restartConnectorService().then(() => {
             Users = require('../lib/users');
             res.redirect('/');
+          }).catch((err) =>
+          {
+            console.error(err);
+            return res.redirectWithError({
+              errorMessage: 'Could not restart connector service after import.',
+              anchor: 'export'
+            });
           });
         }).on('error', err => {
           console.error(err);
@@ -349,12 +369,12 @@ async function registerRoutes(app) {
       'Content-Type': 'text/plain',
     });
 
-    if (!fs.existsSync(__dirname + '/../logs.log')) {
+    if (!fs.existsSync(CONNECTOR_LOGS_FILE)) {
       res.write('The log file is empty.');
       return res.end();
     }
 
-    fs.readFile(__dirname + '/../logs.log', 'utf8', function (err, data) {
+    fs.readFile(CONNECTOR_LOGS_FILE, 'utf8', function (err, data) {
       if (err) {
         res.status(500);
         res.send({
@@ -368,7 +388,7 @@ async function registerRoutes(app) {
   });
 
   app.post('/logs/clear', csrfProtection, function (req, res) {
-    fs.writeFile(__dirname + '/../logs.log', '', function (err) {
+    fs.writeFile(CONNECTOR_LOGS_FILE, '', function (err) {
       if (err) {
         res.status(500);
         res.send({
@@ -386,46 +406,37 @@ async function registerRoutes(app) {
       'Content-Type': 'text/plain',
     });
 
-    if (!fs.existsSync(__dirname + '/../lib/profileMapper.js')) {
-      res.write('');
-      return res.end();
-    }
-
-    fs.readFile(
-      __dirname + '/../lib/profileMapper.js',
-      'utf8',
-      function (err, data) {
-        if (err) {
-          res.status(500);
-          res.send({
-            error: err,
-          });
-        } else {
-          res.write(data);
-          res.end();
-        }
+    try {
+      const profileMappingScript = profileMapper.loadMappingScript({
+        fallbackToDefaultScript: true
+      });
+      if (!profileMappingScript) {
+        res.write('');
+        return res.end();
+      } else {
+        res.write(profileMappingScript);
+        res.end();
       }
-    );
+    } catch (err) {
+      res.status(500);
+      res.send({
+        error: err,
+      });
+    }
   });
 
-  app.post('/profile-mapper', csrfProtection, function (req, res) {
-    fs.writeFile(
-      __dirname + '/../lib/profileMapper.js',
-      req.body.code,
-      function (err) {
-        if (err) {
-          res.status(500);
-          res.send({
-            error: err,
-          });
-        } else {
-          return restartServer(function () {
-            res.status(200);
-            res.end();
-          });
-        }
-      }
-    );
+  app.post('/profile-mapper', csrfProtection, async function (req, res) {
+    try {
+      profileMapper.saveMappingScript(req.body.code);
+      await restartConnectorService();
+      res.status(200);
+      res.end();
+    } catch (err) {
+      res.status(500);
+      res.send({
+        error: err,
+      });
+    }
   });
 
   app.get('/troubleshooter/run', setCurrentConfig, function (req, res) {
@@ -485,8 +496,8 @@ async function registerRoutes(app) {
       });
 
       const files = [
-        'config.json',
-        'lib/profileMapper.js',
+        'data/config.json',
+        'data/profileMapper/custom.js',
         'package.json',
       ].concat(req.body.LOG_FILES);
 
@@ -511,44 +522,6 @@ async function registerRoutes(app) {
       archive.finalize();
     }
   );
-
-  app.post(
-    '/updater/run',
-    csrfProtection,
-    setCurrentConfig,
-    function (req, res) {
-      run(__dirname + '/../update-connector.cmd', [], function (data) {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain',
-        });
-        res.write(data);
-        return res.end();
-      });
-    }
-  );
-
-  app.get('/updater/logs', function (req, res) {
-    res.writeHead(200, {
-      'Content-Type': 'text/plain',
-    });
-
-    if (!fs.existsSync(os.tmpdir() + '/adldap-update.log')) {
-      res.write('');
-      return res.end();
-    }
-
-    fs.readFile(os.tmpdir() + '/adldap-update.log', 'utf8', function (err, data) {
-      if (err) {
-        res.status(500);
-        res.send({
-          error: err,
-        });
-      } else {
-        res.write(data.replace(/\n\r\n/g, '\n'));
-        res.end();
-      }
-    });
-  });
 
   app.get('/version', function (req, res) {
     var p = JSON.parse(fs.readFileSync(__dirname + '/../package.json', 'utf8'));
@@ -651,8 +624,7 @@ async function registerErrorHandler(app) {
  * @return {Promise<void>}
  */
 async function consumePendingAdminPassword() {
-  const pendingPasswordPath = path.join(__dirname, '.pending-admin-password');
-  const setAdminPasswordScriptPath = path.join(__dirname, 'set-admin-password.js');
+  const pendingPasswordPath = path.join(__dirname, '../data', '.pending-admin-password');
   if (fs.existsSync(pendingPasswordPath)) {
     try {
       const pendingHash = fs.readFileSync(pendingPasswordPath, 'utf8').trim();
@@ -665,7 +637,6 @@ async function consumePendingAdminPassword() {
     } finally {
       try {
         fs.unlinkSync(pendingPasswordPath);
-        fs.unlinkSync(setAdminPasswordScriptPath);
       } catch (_) { /* empty */ }
     }
   }

@@ -1,9 +1,7 @@
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
-const execAsync = require('util').promisify(require('child_process').exec);
 const process = require('node:process');
-const filePermissions = require('../lib/filePermissions');
 
 /**
  * This script is used to set the password for the pending admin user.
@@ -20,18 +18,20 @@ if (!password) {
   process.exit(0);
 }
 
+let preHashed = false;
+const preHashedFlag = process.argv[3];
+if (preHashedFlag === '--prehashed') {
+  preHashed = true;
+}
+
 (async () => {
   try {
-    const hash = await bcrypt.hash(password, 12);
-    const filePath = path.join(__dirname, '.pending-admin-password');
+    const hash = preHashed ? password : await bcrypt.hash(password, 12);
+    const filePath = path.join(__dirname, '../data', '.pending-admin-password');
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, hash, 'utf8');
-    await filePermissions.restrict({
-      filePath,
-      platform: process.platform,
-      execAsync
-    });
   } catch (err) {
     process.stdout.write('Failed to save pending password: ' + err.message + '\n');
-    process.exit(0);
+    process.exit(1);
   }
 })();

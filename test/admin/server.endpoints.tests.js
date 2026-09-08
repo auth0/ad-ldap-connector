@@ -10,6 +10,23 @@ const request = require('supertest');
 const proxyquire = require('proxyquire').noCallThru();
 const bcrypt = require('bcryptjs');
 const expressSession = require('express-session');
+const defaultProfileMapping = require('../../lib/defaultProfileMapping');
+
+// ---------------------------------------------------------------------------
+// Profile mapper stub — avoids loading isolated-vm (no native build in tests)
+// ---------------------------------------------------------------------------
+let savedMappingScript = null;
+
+const mockProfileMapper = {
+  loadMappingScript: ({ fallbackToDefaultScript } = {}) => {
+    if (savedMappingScript !== null) return savedMappingScript;
+    if (fallbackToDefaultScript) return defaultProfileMapping.toString();
+    return null;
+  },
+  saveMappingScript: (script) => { savedMappingScript = script; },
+  mapProfile: async (rawProfile) => defaultProfileMapping(rawProfile),
+  '@global': true,
+};
 
 // ---------------------------------------------------------------------------
 // Shared session store — lets tests inspect server-side session contents
@@ -104,6 +121,8 @@ function buildApp() {
     // Replace the OS secure storage with an in-memory store
     // @global ensures the stub is used by admin/middleware.js too
     '../lib/secureStorage': mockSecureStorage,
+    // Stub profileMapper to avoid loading isolated-vm (no native build in tests)
+    '../lib/profileMapper': mockProfileMapper,
     // Inject our testStore so tests can inspect session contents
     'express-session': sessionStub,
   });
@@ -167,6 +186,7 @@ describe('admin server endpoints (integration)', function () {
 
   beforeEach(function () {
     keychainStore.clear();
+    savedMappingScript = null;
   });
 
   // -------------------------------------------------------------------------
@@ -309,7 +329,7 @@ describe('admin server endpoints (integration)', function () {
   // Protected routes — unauthenticated redirects
   // -------------------------------------------------------------------------
   describe('protected routes redirect to /setup when no password is set', function () {
-    const routes = ['/', '/version', '/logs', '/profile-mapper', '/updater/logs'];
+    const routes = ['/', '/version', '/logs', '/profile-mapper'];
 
     routes.forEach(function (route) {
       it(`GET ${route} → /setup`, async function () {
@@ -325,7 +345,7 @@ describe('admin server endpoints (integration)', function () {
       setAdminPassword(TEST_PASSWORD);
     });
 
-    const routes = ['/', '/version', '/logs', '/profile-mapper', '/updater/logs'];
+    const routes = ['/', '/version', '/logs', '/profile-mapper'];
 
     routes.forEach(function (route) {
       it(`GET ${route} → /login`, async function () {
@@ -392,13 +412,32 @@ describe('admin server endpoints (integration)', function () {
         expect(res.status).to.equal(200);
         expect(res.headers['content-type']).to.match(/text\/plain/);
       });
+
+      it('returns non-empty script contents (falls back to default mapping)', async function () {
+        const res = await agent.get('/profile-mapper');
+        expect(res.status).to.equal(200);
+        expect(res.text.length).to.be.greaterThan(0);
+      });
     });
 
-    describe('GET /updater/logs', function () {
-      it('returns a plain-text response', async function () {
-        const res = await agent.get('/updater/logs');
+    describe('POST /profile-mapper', function () {
+      it('returns 200 when a valid script is submitted with a CSRF token', async function () {
+        const csrfToken = await getCsrfToken(agent);
+        const res = await agent
+          .post('/profile-mapper')
+          .type('form')
+          .send({ _csrf: csrfToken, code: 'module.exports = function(p) { return p; }' });
         expect(res.status).to.equal(200);
-        expect(res.headers['content-type']).to.match(/text\/plain/);
+      });
+
+      it('returns 403 without a CSRF token', async function () {
+        const res = await agent
+          .post('/profile-mapper')
+          .type('form')
+          .send({ code: 'module.exports = function(p) { return p; }' });
+        await expectRedirectWithError({
+          res, errorMessage: 'invalid csrf token'
+        });
       });
     });
 

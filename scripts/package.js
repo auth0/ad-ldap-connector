@@ -20,7 +20,6 @@ const excluded = [
   '.vscode',
   'certs',
   'test',
-  'scripts',
   'config.json',
   'cache.db',
   '.env',
@@ -31,7 +30,7 @@ const excluded = [
 ];
 
 const ROOT = path.resolve(__dirname, '..');
-const outputPath = path.join(ROOT, 'ad-ldap-connector.zip');
+const outputPath = path.join(require('os').homedir(), 'ad-ldap-connector.zip');
 
 const output = fs.createWriteStream(outputPath);
 const archive = archiver('zip', { zlib: { level: 9 } });
