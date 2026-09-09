@@ -305,6 +305,23 @@ describe('signingKeys', () => {
         done();
       });
     });
+
+    it('rejects an HS256 token forged with the static key as the secret', (done) => {
+      const key = generateKey('kid-1');
+      const signingKeys = new SigningKeys({
+        configModule: makeConfig({ TENANT_SIGNING_KEY: key.publicPem })
+      });
+
+      // Same algorithm-confusion attack as JWKS mode: the static key is asymmetric, so an HMAC
+      // token signed with it as the secret must not verify.
+      const forged = jwt.sign({ username: 'attacker' }, key.publicPem, { algorithm: 'HS256' });
+
+      signingKeys.verify(forged, (err) => {
+        expect(err).to.be.ok;
+        expect(err.message).to.match(/invalid algorithm/i);
+        done();
+      });
+    });
   });
 
   describe('JWKS fetch failures', () => {
@@ -458,6 +475,23 @@ describe('signingKeys', () => {
       expect(config.get('TENANT_SIGNING_KEY')).to.equal('a-rotated-key');
       expect(config.saveCalls).to.equal(1);
       expect(axiosStub.requests).to.have.length(0);
+    });
+
+    it('does not persist when the re-provisioned signing key is unchanged', async () => {
+      const config = makeConfig({ TENANT_SIGNING_KEY: 'an-old-key', CONNECTION: 'my-ad' });
+      const signingKeys = new SigningKeys({
+        configModule: config,
+        axiosModule: makeAxios(() => { throw new Error('the JWKS endpoint must not be called in static key mode'); }),
+        minRefreshIntervalMs: 0,
+        // Reconnect with no rotation: the same key comes back, so there is nothing to persist.
+        configureConnectionFn: async () => ({ serverUrl: 'https://connector.example.com', certThumbprint: 'aa:bb', tenantSigningKey: 'an-old-key' })
+      });
+
+      const refreshed = await signingKeys.refreshOnReconnect();
+
+      expect(refreshed).to.equal(true);
+      expect(config.get('TENANT_SIGNING_KEY')).to.equal('an-old-key');
+      expect(config.saveCalls).to.equal(0);
     });
 
     it('switches to JWKS mode when the provisioning ticket stops returning a signing key', async () => {
