@@ -1,7 +1,7 @@
 const passport = require('passport');
 const config = require('./lib/config');
-const jwt = require('jsonwebtoken');
 const logout = require('express-passport-logout');
+const signingKeys = require('./lib/signingKeys');
 
 const wsfederationResponses = require('./lib/wsfederation-responses');
 const Users = require('./lib/users');
@@ -18,7 +18,9 @@ exports.install = async function (app) {
     }
 
     var token = req.headers.authorization.replace('Bearer ', '');
-    jwt.verify(token, config.get('TENANT_SIGNING_KEY'), function (err) {
+    // Resolved through signingKeys so this keeps working when the tenant signing key is served
+    // from the JWKS endpoint rather than stored in TENANT_SIGNING_KEY.
+    signingKeys.verify(token, function (err) {
       if (err) {
         console.log('Validate Access Token Error', err);
         return res.send(401);
