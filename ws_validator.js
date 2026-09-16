@@ -1,7 +1,6 @@
 const WebSocket = require('ws');
 const EventEmitter = require('events').EventEmitter;
 const async = require('async');
-const cb = require('cb');
 const ms = require('ms');
 
 const exit = require('./lib/exit');
@@ -59,25 +58,32 @@ async function setupWebsocket() {
         callback = function () {};
       }
 
-      var pong = cb(function (err) {
-        if (err instanceof cb.TimeoutError &&
-            client.listeners('pong').length > 0) {
-          client.removeListener('pong', pong);
-          if (count === 4) {
-            return callback(new Error(
-              `Auth0 server didn't respond to ${(count + 1)} ping commands. Re-pinging.`
-            ));
-          }
-          return ping(client, ++count, callback);
-        }
-        callback(null, { failed_pings: count });
-      }).timeout(ms('4s'));
-
       if (client.readyState !== WebSocket.OPEN) {
         return callback(null, { failed_pings: 0 });
       }
 
-      client.once('pong', pong).ping('');
+      let settled = false;
+
+      const timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        client.removeListener('pong', onPong);
+        if (count === 4) {
+          return callback(new Error(
+            `Auth0 server didn't respond to ${(count + 1)} ping commands. Re-pinging.`
+          ));
+        }
+        ping(client, ++count, callback);
+      }, ms('4s'));
+
+      function onPong() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        callback(null, { failed_pings: count });
+      }
+
+      client.once('pong', onPong).ping('');
     }
 
     var log_from_auth0 = console.log.bind(console, 'auth0'.blue + ':');
