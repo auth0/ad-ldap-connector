@@ -59,6 +59,10 @@ async function setupWebsocket() {
         callback = function () {};
       }
 
+      if (client.readyState !== WebSocket.OPEN) {
+        return callback(null, { failed_pings: 0 });
+      }
+
       var pong = cb(function (err) {
         if (err instanceof cb.TimeoutError &&
             client.listeners('pong').length > 0) {
@@ -72,10 +76,6 @@ async function setupWebsocket() {
         }
         callback(null, { failed_pings: count });
       }).timeout(ms('4s'));
-
-      if (client.readyState !== WebSocket.OPEN) {
-        return callback(null, { failed_pings: 0 });
-      }
 
       client.once('pong', pong).ping('');
     }
