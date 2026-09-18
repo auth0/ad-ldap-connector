@@ -1,7 +1,7 @@
-const cb = require('cb');
 const WebSocket = require('ws');
 const EventEmitter = require('events').EventEmitter;
 const async = require('async');
+const cb = require('cb');
 const ms = require('ms');
 
 const exit = require('./lib/exit');
