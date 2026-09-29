@@ -172,6 +172,19 @@ describe('configureConnection', function () {
 
       expect(stubs.axiosStub._calls[0].body.agentVersion).to.equal('1.2.3');
     });
+
+    it('reports the useJWKS capability regardless of the response', async function () {
+      // Reported unconditionally so auth0-server can, depending on the tenant's deprecation status,
+      // choose to stop sending a signing key down and let the connector read it from the JWKS
+      // endpoint. The connector cannot inspect deprecation status itself.
+      const withKey = makeStubs({ axiosResponse: { data: { signingKey: FAKE_SIGNING_KEY } } });
+      await loadModule(withKey).configureConnection({ provisioningTicket: PROVISIONING_TICKET, connectionName: CONNECTION_NAME });
+      expect(withKey.axiosStub._calls[0].body.capabilities).to.deep.equal({ useJWKS: true });
+
+      const withoutKey = makeStubs({ axiosResponse: { data: {} } });
+      await loadModule(withoutKey).configureConnection({ provisioningTicket: PROVISIONING_TICKET, connectionName: CONNECTION_NAME });
+      expect(withoutKey.axiosStub._calls[0].body.capabilities).to.deep.equal({ useJWKS: true });
+    });
   });
 
   describe('error handling', function () {
