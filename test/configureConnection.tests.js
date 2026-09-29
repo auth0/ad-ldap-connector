@@ -175,7 +175,24 @@ describe('configureConnection', function () {
   });
 
   describe('error handling', function () {
-    it('throws with status message when axios response has non-200 status', async function () {
+    it('throws with status and response body when axios response has non-200 status', async function () {
+      const err = Object.assign(new Error('Bad Request'), {
+        response: { status: 400, data: { message: 'ticket already used by another agent' } },
+      });
+      const stubs = makeStubs({ axiosError: err });
+      const { configureConnection } = loadModule(stubs);
+
+      try {
+        await configureConnection({ provisioningTicket: PROVISIONING_TICKET, connectionName: CONNECTION_NAME });
+        expect.fail('should have thrown');
+      } catch (e) {
+        expect(e.message).to.equal(
+          'Unexpected status while configuring connection: 400 — {"message":"ticket already used by another agent"}'
+        );
+      }
+    });
+
+    it('uses (no body) placeholder when non-200 response has no data', async function () {
       const err = Object.assign(new Error('Bad Request'), { response: { status: 400 } });
       const stubs = makeStubs({ axiosError: err });
       const { configureConnection } = loadModule(stubs);
@@ -184,7 +201,7 @@ describe('configureConnection', function () {
         await configureConnection({ provisioningTicket: PROVISIONING_TICKET, connectionName: CONNECTION_NAME });
         expect.fail('should have thrown');
       } catch (e) {
-        expect(e.message).to.equal('Unexpected status while configuring connection: 400');
+        expect(e.message).to.equal('Unexpected status while configuring connection: 400 — (no body)');
       }
     });
 
