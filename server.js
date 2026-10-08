@@ -52,7 +52,7 @@ async function startup({
   configSave = () => config.save(),
   loadTicket = loadProvisioningTicket,
   initCerts = (opts) => certificates.initialize(opts),
-  configure = configureConnection,
+  configureAuth0LDAPConnection = configureConnection,
   storageGet = (key) => secureStorage.get(key),
   storageStore = (key, val) => secureStorage.store(key, val),
   ldapInit = () => require('./lib/ldap').initialize(),
@@ -119,7 +119,7 @@ async function startup({
 
     // Configure connection using the provisioning ticket
     console.log('Configuring connection ' + ticketInfo.connectionName + '.');
-    const { serverUrl, certThumbprint, tenantSigningKey } = await configure({
+    const { serverUrl, certThumbprint, tenantSigningKey } = await configureAuth0LDAPConnection({
       provisioningTicket,
       connectionName: ticketInfo.connectionName,
     });
