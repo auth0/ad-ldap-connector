@@ -15,6 +15,7 @@ const certificates = require('./lib/certificates');
 const connectorServiceSecretsBridge = require('./lib/connectorServiceSecretsBridge');
 const endpoints = require('./endpoints');
 const secureStorage = require('./lib/secureStorage');
+const cas = require('./lib/add_certs');
 const { loadProvisioningTicket } = require('./lib/provisioningTicket');
 const { configureConnection } = require('./lib/configureConnection');
 
@@ -55,6 +56,7 @@ async function startup({
   configureAuth0LDAPConnection = configureConnection,
   storageGet = (key) => secureStorage.get(key),
   storageStore = (key, val) => secureStorage.store(key, val),
+  injectCAs = () => cas.injectAsync(),
   ldapInit = () => require('./lib/ldap').initialize(),
   startClockSkewDetector = () => require('./lib/clock_skew_detector'),
   startWsValidator = () => { ws_client = require('./ws_validator'); },
@@ -131,6 +133,8 @@ async function startup({
     // Save config to file
     await configSave();
 
+    // Custom/system CAs must be injected into the global HTTPS agent BEFORE the first LDAP connection is created
+    await injectCAs();
     await ldapInit();
   } catch (e) {
     console.error(e.message);
