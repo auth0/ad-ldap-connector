@@ -6,9 +6,7 @@ const config = require('../lib/config');
 const BASE_DN = 'dc=example,dc=org';
 const LDAP_SERVER_PORT = 4444;
 
-// Serve LDAPS only when both --cert and --key are provided; otherwise fall back to
-// plain LDAP. Pointing these at a cert whose issuing CA the client does not trust
-// reproduces the connector's LDAPS trust failures (e.g. UNABLE_TO_GET_ISSUER_CERT_LOCALLY).
+// Serve LDAPS only when both --cert and --key are provided
 const { values: cliArgs } = parseArgs({
   options: {
     cert: { type: 'string' },
@@ -125,7 +123,6 @@ if (require.main === module) {
 module.exports = server;
 
 // Factory for creating a fresh server with optional TLS options.
-// Used by tests to spin up an LDAPS-mode server without affecting the singleton above.
 module.exports.createServer = function (opts) {
   const s = ldap.createServer(opts || {});
   registerHandlers(s);

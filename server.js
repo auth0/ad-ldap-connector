@@ -55,7 +55,6 @@ async function startup({
   configure = configureConnection,
   storageGet = (key) => secureStorage.get(key),
   storageStore = (key, val) => secureStorage.store(key, val),
-  injectCAs = async () => {},
   ldapInit = () => require('./lib/ldap').initialize(),
   startClockSkewDetector = () => require('./lib/clock_skew_detector'),
   startWsValidator = () => { ws_client = require('./ws_validator'); },
@@ -132,7 +131,6 @@ async function startup({
     // Save config to file
     await configSave();
 
-    await injectCAs();
     await ldapInit();
   } catch (e) {
     console.error(e.message);
