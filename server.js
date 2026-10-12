@@ -18,6 +18,7 @@ const secureStorage = require('./lib/secureStorage');
 const { loadProvisioningTicket } = require('./lib/provisioningTicket');
 const { configureConnection } = require('./lib/configureConnection');
 
+
 function end () {
   console.log('Got SIGTERM, exiting now.');
   if (ws_client) {
@@ -45,10 +46,23 @@ console.log('');
 console.log('======================== STARTING AD-LDAP CONNECTOR ========================');
 console.log('Maximum header size = ' + maxHeaderSize);
 
-(async () => {
+async function startup({
+  processBridgeFile = () => connectorServiceSecretsBridge.processBridgeFile(),
+  configInitialize = () => config.initialize(),
+  configSave = () => config.save(),
+  loadTicket = loadProvisioningTicket,
+  initCerts = (opts) => certificates.initialize(opts),
+  configureAuth0LDAPConnection = configureConnection,
+  storageGet = (key) => secureStorage.get(key),
+  storageStore = (key, val) => secureStorage.store(key, val),
+  ldapInit = () => require('./lib/ldap').initialize(),
+  startClockSkewDetector = () => require('./lib/clock_skew_detector'),
+  startWsValidator = () => { ws_client = require('./ws_validator'); },
+  startLatencyTest = () => { const lt = require('./latency_test'); lt.run_many(10); },
+} = {}) {
   try {
-    await connectorServiceSecretsBridge.processBridgeFile();
-    await config.initialize();
+    await processBridgeFile();
+    await configInitialize();
   } catch (err) {
     console.log(err.message);
     return exit(2);
@@ -76,14 +90,14 @@ console.log('Maximum header size = ' + maxHeaderSize);
   }
 
   if (!config.get('ANONYMOUS_SEARCH_ENABLED')) {
-    if (!config.get('LDAP_BIND_USER') || !await secureStorage.get(secureStorage.keys.LDAP_BIND_PASSWORD)) {
+    if (!config.get('LDAP_BIND_USER') || !await storageGet(secureStorage.keys.LDAP_BIND_PASSWORD)) {
       throwImproperInstallError('Anonymous LDAP search is not enabled, and LDAP bind user or password is not set');
     }
   }
 
   try {
     let provisioningTicket = config.get('PROVISIONING_TICKET');
-    const ticketInfo = await loadProvisioningTicket(provisioningTicket);
+    const ticketInfo = await loadTicket(provisioningTicket);
 
     // Update config
     config.set('AD_HUB', ticketInfo.adHub);
@@ -98,14 +112,14 @@ console.log('Maximum header size = ' + maxHeaderSize);
 
     // Generate self-signed certificates if needed
     console.log('Generating self-signed certificates...');
-    await certificates.initialize({
+    await initCerts({
       connectionDomain: ticketInfo.connectionDomain,
       connectionName: ticketInfo.connectionName,
     });
 
     // Configure connection using the provisioning ticket
     console.log('Configuring connection ' + ticketInfo.connectionName + '.');
-    const { serverUrl, certThumbprint, tenantSigningKey } = await configureConnection({
+    const { serverUrl, certThumbprint, tenantSigningKey } = await configureAuth0LDAPConnection({
       provisioningTicket,
       connectionName: ticketInfo.connectionName,
     });
@@ -115,18 +129,17 @@ console.log('Maximum header size = ' + maxHeaderSize);
     config.set('TENANT_SIGNING_KEY', tenantSigningKey);
 
     // Save config to file
-    await config.save();
+    await configSave();
 
-    await require('./lib/ldap').initialize();
+    await ldapInit();
   } catch (e) {
     console.error(e.message);
     return exit(1);
   }
 
-  require('./lib/clock_skew_detector');
-  ws_client = require('./ws_validator');
-  var latency_test = require('./latency_test');
-  latency_test.run_many(10);
+  startClockSkewDetector();
+  startWsValidator();
+  startLatencyTest();
 
   if (!config.get('KERBEROS_AUTH') && !config.get('CLIENT_CERT_AUTH')) {
     return;
@@ -151,10 +164,10 @@ console.log('Maximum header size = ' + maxHeaderSize);
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended:true}));
 
-  let sessionSecret = await secureStorage.get(secureStorage.keys.CONNECTOR_SESSION_SECRET);
+  let sessionSecret = await storageGet(secureStorage.keys.CONNECTOR_SESSION_SECRET);
   if (!sessionSecret) {
     sessionSecret = crypto.randomBytes(32).toString('hex');
-    await secureStorage.store(secureStorage.keys.CONNECTOR_SESSION_SECRET, sessionSecret);
+    await storageStore(secureStorage.keys.CONNECTOR_SESSION_SECRET, sessionSecret);
   }
   app.use(session({
     secret: sessionSecret,
@@ -166,7 +179,7 @@ console.log('Maximum header size = ' + maxHeaderSize);
 
   await endpoints.install(app);
 
-  await config.save();
+  await configSave();
 
   var options = {
     port: config.get('PORT'),
@@ -181,7 +194,7 @@ console.log('Maximum header size = ' + maxHeaderSize);
     // SSL settings
     options.ca = config.get('CA_CERT');
     options.pfx = Buffer.from(config.get('SSL_PFX'), 'base64');
-    options.passphrase = await secureStorage.get(secureStorage.keys.CUSTOM_SSL_PFX_PASSWORD);
+    options.passphrase = await storageGet(secureStorage.keys.CUSTOM_SSL_PFX_PASSWORD);
     options.requestCert = true;
 
     if (!config.get('KERBEROS_AUTH')) {
@@ -212,4 +225,10 @@ console.log('Maximum header size = ' + maxHeaderSize);
   }
 
   console.log('listening on port: ' + config.get('PORT'));
-})();
+}
+
+if (require.main === module) {
+  startup();
+}
+
+module.exports = { startup };

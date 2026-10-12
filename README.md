@@ -104,6 +104,74 @@ By default the connector search using this query LDAP `(sAMAccountName={0})`, yo
 
 If you get "Invalid Ticket" when configuring the connector for the first time, the most likely cause is a network issue (e.g. connector behind a proxy). Try connecting to `https://{your tenant}.auth0.com/testall` with a browser other than IE.
 
+## Local development with the mock LDAP server
+
+`mock-ldap/mock-ldap-server.js` is a small in-memory LDAP server (built on `ldapjs`) that serves the
+sample directory in `mock-ldap/mock_ldap_data.json`. It lets you exercise the connector without a
+real Active Directory. It listens on port `4444` with base DN `dc=example,dc=org` and bind user
+`cn=admin,dc=example,dc=org` / password `admin`.
+
+### Plain LDAP
+
+```
+node mock-ldap/mock-ldap-server.js
+```
+
+This serves plain `ldap://0.0.0.0:4444`. Point the connector at it by setting `LDAP_URL` to
+`ldap://localhost:4444` in `data/config.json`.
+
+### SSL (LDAPS) mode
+
+Pass both `--cert` and `--key` to serve `ldaps://localhost:4444` instead. If either flag is missing,
+the server falls back to plain LDAP.
+
+```
+node mock-ldap/mock-ldap-server.js --cert /path/to/server.crt --key /path/to/server.key
+```
+
+No certificates are committed to the repo — you supply your own. The certificate's SAN must include
+`localhost`, since LDAPS mode binds to that host. A quick way to generate a throwaway chain
+(root → intermediate → leaf, with the server presenting leaf + intermediate):
+
+```
+mkdir -p /tmp/ldaps/ca && cd /tmp/ldaps
+openssl req -x509 -newkey rsa:2048 -nodes -keyout root.key -out root.crt -days 365 \
+  -subj "/CN=Test Root" -addext "basicConstraints=critical,CA:TRUE"
+openssl req -newkey rsa:2048 -nodes -keyout int.key -out int.csr -subj "/CN=Test Intermediate"
+openssl x509 -req -in int.csr -CA root.crt -CAkey root.key -CAcreateserial -out int.crt -days 365 \
+  -extfile <(echo "basicConstraints=critical,CA:TRUE")
+openssl req -newkey rsa:2048 -nodes -keyout server.key -out server.csr \
+  -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost"
+openssl x509 -req -in server.csr -CA int.crt -CAkey int.key -CAcreateserial -out leaf.crt -days 365 \
+  -copy_extensions copyall
+cat leaf.crt int.crt > server.crt
+cp root.crt ca/root.crt
+```
+
+Then start the server with `--cert /tmp/ldaps/server.crt --key /tmp/ldaps/server.key` and configure
+the connector:
+
+```
+	"LDAP_URL": "ldaps://localhost:4444",
+	"LDAP_BASE": "dc=example,dc=org",
+	"LDAP_BIND_USER": "cn=admin,dc=example,dc=org",
+	"SSL_CA_PATH": "/tmp/ldaps/ca"
+```
+
+`SSL_CA_PATH` points at a *directory* of CA files (matched by the `SSL_CA_FILE` pattern, default
+`.+\.(pem|crt|cer)$`), so the connector trusts the private root that signed the LDAPS certificate.
+
+> **Note:** when `SSL_CA_PATH` is set, Node uses that CA list as the complete trust store and no
+> longer trusts its built-in public roots. The connector also opens a WSS connection to the Auth0
+> hub, which is served by a public CA. On Windows and Linux the system cert store (imported
+> automatically) already includes the public roots, so both connections work. For local testing with
+> a dedicated CA directory, add Node's built-in roots alongside your private root so public TLS keeps
+> working:
+>
+> ```
+> node -e 'const tls=require("tls"),fs=require("fs");fs.writeFileSync("/tmp/ldaps/ca/node-roots.pem", tls.rootCertificates.join("\n")+"\n")'
+> ```
+
 ## Issue Reporting
 
 If you have found a bug or if you have a feature request, please report them 
