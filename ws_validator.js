@@ -26,6 +26,7 @@ const WrongUsername = require('./lib/errors/WrongUsername');
 const InsufficientAccessRightsError = require('./lib/errors/InsufficientAccessRightsError');
 const PasswordComplexityError = require('./lib/errors/PasswordComplexityError');
 const certificates = require('./lib/certificates');
+const signingKeys = require('./lib/signingKeys');
 var ws;
 
 const emitter = new EventEmitter();
@@ -140,7 +141,7 @@ async function setupWebsocket() {
         openedSocket = false;
       }
     }).on('authenticate_user', function (msg) {
-      jwt.verify(msg.jwt, config.get('TENANT_SIGNING_KEY'), function (err, payload) {
+      signingKeys.verify(msg.jwt, function (err, payload) {
         if (err) {
           console.error('Unauthorized attemp of authentication.');
           return;
@@ -245,7 +246,7 @@ async function setupWebsocket() {
         });
       });
     }).on('search_users', function (msg) {
-      jwt.verify(msg.jwt, config.get('TENANT_SIGNING_KEY'), function (err, payload) {
+      signingKeys.verify(msg.jwt, function (err, payload) {
         if (err) {
           console.error('Unauthorized attemp of search_users.');
           return;
@@ -269,7 +270,7 @@ async function setupWebsocket() {
         });
       });
     }).on('list_groups', function(msg) {
-      jwt.verify(msg.jwt, config.get('TENANT_SIGNING_KEY'), function(err, payload) {
+      signingKeys.verify(msg.jwt, function(err, payload) {
         if (err) {
           console.error('Unauthorized attempt of list_groups');
           return;
@@ -296,7 +297,7 @@ async function setupWebsocket() {
     // Listen only for change_password event when write back is enabled.
     if (config.get('ENABLE_WRITE_BACK')) {
       ws.on('change_password', function (command) {
-        jwt.verify(command.jwt, config.get('TENANT_SIGNING_KEY'), function (err, payload) {
+        signingKeys.verify(command.jwt, function (err, payload) {
           if (err) {
             console.error('Unauthorized change_password attempt');
             return;
@@ -361,6 +362,13 @@ async function setupWebsocket() {
 
 async function reconnect() {
   try {
+    // The hub may have rotated the key it signs messages with while the socket was down, so the
+    // key captured during setup cannot be assumed current. Depending on what auth0-server replied
+    // with during the provisioning ticket process, this either re-reads the JWKS document or runs
+    // the provisioning ticket process again. Failures are logged and swallowed inside
+    // refreshOnReconnect so that a temporarily unreachable tenant never blocks the reconnect.
+    await signingKeys.refreshOnReconnect();
+
     console.log('Connecting to websocket...');
     await setupWebsocket();
     console.log('Connected to websocket');
