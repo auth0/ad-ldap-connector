@@ -224,7 +224,28 @@ describe('ws_validator', () => {
       const replies = events.filter((event) => event.n === 'pid-' + hubEvent + replyEvent);
       expect(replies).to.have.length(1);
       expect(replies[0].p.err.code).to.equal('invalid_signature');
+      expect(replies[0].p.err.reason).to.equal('JsonWebTokenError');
       expect(usersCalls.length).to.equal(before);
+    });
+  });
+
+  ['TokenExpiredError', 'NotBeforeError'].forEach((name) => {
+    it(`also replies when the request failed with ${name}, and says so`, () => {
+      const events = captureSent();
+      const token = jwt.sign({ pid: 'pid-' + name, username: 'jdoe' }, 'some secret');
+      const failure = verificationFailure();
+      failure.name = name;
+      mockSigningKeys.failWith = failure;
+
+      try {
+        mockWebSocketInstance.emit('authenticate_user', { jwt: token });
+      } finally {
+        mockSigningKeys.failWith = null;
+      }
+
+      const replies = events.filter((event) => event.n === 'pid-' + name + '_result');
+      expect(replies).to.have.length(1);
+      expect(replies[0].p.err.reason).to.equal(name);
     });
   });
 

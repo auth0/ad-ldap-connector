@@ -26,7 +26,13 @@ describe('rejectUnverified', () => {
     expect(sent).to.deep.equal([
       {
         event: 'abc123_search_users_result',
-        payload: { err: { code: INVALID_SIGNATURE, message: 'The connector could not verify the signature of the request.' } }
+        payload: {
+          err: {
+            code: INVALID_SIGNATURE,
+            message: 'The connector could not verify the signature of the request.',
+            reason: 'JsonWebTokenError'
+          }
+        }
       }
     ]);
   });
@@ -59,13 +65,22 @@ describe('rejectUnverified', () => {
   });
 
   ['TokenExpiredError', 'NotBeforeError'].forEach((name) => {
-    it(`stays silent for ${name}, which is about time and not about the key`, () => {
+    it(`answers for ${name} too and says why, so the hub can tell a clock problem from a key problem`, () => {
       const token = jwt.sign({ pid: 'abc123' }, 'some secret');
       const err = signatureError();
       err.name = name;
 
-      expect(rejectUnverified(token, err, '_result', send)).to.equal(false);
-      expect(sent).to.have.length(0);
+      expect(rejectUnverified(token, err, '_result', send)).to.equal(true);
+      expect(sent).to.have.length(1);
+      expect(sent[0].payload.err.reason).to.equal(name);
     });
+  });
+
+  it('leaves the reason out when there is no verification error to name', () => {
+    const token = jwt.sign({ pid: 'abc123' }, 'some secret');
+
+    rejectUnverified(token, undefined, '_result', send);
+
+    expect(sent[0].payload.err).to.not.have.property('reason');
   });
 });
