@@ -27,6 +27,7 @@ const InsufficientAccessRightsError = require('./lib/errors/InsufficientAccessRi
 const PasswordComplexityError = require('./lib/errors/PasswordComplexityError');
 const certificates = require('./lib/certificates');
 const signingKeys = require('./lib/signingKeys');
+const { rejectUnverified } = require('./lib/rejectUnverified');
 var ws;
 
 const emitter = new EventEmitter();
@@ -145,6 +146,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attemp of authentication.');
           console.error('Reason: ' + err.message);
+          rejectUnverified(msg.jwt, err, '_result', (event, payload) => ws.sendEvent(event, payload));
           return;
         }
 
@@ -251,6 +253,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attemp of search_users.');
           console.error('Reason: ' + err.message);
+          rejectUnverified(msg.jwt, err, '_search_users_result', (event, payload) => ws.sendEvent(event, payload));
           return;
         }
 
@@ -276,6 +279,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attempt of list_groups');
           console.error('Reason: ' + err.message);
+          rejectUnverified(msg.jwt, err, '_list_groups_result', (event, payload) => ws.sendEvent(event, payload));
           return;
         }
 
@@ -303,6 +307,8 @@ async function setupWebsocket() {
         signingKeys.verify(command.jwt, function (err, payload) {
           if (err) {
             console.error('Unauthorized change_password attempt');
+            console.error('Reason: ' + err.message);
+            rejectUnverified(command.jwt, err, '_change_password_result', (event, payload) => ws.sendEvent(event, payload));
             return;
           };
 

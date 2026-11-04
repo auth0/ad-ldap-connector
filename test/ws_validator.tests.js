@@ -45,8 +45,11 @@ class MockWebSocket {
   }
 }
 
+const usersCalls = [];
+
 class MockUsers {
   validate (username, password, options, callback) {
+    usersCalls.push('validate');
     callback(null, { username });
   }
 }
@@ -59,8 +62,12 @@ const mockSigningKeys = {
     this.refreshOnReconnectCalls++;
     return true;
   },
+  failWith: null,
   verify: function (token, callback) {
     this.verifyCalls.push(token);
+    if (this.failWith) {
+      return callback(this.failWith);
+    }
     callback(null, { username: 'jsmith', pid: 'a-pid' });
   }
 };
@@ -131,6 +138,7 @@ describe('ws_validator', () => {
   mockConfig.set('CONNECTION', 'test-ad');
   mockConfig.set('REALM', 'urn:auth0:example');
   mockConfig.set('WS_RECONNECT_INTERVAL_MS', 1000);
+  mockConfig.set('ENABLE_WRITE_BACK', true);
 
   const wsValidator = proxyquire('../ws_validator', {
     'ws': MockWebSocket,
@@ -180,6 +188,57 @@ describe('ws_validator', () => {
 
     expect(mockSigningKeys.verifyCalls.length).to.equal(before + 1);
     expect(mockSigningKeys.verifyCalls[before]).to.equal('a-hub-token');
+  });
+
+
+  function verificationFailure() {
+    const err = new Error('invalid signature');
+    err.name = 'JsonWebTokenError';
+    return err;
+  }
+
+  function captureSent() {
+    const events = [];
+    mockWebSocketInstance.on('send', (event) => events.push(JSON.parse(event)));
+    return events;
+  }
+
+  [
+    ['authenticate_user', '_result'],
+    ['search_users', '_search_users_result'],
+    ['list_groups', '_list_groups_result'],
+    ['change_password', '_change_password_result']
+  ].forEach(([hubEvent, replyEvent]) => {
+    it(`replies to a rejected ${hubEvent} request with invalid_signature and runs nothing`, () => {
+      const events = captureSent();
+      const before = usersCalls.length;
+      const token = jwt.sign({ pid: 'pid-' + hubEvent, username: 'jdoe', password: 'secret' }, 'some secret');
+      mockSigningKeys.failWith = verificationFailure();
+
+      try {
+        mockWebSocketInstance.emit(hubEvent, { jwt: token });
+      } finally {
+        mockSigningKeys.failWith = null;
+      }
+
+      const replies = events.filter((event) => event.n === 'pid-' + hubEvent + replyEvent);
+      expect(replies).to.have.length(1);
+      expect(replies[0].p.err.code).to.equal('invalid_signature');
+      expect(usersCalls.length).to.equal(before);
+    });
+  });
+
+  it('stays silent for a rejected request whose token carries no pid', () => {
+    const events = captureSent();
+    mockSigningKeys.failWith = verificationFailure();
+
+    try {
+      mockWebSocketInstance.emit('authenticate_user', { jwt: jwt.sign({ username: 'jdoe' }, 'some secret') });
+    } finally {
+      mockSigningKeys.failWith = null;
+    }
+
+    expect(events.filter((event) => /_result$/.test(event.n))).to.have.length(0);
   });
 
   it('terminate socket on error', (done) => {
