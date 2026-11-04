@@ -144,6 +144,7 @@ async function setupWebsocket() {
       signingKeys.verify(msg.jwt, function (err, payload) {
         if (err) {
           console.error('Unauthorized attemp of authentication.');
+          console.error('Reason: ' + err.message);
           return;
         }
 
@@ -249,6 +250,7 @@ async function setupWebsocket() {
       signingKeys.verify(msg.jwt, function (err, payload) {
         if (err) {
           console.error('Unauthorized attemp of search_users.');
+          console.error('Reason: ' + err.message);
           return;
         }
 
@@ -273,6 +275,7 @@ async function setupWebsocket() {
       signingKeys.verify(msg.jwt, function(err, payload) {
         if (err) {
           console.error('Unauthorized attempt of list_groups');
+          console.error('Reason: ' + err.message);
           return;
         }
 

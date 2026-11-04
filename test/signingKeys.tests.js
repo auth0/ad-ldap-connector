@@ -65,6 +65,31 @@ function jwksResponse(keys) {
   return Promise.resolve({ data: { keys: keys.map((k) => k.jwk) } });
 }
 
+/**
+ * Stub for the provisioning ticket process. `answers` is the signing key the server returns on each
+ * call ('' means "no key, read the JWKS yourself"); the last answer repeats. Records every call.
+ */
+function makeTicket(...answers) {
+  const calls = [];
+  const fn = async (args) => {
+    calls.push(args);
+    const answer = answers[Math.min(calls.length - 1, answers.length - 1)];
+    if (answer instanceof Error) {
+      throw answer;
+    }
+    return { serverUrl: 'https://connector.example.com', certThumbprint: 'aa:bb', tenantSigningKey: answer };
+  };
+  fn.calls = calls;
+  return fn;
+}
+
+/**
+ * A key the hub signs with when the tenant is still on the deprecated behaviour: no kid in the token.
+ */
+function signWithoutKid(key, payload = { username: 'jsmith' }) {
+  return jwt.sign(payload, key.privatePem, { algorithm: 'RS256' });
+}
+
 describe('signingKeys', () => {
 
   describe('mode detection', () => {
@@ -417,6 +442,7 @@ describe('signingKeys', () => {
       const signingKeys = new SigningKeys({
         configModule: makeConfig(),
         axiosModule: axiosStub,
+        configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 0
       });
 
@@ -434,6 +460,7 @@ describe('signingKeys', () => {
       const signingKeys = new SigningKeys({
         configModule: makeConfig(),
         axiosModule: makeAxios(() => jwksResponse(current)),
+        configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 0
       });
 
@@ -514,6 +541,7 @@ describe('signingKeys', () => {
       const signingKeys = new SigningKeys({
         configModule: makeConfig(),
         axiosModule: makeAxios(() => Promise.reject(new Error('ECONNREFUSED'))),
+        configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 0
       });
 
@@ -544,6 +572,7 @@ describe('signingKeys', () => {
         axiosModule: makeAxios(() => shouldFail
           ? Promise.reject(new Error('ECONNREFUSED'))
           : jwksResponse([key])),
+        configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 0
       });
 
@@ -563,6 +592,7 @@ describe('signingKeys', () => {
       const signingKeys = new SigningKeys({
         configModule: makeConfig(),
         axiosModule: axiosStub,
+        configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 60 * 1000
       });
 
@@ -571,6 +601,211 @@ describe('signingKeys', () => {
       await signingKeys.refreshOnReconnect();
 
       expect(axiosStub.requests).to.have.length(1);
+    });
+
+    it('re-reads the provisioning ticket and the JWKS document on every reconnect in JWKS mode', async () => {
+      const key = generateKey('kid-1');
+      const ticket = makeTicket('');
+      const axiosStub = makeAxios(() => jwksResponse([key]));
+      const signingKeys = new SigningKeys({
+        configModule: makeConfig({ CONNECTION: 'my-ad' }),
+        axiosModule: axiosStub,
+        configureConnectionFn: ticket,
+        minRefreshIntervalMs: 0
+      });
+
+      const refreshed = await signingKeys.refreshOnReconnect();
+
+      expect(refreshed).to.equal(true);
+      expect(ticket.calls).to.have.length(1);
+      expect(axiosStub.requests).to.have.length(1);
+      expect(signingKeys.useJwks()).to.equal(true);
+    });
+
+    it('returns to static mode when the provisioning ticket sends a signing key again', async () => {
+      const globalClientKey = generateKey('unused');
+      const config = makeConfig({ CONNECTION: 'my-ad' });
+      const signingKeys = new SigningKeys({
+        configModule: config,
+        axiosModule: makeAxios(() => { throw new Error('the JWKS endpoint must not be called in static key mode'); }),
+        configureConnectionFn: makeTicket(globalClientKey.publicPem),
+        minRefreshIntervalMs: 0
+      });
+      expect(signingKeys.useJwks()).to.equal(true);
+
+      await signingKeys.refreshOnReconnect();
+
+      expect(signingKeys.useJwks()).to.equal(false);
+      expect(config.get('TENANT_SIGNING_KEY')).to.equal(globalClientKey.publicPem);
+      expect(config.saveCalls).to.equal(1);
+      const payload = await new Promise((resolve, reject) => {
+        signingKeys.verify(signWithoutKid(globalClientKey), (err, p) => err ? reject(err) : resolve(p));
+      });
+      expect(payload.username).to.equal('jsmith');
+    });
+
+    it('follows the server across a toggle that is switched off and back on', async () => {
+      const globalClientKey = generateKey('unused');
+      const tenantKey = generateKey('kid-tsk');
+      // The server answers with the global client key, then with nothing, then with the global client key again.
+      const ticket = makeTicket(globalClientKey.publicPem, '', globalClientKey.publicPem);
+      const signingKeys = new SigningKeys({
+        configModule: makeConfig({ CONNECTION: 'my-ad', TENANT_SIGNING_KEY: globalClientKey.publicPem }),
+        axiosModule: makeAxios(() => jwksResponse([tenantKey])),
+        configureConnectionFn: ticket,
+        minRefreshIntervalMs: 0
+      });
+      const modes = [];
+
+      await signingKeys.refreshOnReconnect();
+      modes.push(signingKeys.useJwks());
+      await signingKeys.refreshOnReconnect();
+      modes.push(signingKeys.useJwks());
+      await signingKeys.refreshOnReconnect();
+      modes.push(signingKeys.useJwks());
+
+      expect(modes).to.deep.equal([false, true, false]);
+      expect(ticket.calls).to.have.length(3);
+    });
+
+    it('keeps refreshing the JWKS document when the provisioning ticket cannot be reached in JWKS mode', async () => {
+      const key = generateKey('kid-1');
+      const axiosStub = makeAxios(() => jwksResponse([key]));
+      const signingKeys = new SigningKeys({
+        configModule: makeConfig(),
+        axiosModule: axiosStub,
+        configureConnectionFn: makeTicket(new Error('Unexpected status while configuring connection: 503')),
+        minRefreshIntervalMs: 0
+      });
+
+      const refreshed = await signingKeys.refreshOnReconnect();
+
+      expect(refreshed).to.equal(true);
+      expect(axiosStub.requests).to.have.length(1);
+      expect(signingKeys.useJwks()).to.equal(true);
+    });
+
+    it('throttles the provisioning ticket separately from the JWKS document', async () => {
+      const key = generateKey('kid-1');
+      const ticket = makeTicket('');
+      const axiosStub = makeAxios(() => jwksResponse([key]));
+      const signingKeys = new SigningKeys({
+        configModule: makeConfig(),
+        axiosModule: axiosStub,
+        configureConnectionFn: ticket,
+        minRefreshIntervalMs: 60 * 1000
+      });
+
+      await signingKeys.refreshOnReconnect();
+      await signingKeys.refreshOnReconnect();
+      await signingKeys.refreshOnReconnect();
+
+      expect(ticket.calls).to.have.length(1);
+      expect(axiosStub.requests).to.have.length(1);
+    });
+  });
+
+  describe('verify when the message does not match the current mode', () => {
+    function build({ ticket, startingKey = '', jwksKeys = [], minRefreshIntervalMs = 0 }) {
+      const config = makeConfig({ CONNECTION: 'my-ad', TENANT_SIGNING_KEY: startingKey });
+      const axiosStub = makeAxios(() => jwksResponse(jwksKeys));
+      const signingKeys = new SigningKeys({
+        configModule: config,
+        axiosModule: axiosStub,
+        configureConnectionFn: ticket,
+        minRefreshIntervalMs
+      });
+      return { signingKeys, config, axiosStub };
+    }
+
+    const verifyAsync = (signingKeys, token) => new Promise((resolve) => {
+      signingKeys.verify(token, (err, payload) => resolve({ err, payload }));
+    });
+
+    it('returns to static mode and verifies a message signed with the global client key (no kid) while in JWKS mode', async () => {
+      const globalClientKey = generateKey('unused');
+      const tenantKeys = [generateKey('kid-a'), generateKey('kid-b')];
+      const ticket = makeTicket(globalClientKey.publicPem);
+      const { signingKeys } = build({ ticket, jwksKeys: tenantKeys });
+
+      const { err, payload } = await verifyAsync(signingKeys, signWithoutKid(globalClientKey));
+
+      expect(err).to.equal(null);
+      expect(payload.username).to.equal('jsmith');
+      expect(ticket.calls).to.have.length(1);
+      expect(signingKeys.useJwks()).to.equal(false);
+    });
+
+    it('switches to JWKS mode and verifies a message signed with a tenant signing key (kid) while in static mode', async () => {
+      const globalClientKey = generateKey('unused');
+      const tenantKey = generateKey('kid-tsk');
+      const ticket = makeTicket('');
+      const { signingKeys } = build({ ticket, startingKey: globalClientKey.publicPem, jwksKeys: [tenantKey] });
+
+      const { err, payload } = await verifyAsync(signingKeys, sign(tenantKey));
+
+      expect(err).to.equal(null);
+      expect(payload.username).to.equal('jsmith');
+      expect(ticket.calls).to.have.length(1);
+      expect(signingKeys.useJwks()).to.equal(true);
+    });
+
+    it('returns the original error, after a single ticket call, when the server still sends the same key', async () => {
+      const forger = generateKey('unused');
+      const ticket = makeTicket('');
+      const { signingKeys } = build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')] });
+
+      const { err } = await verifyAsync(signingKeys, signWithoutKid(forger));
+
+      expect(err.message).to.contain('ambiguous');
+      expect(ticket.calls).to.have.length(1);
+      expect(signingKeys.useJwks()).to.equal(true);
+    });
+
+    it('does not contact the provisioning ticket for a token that carries the expected kid but a bad signature', async () => {
+      const published = generateKey('kid-a');
+      const forged = generateKey('kid-a');
+      const ticket = makeTicket('');
+      const { signingKeys } = build({ ticket, jwksKeys: [published] });
+
+      const { err } = await verifyAsync(signingKeys, sign(forged));
+
+      expect(err.message).to.equal('invalid signature');
+      expect(ticket.calls).to.have.length(0);
+    });
+
+    it('returns the original error when the provisioning ticket cannot be reached', async () => {
+      const globalClientKey = generateKey('unused');
+      const ticket = makeTicket(new Error('Unexpected status while configuring connection: 503'));
+      const { signingKeys } = build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')] });
+
+      const { err } = await verifyAsync(signingKeys, signWithoutKid(globalClientKey));
+
+      expect(err.message).to.contain('no kid');
+      expect(signingKeys.useJwks()).to.equal(true);
+    });
+
+    it('limits how often a failed verification can re-read the provisioning ticket', async () => {
+      const forger = generateKey('unused');
+      const ticket = makeTicket('');
+      const { signingKeys } = build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')], minRefreshIntervalMs: 60 * 1000 });
+
+      await verifyAsync(signingKeys, signWithoutKid(forger));
+      await verifyAsync(signingKeys, signWithoutKid(forger));
+      await verifyAsync(signingKeys, signWithoutKid(forger));
+
+      expect(ticket.calls).to.have.length(1);
+    });
+
+    it('shares one provisioning ticket call between concurrent failed verifications', async () => {
+      const globalClientKey = generateKey('unused');
+      const ticket = makeTicket(globalClientKey.publicPem);
+      const { signingKeys } = build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')], minRefreshIntervalMs: 60 * 1000 });
+
+      const results = await Promise.all([1, 2, 3].map(() => verifyAsync(signingKeys, signWithoutKid(globalClientKey))));
+
+      expect(results.map((r) => r.err)).to.deep.equal([null, null, null]);
+      expect(ticket.calls).to.have.length(1);
     });
   });
 });
