@@ -146,7 +146,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attemp of authentication.');
           console.error('Reason: ' + err.message);
-          rejectUnverified(msg.jwt, err, '_result', (event, payload) => ws.sendEvent(event, payload));
+          rejectUnverifiedInJwksMode(ws, msg.jwt, err, '_result');
           return;
         }
 
@@ -253,7 +253,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attemp of search_users.');
           console.error('Reason: ' + err.message);
-          rejectUnverified(msg.jwt, err, '_search_users_result', (event, payload) => ws.sendEvent(event, payload));
+          rejectUnverifiedInJwksMode(ws, msg.jwt, err, '_search_users_result');
           return;
         }
 
@@ -279,7 +279,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attempt of list_groups');
           console.error('Reason: ' + err.message);
-          rejectUnverified(msg.jwt, err, '_list_groups_result', (event, payload) => ws.sendEvent(event, payload));
+          rejectUnverifiedInJwksMode(ws, msg.jwt, err, '_list_groups_result');
           return;
         }
 
@@ -308,7 +308,7 @@ async function setupWebsocket() {
           if (err) {
             console.error('Unauthorized change_password attempt');
             console.error('Reason: ' + err.message);
-            rejectUnverified(command.jwt, err, '_change_password_result', (event, payload) => ws.sendEvent(event, payload));
+            rejectUnverifiedInJwksMode(ws, command.jwt, err, '_change_password_result');
             return;
           };
 
@@ -400,5 +400,25 @@ setInterval(() => {
     reconnect()
   }
 }, reconnectionInterval)
+
+/**
+ * Replies to the hub that a request could not be verified, but only while this connector verifies with
+ * the tenant signing key from the JWKS endpoint. That is the only key the hub can replace after a
+ * rotation. With a global client key (static key) the connector stays silent, as it always did, so
+ * a hub that does not know the reply sees no change.
+ *
+ * @param {object} ws the websocket to the hub
+ * @param {string} token the request token that failed verification
+ * @param {Error} err the verification error
+ * @param {string} replyEventSuffix the suffix of the reply event for this request
+ * @return {boolean} true when a reply was sent
+ */
+function rejectUnverifiedInJwksMode(ws, token, err, replyEventSuffix) {
+  if (!signingKeys.useJwks()) {
+    return false;
+  }
+
+  return rejectUnverified(token, err, replyEventSuffix, (event, payload) => ws.sendEvent(event, payload));
+}
 
 module.exports = emitter;

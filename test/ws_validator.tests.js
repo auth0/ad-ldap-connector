@@ -63,6 +63,10 @@ const mockSigningKeys = {
     return true;
   },
   failWith: null,
+  jwks: true,
+  useJwks: function () {
+    return this.jwks;
+  },
   verify: function (token, callback) {
     this.verifyCalls.push(token);
     if (this.failWith) {
@@ -246,6 +250,29 @@ describe('ws_validator', () => {
       const replies = events.filter((event) => event.n === 'pid-' + name + '_result');
       expect(replies).to.have.length(1);
       expect(replies[0].p.err.reason).to.equal(name);
+    });
+  });
+
+  [
+    ['authenticate_user'],
+    ['search_users'],
+    ['list_groups'],
+    ['change_password']
+  ].forEach(([hubEvent]) => {
+    it(`stays silent for a rejected ${hubEvent} request while the connector verifies with a static key, as before`, () => {
+      const events = captureSent();
+      const token = jwt.sign({ pid: 'pid-' + hubEvent, username: 'jdoe', password: 'secret' }, 'some secret');
+      mockSigningKeys.failWith = verificationFailure();
+      mockSigningKeys.jwks = false;
+
+      try {
+        mockWebSocketInstance.emit(hubEvent, { jwt: token });
+      } finally {
+        mockSigningKeys.failWith = null;
+        mockSigningKeys.jwks = true;
+      }
+
+      expect(events.filter((event) => /_result$/.test(event.n))).to.have.length(0);
     });
   });
 
