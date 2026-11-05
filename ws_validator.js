@@ -27,7 +27,7 @@ const InsufficientAccessRightsError = require('./lib/errors/InsufficientAccessRi
 const PasswordComplexityError = require('./lib/errors/PasswordComplexityError');
 const certificates = require('./lib/certificates');
 const signingKeys = require('./lib/signingKeys');
-const { rejectUnverified } = require('./lib/rejectUnverified');
+const { rejectUnverified, hubAnnouncesReply } = require('./lib/rejectUnverified');
 var ws;
 
 const emitter = new EventEmitter();
@@ -103,9 +103,12 @@ async function setupWebsocket() {
       console.error('Socket error: ' + err);
       openedSocket = false;
       reject(err);
-    }).on('authenticated', function () {
+    }).on('authenticated', function (payload) {
       log_from_auth0('Agent accepted.');
       var client = this;
+
+      // Remembered for this connection only. A new connection asks the hub again.
+      client.hubRepliesToRejections = hubAnnouncesReply(payload);
 
       async.whilst(
         function () {
@@ -402,10 +405,10 @@ setInterval(() => {
 }, reconnectionInterval)
 
 /**
- * Replies to the hub that a request could not be verified, but only while this connector verifies with
- * the tenant signing key from the JWKS endpoint. That is the only key the hub can replace after a
- * rotation. With a global client key (static key) the connector stays silent, as it always did, so
- * a hub that does not know the reply sees no change.
+ * Replies to the hub that a request could not be verified, but only if the hub announced when it accepted
+ * this connection that it understands the reply. A hub announces it only while it signs with the tenant
+ * signing key, the one key it can replace after a rotation. Otherwise the connector stays silent, as it
+ * always did, so a hub that does not know the reply (or a tenant on the global client key) sees no change.
  *
  * @param {object} ws the websocket to the hub
  * @param {string} token the request token that failed verification
@@ -414,7 +417,7 @@ setInterval(() => {
  * @return {boolean} true when a reply was sent
  */
 function rejectUnverifiedInJwksMode(ws, token, err, replyEventSuffix) {
-  if (!signingKeys.useJwks()) {
+  if (!ws.hubRepliesToRejections) {
     return false;
   }
 

@@ -25,7 +25,7 @@ class MockWebSocket {
   }
 
   emit (eventType, event) {
-    this.getHandlers(eventType).forEach((handler) => handler(event));
+    this.getHandlers(eventType).forEach((handler) => handler.call(this, event));
   }
 
   send (event) {
@@ -63,10 +63,6 @@ const mockSigningKeys = {
     return true;
   },
   failWith: null,
-  jwks: true,
-  useJwks: function () {
-    return this.jwks;
-  },
   verify: function (token, callback) {
     this.verifyCalls.push(token);
     if (this.failWith) {
@@ -201,7 +197,9 @@ describe('ws_validator', () => {
     return err;
   }
 
+  // Starts a test as a connector whose hub announced the reply when it accepted the connection.
   function captureSent() {
+    mockWebSocketInstance.hubRepliesToRejections = true;
     const events = [];
     mockWebSocketInstance.on('send', (event) => events.push(JSON.parse(event)));
     return events;
@@ -253,27 +251,50 @@ describe('ws_validator', () => {
     });
   });
 
-  [
-    ['authenticate_user'],
-    ['search_users'],
-    ['list_groups'],
-    ['change_password']
-  ].forEach(([hubEvent]) => {
-    it(`stays silent for a rejected ${hubEvent} request while the connector verifies with a static key, as before`, () => {
+  [['authenticate_user'], ['search_users'], ['list_groups'], ['change_password']].forEach(([hubEvent]) => {
+    it(`stays silent for a rejected ${hubEvent} request when the hub did not announce the reply, as before`, () => {
       const events = captureSent();
       const token = jwt.sign({ pid: 'pid-' + hubEvent, username: 'jdoe', password: 'secret' }, 'some secret');
       mockSigningKeys.failWith = verificationFailure();
-      mockSigningKeys.jwks = false;
+      mockWebSocketInstance.hubRepliesToRejections = false;
 
       try {
         mockWebSocketInstance.emit(hubEvent, { jwt: token });
       } finally {
         mockSigningKeys.failWith = null;
-        mockSigningKeys.jwks = true;
+        mockWebSocketInstance.hubRepliesToRejections = true;
       }
 
       expect(events.filter((event) => /_result$/.test(event.n))).to.have.length(0);
     });
+  });
+
+  it('only replies after the hub announced the reply when it accepted the connection', () => {
+    const events = captureSent();
+    const token = jwt.sign({ pid: 'pid-announce', username: 'jdoe' }, 'some secret');
+    const rejectOnce = () => {
+      mockSigningKeys.failWith = verificationFailure();
+      try {
+        mockWebSocketInstance.emit('authenticate_user', { jwt: token });
+      } finally {
+        mockSigningKeys.failWith = null;
+      }
+    };
+    const replies = () => events.filter((event) => event.n === 'pid-announce_result');
+
+    // An old hub accepts the connection without any payload.
+    mockWebSocketInstance.emit('authenticated');
+    rejectOnce();
+    expect(replies()).to.have.length(0);
+
+    // A hub that does not use the reply for this tenant announces nothing.
+    mockWebSocketInstance.emit('authenticated', { features: [] });
+    rejectOnce();
+    expect(replies()).to.have.length(0);
+
+    mockWebSocketInstance.emit('authenticated', { features: ['invalid_signature_reply'] });
+    rejectOnce();
+    expect(replies()).to.have.length(1);
   });
 
   it('stays silent for a rejected request whose token carries no pid', () => {

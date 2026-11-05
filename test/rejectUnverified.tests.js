@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const jwt = require('jsonwebtoken');
 
-const { rejectUnverified, INVALID_SIGNATURE } = require('../lib/rejectUnverified');
+const { rejectUnverified, hubAnnouncesReply, INVALID_SIGNATURE, INVALID_SIGNATURE_REPLY } = require('../lib/rejectUnverified');
 
 function signatureError() {
   const err = new Error('invalid signature');
@@ -82,5 +82,22 @@ describe('rejectUnverified', () => {
     rejectUnverified(token, undefined, '_result', send);
 
     expect(sent[0].payload.err).to.not.have.property('reason');
+  });
+
+  describe('hubAnnouncesReply', () => {
+    it('is true only when the hub lists the invalid_signature_reply feature', () => {
+      expect(INVALID_SIGNATURE_REPLY).to.equal('invalid_signature_reply');
+      expect(hubAnnouncesReply({ features: [INVALID_SIGNATURE_REPLY] })).to.equal(true);
+      expect(hubAnnouncesReply({ features: ['something_else', INVALID_SIGNATURE_REPLY] })).to.equal(true);
+    });
+
+    it('is false for a hub that announces nothing or something else', () => {
+      expect(hubAnnouncesReply(undefined)).to.equal(false);
+      expect(hubAnnouncesReply(null)).to.equal(false);
+      expect(hubAnnouncesReply({})).to.equal(false);
+      expect(hubAnnouncesReply({ features: [] })).to.equal(false);
+      expect(hubAnnouncesReply({ features: 'invalid_signature_reply' })).to.equal(false);
+      expect(hubAnnouncesReply({ features: ['something_else'] })).to.equal(false);
+    });
   });
 });
