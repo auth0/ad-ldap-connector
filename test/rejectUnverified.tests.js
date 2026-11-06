@@ -76,6 +76,22 @@ describe('rejectUnverified', () => {
     });
   });
 
+  it('echoes the key id from the token header so the hub can tell which key the request was signed with', () => {
+    const token = jwt.sign({ pid: 'abc123' }, 'some secret', { keyid: 'kid-a' });
+
+    rejectUnverified(token, signatureError(), '_result', send);
+
+    expect(sent[0].payload.err.kid).to.equal('kid-a');
+  });
+
+  it('leaves the kid out when the token has none, as with a global client key', () => {
+    const token = jwt.sign({ pid: 'abc123' }, 'some secret');
+
+    rejectUnverified(token, signatureError(), '_result', send);
+
+    expect(sent[0].payload.err).to.not.have.property('kid');
+  });
+
   it('leaves the reason out when there is no verification error to name', () => {
     const token = jwt.sign({ pid: 'abc123' }, 'some secret');
 

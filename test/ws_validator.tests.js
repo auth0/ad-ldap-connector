@@ -297,6 +297,22 @@ describe('ws_validator', () => {
     expect(replies()).to.have.length(1);
   });
 
+  it('tells the hub which key id the rejected request was signed with', () => {
+    const events = captureSent();
+    const token = jwt.sign({ pid: 'pid-kid', username: 'jdoe' }, 'some secret', { keyid: 'kid-a' });
+    mockSigningKeys.failWith = verificationFailure();
+
+    try {
+      mockWebSocketInstance.emit('authenticate_user', { jwt: token });
+    } finally {
+      mockSigningKeys.failWith = null;
+    }
+
+    const replies = events.filter((event) => event.n === 'pid-kid_result');
+    expect(replies).to.have.length(1);
+    expect(replies[0].p.err.kid).to.equal('kid-a');
+  });
+
   it('stays silent for a rejected request whose token carries no pid', () => {
     const events = captureSent();
     mockSigningKeys.failWith = verificationFailure();
