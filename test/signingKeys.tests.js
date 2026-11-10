@@ -2,6 +2,7 @@ require('colors');
 
 const { expect } = require('chai');
 const crypto = require('crypto');
+const http = require('http');
 const forge = require('node-forge');
 const jwt = require('jsonwebtoken');
 
@@ -49,21 +50,71 @@ function makeConfig(values = {}) {
   };
 }
 
+const servers = [];
+
 /**
- * Minimal axios stub that records the URLs it was asked for.
+ * Serves a JWKS document over http on an ephemeral port, so the tests exercise the real request
+ * path. `keys` is what the document lists, `failing` makes the endpoint answer 503, `body` replaces
+ * the document, and `delayMs` slows the answer down. `requests` records the path of every request.
  */
-function makeAxios(handler) {
-  return {
-    requests: [],
-    get: function (url, options) {
-      this.requests.push({ url, options });
-      return handler(url, options);
-    }
+async function serveJwks(keys = []) {
+  const server = {
+    keys,
+    failing: false,
+    body: null,
+    delayMs: 0,
+    requests: []
   };
+
+  const httpServer = http.createServer((req, res) => {
+    server.requests.push(req.url);
+    setTimeout(() => {
+      if (server.failing) {
+        res.statusCode = 503;
+        return res.end('unavailable');
+      }
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify(server.body || { keys: server.keys.map((k) => k.jwk) }));
+    }, server.delayMs);
+  });
+
+  await new Promise((resolve) => httpServer.listen(0, '127.0.0.1', resolve));
+  servers.push(httpServer);
+
+  server.origin = 'http://127.0.0.1:' + httpServer.address().port;
+  server.ticket = server.origin + '/p/ad/abc123';
+  server.jwksUri = server.origin + '/.well-known/jwks.json';
+  server.close = () => new Promise((resolve) => httpServer.close(resolve));
+  return server;
 }
 
-function jwksResponse(keys) {
-  return Promise.resolve({ data: { keys: keys.map((k) => k.jwk) } });
+/**
+ * A server nothing listens on: the port is taken and released again.
+ */
+async function unreachableServer() {
+  const server = await serveJwks();
+  await server.close();
+  return server;
+}
+
+afterEach(async () => {
+  while (servers.length) {
+    const httpServer = servers.pop();
+    httpServer.closeAllConnections();
+    if (httpServer.listening) {
+      await new Promise((resolve) => httpServer.close(resolve));
+    }
+  }
+});
+
+/**
+ * Builds a SigningKeys that reads the JWKS document from `server`.
+ */
+function forServer(server, { config = {}, ...options } = {}) {
+  return new SigningKeys({
+    configModule: makeConfig(Object.assign({ PROVISIONING_TICKET: server.ticket }, config)),
+    ...options
+  });
 }
 
 /**
@@ -134,75 +185,61 @@ describe('signingKeys', () => {
   });
 
   describe('verify in JWKS mode', () => {
-    it('verifies a token signed with a key from the JWKS document', (done) => {
-      const key = generateKey('kid-1');
-      const axiosStub = makeAxios(() => jwksResponse([key]));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: axiosStub
-      });
-
-      signingKeys.verify(sign(key), (err, payload) => {
-        expect(err).to.equal(null);
-        expect(payload.username).to.equal('jsmith');
-        expect(axiosStub.requests[0].url).to.equal(JWKS_URI);
-        done();
-      });
+    const verifyAsync = (signingKeys, token) => new Promise((resolve, reject) => {
+      signingKeys.verify(token, (err, payload) => err ? reject(err) : resolve(payload));
+    });
+    const verifyError = (signingKeys, token) => new Promise((resolve) => {
+      signingKeys.verify(token, (err) => resolve(err));
     });
 
-    it('selects the key matching the kid when several are published', (done) => {
+    it('verifies a token signed with a key from the JWKS document', async () => {
+      const key = generateKey('kid-1');
+      const server = await serveJwks([key]);
+      const signingKeys = forServer(server);
+
+      const payload = await verifyAsync(signingKeys, sign(key));
+
+      expect(payload.username).to.equal('jsmith');
+      expect(server.requests).to.deep.equal(['/.well-known/jwks.json']);
+    });
+
+    it('selects the key matching the kid when several are published', async () => {
       const keyOne = generateKey('kid-1');
       const keyTwo = generateKey('kid-2');
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => jwksResponse([keyOne, keyTwo]))
-      });
+      const signingKeys = forServer(await serveJwks([keyOne, keyTwo]));
 
       // Signed with the second key, so selection by kid is what makes this pass.
-      signingKeys.verify(sign(keyTwo), (err, payload) => {
-        expect(err).to.equal(null);
-        expect(payload.username).to.equal('jsmith');
-        done();
-      });
+      const payload = await verifyAsync(signingKeys, sign(keyTwo));
+
+      expect(payload.username).to.equal('jsmith');
     });
 
-    it('rejects a token whose kid is not published', (done) => {
+    it('rejects a token whose kid is not published', async () => {
       const published = generateKey('kid-1');
       const rogue = generateKey('kid-unknown');
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => jwksResponse([published]))
-      });
+      const signingKeys = forServer(await serveJwks([published]));
 
-      signingKeys.verify(sign(rogue), (err) => {
-        expect(err).to.be.ok;
-        expect(err.message).to.match(/kid "kid-unknown"/);
-        done();
-      });
+      const err = await verifyError(signingKeys, sign(rogue));
+
+      expect(err).to.be.ok;
+      expect(err.message).to.match(/kid-unknown/);
     });
 
-    it('rejects a token signed by a different key with a published kid', (done) => {
+    it('rejects a token signed by a different key with a published kid', async () => {
       const published = generateKey('kid-1');
       // Same kid, different key material - a forged token.
       const forged = generateKey('kid-1');
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => jwksResponse([published]))
-      });
+      const signingKeys = forServer(await serveJwks([published]));
 
-      signingKeys.verify(sign(forged), (err) => {
-        expect(err).to.be.ok;
-        expect(err.message).to.match(/invalid signature/i);
-        done();
-      });
+      const err = await verifyError(signingKeys, sign(forged));
+
+      expect(err).to.be.ok;
+      expect(err.message).to.match(/invalid signature/i);
     });
 
-    it('rejects an HS256 token forged with the published public key as the secret', (done) => {
+    it('rejects an HS256 token forged with the published public key as the secret', async () => {
       const key = generateKey('kid-1');
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => jwksResponse([key]))
-      });
+      const signingKeys = forServer(await serveJwks([key]));
 
       // Classic algorithm confusion attack: sign with HMAC using the public key as the secret.
       const forged = jwt.sign({ username: 'attacker' }, key.publicPem, {
@@ -210,126 +247,136 @@ describe('signingKeys', () => {
         keyid: 'kid-1'
       });
 
-      signingKeys.verify(forged, (err) => {
-        expect(err).to.be.ok;
-        expect(err.message).to.match(/invalid algorithm/i);
-        done();
-      });
+      const err = await verifyError(signingKeys, forged);
+
+      expect(err).to.be.ok;
+      expect(err.message).to.match(/invalid algorithm/i);
     });
 
-    it('falls back to the single published key when the token carries no kid', (done) => {
+    it('rejects an unsigned token', async () => {
       const key = generateKey('kid-1');
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => jwksResponse([key]))
-      });
+      const signingKeys = forServer(await serveJwks([key]));
+      const header = Buffer.from(JSON.stringify({ alg: 'none', kid: 'kid-1' })).toString('base64url');
+      const body = Buffer.from(JSON.stringify({ username: 'attacker' })).toString('base64url');
 
-      const token = jwt.sign({ username: 'jsmith' }, key.privatePem, { algorithm: 'RS256' });
+      const err = await verifyError(signingKeys, `${header}.${body}.`);
 
-      signingKeys.verify(token, (err, payload) => {
-        expect(err).to.equal(null);
-        expect(payload.username).to.equal('jsmith');
-        done();
-      });
+      expect(err).to.be.ok;
     });
 
-    it('refuses to guess when the token has no kid and several keys are published', (done) => {
-      const keyOne = generateKey('kid-1');
-      const keyTwo = generateKey('kid-2');
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => jwksResponse([keyOne, keyTwo]))
-      });
+    it('falls back to the single published key when the token carries no kid', async () => {
+      const key = generateKey('kid-1');
+      const signingKeys = forServer(await serveJwks([key]));
 
-      const token = jwt.sign({ username: 'jsmith' }, keyOne.privatePem, { algorithm: 'RS256' });
-
-      signingKeys.verify(token, (err) => {
-        expect(err).to.be.ok;
-        expect(err.message).to.match(/no kid/);
-        done();
-      });
-    });
-
-    it('re-fetches on an unknown kid even while the cached document is still fresh', async () => {
-      const oldKey = generateKey('kid-old');
-      const newKey = generateKey('kid-new');
-      let current = [oldKey];
-      const axiosStub = makeAxios(() => jwksResponse(current));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: axiosStub,
-        // Long freshness window, no cooldown: rotation must still be picked up.
-        cacheMaxAgeMs: 60 * 60 * 1000,
-        minRefreshIntervalMs: 0
-      });
-
-      const first = await new Promise((resolve) => signingKeys.verify(sign(oldKey), resolve));
-      expect(first).to.equal(null);
-
-      // The tenant rotates to a new kid without the cache having expired.
-      current = [newKey];
-      const payload = await new Promise((resolve, reject) => {
-        signingKeys.verify(sign(newKey), (err, p) => err ? reject(err) : resolve(p));
-      });
+      const payload = await verifyAsync(signingKeys, signWithoutKid(key));
 
       expect(payload.username).to.equal('jsmith');
-      expect(axiosStub.requests).to.have.length(2);
     });
 
-    it('caches the JWKS document across verifications', async () => {
+    it('refuses to guess when the token has no kid and several keys are published', async () => {
+      const keyOne = generateKey('kid-1');
+      const keyTwo = generateKey('kid-2');
+      const signingKeys = forServer(await serveJwks([keyOne, keyTwo]));
+
+      const err = await verifyError(signingKeys, signWithoutKid(keyOne));
+
+      expect(err).to.be.ok;
+      expect(err.message).to.match(/more than 1 key/);
+    });
+
+    it('re-fetches on an unknown kid even while the cached keys are still fresh', async () => {
+      const oldKey = generateKey('kid-old');
+      const newKey = generateKey('kid-new');
+      const server = await serveJwks([oldKey]);
+      // Long freshness window, no rate limit: rotation must still be picked up.
+      const signingKeys = forServer(server, { cacheMaxAgeMs: 60 * 60 * 1000, minRefreshIntervalMs: 0 });
+
+      await verifyAsync(signingKeys, sign(oldKey));
+
+      // The tenant rotates to a new kid without the cache having expired.
+      server.keys = [newKey];
+      const payload = await verifyAsync(signingKeys, sign(newKey));
+
+      expect(payload.username).to.equal('jsmith');
+      expect(server.requests).to.have.length(2);
+    });
+
+    it('caches the keys across verifications', async () => {
       const key = generateKey('kid-1');
-      const axiosStub = makeAxios(() => jwksResponse([key]));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: axiosStub
-      });
+      const server = await serveJwks([key]);
+      const signingKeys = forServer(server);
 
-      const verifyOnce = () => new Promise((resolve) => signingKeys.verify(sign(key), resolve));
+      await verifyAsync(signingKeys, sign(key));
+      await verifyAsync(signingKeys, sign(key));
+      await verifyAsync(signingKeys, sign(key));
 
-      await verifyOnce();
-      await verifyOnce();
-      await verifyOnce();
+      expect(server.requests).to.have.length(1);
+    });
 
-      expect(axiosStub.requests).to.have.length(1);
+    it('fetches the JWKS document again once the cached key is no longer fresh', async () => {
+      const key = generateKey('kid-1');
+      const server = await serveJwks([key]);
+      const signingKeys = forServer(server, { cacheMaxAgeMs: 20, minRefreshIntervalMs: 0 });
+
+      await verifyAsync(signingKeys, sign(key));
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      await verifyAsync(signingKeys, sign(key));
+
+      expect(server.requests).to.have.length(2);
+    });
+
+    it('limits how often unknown kids can trigger a fetch', async () => {
+      const key = generateKey('kid-1');
+      const server = await serveJwks([key]);
+      // One request per minute.
+      const signingKeys = forServer(server, { minRefreshIntervalMs: 60 * 1000 });
+
+      await verifyAsync(signingKeys, sign(key));
+      const err = await verifyError(signingKeys, sign(generateKey('kid-unknown')));
+
+      expect(err).to.be.ok;
+      expect(err.message).to.match(/Too many requests/);
+      expect(server.requests).to.have.length(1);
+      // The key that is cached keeps working.
+      const payload = await verifyAsync(signingKeys, sign(key));
+      expect(payload.username).to.equal('jsmith');
+    });
+
+    it('shares a single request between concurrent verifications of the same kid', async () => {
+      const key = generateKey('kid-1');
+      const server = await serveJwks([key]);
+      server.delayMs = 50;
+      const signingKeys = forServer(server);
+
+      await Promise.all([1, 2, 3].map(() => verifyAsync(signingKeys, sign(key))));
+
+      expect(server.requests).to.have.length(1);
     });
 
     it('shares a single request between concurrent refreshes', async () => {
       const key = generateKey('kid-1');
-      let resolveFetch;
-      const axiosStub = makeAxios(() => new Promise((resolve) => {
-        resolveFetch = () => resolve({ data: { keys: [key.jwk] } });
-      }));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: axiosStub
-      });
+      const server = await serveJwks([key]);
+      server.delayMs = 50;
+      const signingKeys = forServer(server);
 
-      const first = signingKeys.refresh();
-      const second = signingKeys.refresh();
-      resolveFetch();
-      await Promise.all([first, second]);
+      await Promise.all([signingKeys.refresh(), signingKeys.refresh()]);
 
-      expect(axiosStub.requests).to.have.length(1);
+      expect(server.requests).to.have.length(1);
     });
   });
 
   describe('verify in static key mode', () => {
-    it('verifies against the key the server sent, without touching the JWKS endpoint', (done) => {
+    it('verifies against the key the server sent, without touching the JWKS endpoint', async () => {
       const key = generateKey('kid-1');
-      const axiosStub = makeAxios(() => {
-        throw new Error('the JWKS endpoint must not be called in static key mode');
-      });
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig({ TENANT_SIGNING_KEY: key.publicPem }),
-        axiosModule: axiosStub
+      const server = await serveJwks([key]);
+      const signingKeys = forServer(server, { config: { TENANT_SIGNING_KEY: key.publicPem } });
+
+      const payload = await new Promise((resolve, reject) => {
+        signingKeys.verify(sign(key), (err, p) => err ? reject(err) : resolve(p));
       });
 
-      signingKeys.verify(sign(key), (err, payload) => {
-        expect(err).to.equal(null);
-        expect(payload.username).to.equal('jsmith');
-        expect(axiosStub.requests).to.have.length(0);
-        done();
-      });
+      expect(payload.username).to.equal('jsmith');
+      expect(server.requests).to.have.length(0);
     });
 
     it('rejects an HS256 token forged with the static key as the secret', (done) => {
@@ -425,98 +472,140 @@ describe('signingKeys', () => {
   });
 
   describe('JWKS fetch failures', () => {
-    it('surfaces a verification error when the JWKS document cannot be fetched', (done) => {
-      const key = generateKey('kid-1');
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => Promise.reject(new Error('ECONNREFUSED')))
-      });
+    const verifyAsync = (signingKeys, token) => new Promise((resolve, reject) => {
+      signingKeys.verify(token, (err, payload) => err ? reject(err) : resolve(payload));
+    });
+    const verifyError = (signingKeys, token) => new Promise((resolve) => {
+      signingKeys.verify(token, (err) => resolve(err));
+    });
 
-      signingKeys.verify(sign(key), (err) => {
-        expect(err).to.be.ok;
-        expect(err.message).to.match(/kid "kid-1"/);
-        done();
-      });
+    it('surfaces a verification error when the JWKS endpoint answers with an error', async () => {
+      const key = generateKey('kid-1');
+      const server = await serveJwks([key]);
+      server.failing = true;
+      const signingKeys = forServer(server);
+
+      const err = await verifyError(signingKeys, sign(key));
+
+      expect(err).to.be.ok;
+      expect(err.name).to.equal('JsonWebTokenError');
+    });
+
+    it('surfaces a verification error when the JWKS endpoint cannot be reached', async () => {
+      const key = generateKey('kid-1');
+      const signingKeys = forServer(await unreachableServer());
+
+      const err = await verifyError(signingKeys, sign(key));
+
+      expect(err).to.be.ok;
+      expect(err.message).to.match(/ECONNREFUSED/);
+    });
+
+    it('gives up on a JWKS endpoint that does not answer in time', async () => {
+      const key = generateKey('kid-1');
+      const server = await serveJwks([key]);
+      server.delayMs = 500;
+      const signingKeys = forServer(server, { requestTimeoutMs: 50 });
+
+      const err = await verifyError(signingKeys, sign(key));
+
+      expect(err).to.be.ok;
     });
 
     it('rejects a JWKS document without a keys array', async () => {
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => Promise.resolve({ data: {} }))
-      });
+      const server = await serveJwks();
+      server.body = {};
+      const signingKeys = forServer(server);
 
       let error;
       await signingKeys.refresh().catch((err) => { error = err; });
 
       expect(error).to.be.ok;
-      expect(error.message).to.match(/no "keys" array/);
+      expect(error.message).to.match(/did not contain any keys/);
     });
 
     it('rejects a JWKS document with no usable keys', async () => {
       const unusable = generateKey('kid-1');
-      unusable.jwk.kty = 'OKP';
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => Promise.resolve({ data: { keys: [unusable.jwk] } }))
-      });
+      unusable.jwk.kty = 'oct';
+      const signingKeys = forServer(await serveJwks([unusable]));
 
       let error;
       await signingKeys.refresh().catch((err) => { error = err; });
 
       expect(error).to.be.ok;
-      expect(error.message).to.match(/No usable signing keys/);
+      expect(error.message).to.match(/did not contain any signing keys/);
     });
 
     it('keeps serving previously cached keys when a later fetch fails', async () => {
       const key = generateKey('kid-1');
-      let shouldFail = false;
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => shouldFail
-          ? Promise.reject(new Error('ECONNREFUSED'))
-          : jwksResponse([key])),
-        cacheMaxAgeMs: 0,
-        minRefreshIntervalMs: 0
-      });
+      const server = await serveJwks([key]);
+      const signingKeys = forServer(server, { cacheMaxAgeMs: 20, minRefreshIntervalMs: 0 });
 
-      await signingKeys.refresh({ force: true });
-      shouldFail = true;
-      await signingKeys.refresh({ force: true }).catch(() => {});
+      await verifyAsync(signingKeys, sign(key));
+      server.failing = true;
+      await new Promise((resolve) => setTimeout(resolve, 60));
 
-      // The cache was not cleared by the failed fetch, so verification still works.
-      const payload = await new Promise((resolve, reject) => {
-        signingKeys.verify(sign(key), (err, p) => err ? reject(err) : resolve(p));
-      });
+      // The cached key is no longer fresh and the fetch fails, so the last good key is used.
+      const payload = await verifyAsync(signingKeys, sign(key));
       expect(payload.username).to.equal('jsmith');
+      expect(server.requests).to.have.length(2);
+    });
+
+    it('does not accept a key that was never fetched while the endpoint is down', async () => {
+      const cached = generateKey('kid-1');
+      const other = generateKey('kid-2');
+      const server = await serveJwks([cached, other]);
+      const signingKeys = forServer(server, { minRefreshIntervalMs: 0 });
+
+      await verifyAsync(signingKeys, sign(cached));
+      server.failing = true;
+
+      const err = await verifyError(signingKeys, sign(other));
+      expect(err).to.be.ok;
     });
 
     it('skips entries that are not signature keys', async () => {
       const sigKey = generateKey('kid-sig');
       const encKey = generateKey('kid-enc');
       encKey.jwk.use = 'enc';
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => jwksResponse([sigKey, encKey]))
-      });
+      const signingKeys = forServer(await serveJwks([sigKey, encKey]));
 
       await signingKeys.refresh();
 
       // The encryption key was dropped, so a token signed with it cannot be verified.
-      const err = await new Promise((resolve) => {
-        signingKeys.verify(sign(encKey), resolve);
-      });
+      const err = await verifyError(signingKeys, sign(encKey));
       expect(err).to.be.ok;
-      expect(err.message).to.match(/kid "kid-enc"/);
+      expect(err.message).to.match(/kid-enc/);
+    });
+
+    it('uses the JWKS address of the current provisioning ticket', async () => {
+      const key = generateKey('kid-1');
+      const first = await serveJwks([]);
+      const second = await serveJwks([key]);
+      const config = makeConfig({ PROVISIONING_TICKET: first.ticket });
+      const signingKeys = new SigningKeys({ configModule: config, minRefreshIntervalMs: 0 });
+
+      await verifyError(signingKeys, sign(key));
+      config.set('PROVISIONING_TICKET', second.ticket);
+      const payload = await verifyAsync(signingKeys, sign(key));
+
+      expect(payload.username).to.equal('jsmith');
+      expect(first.requests).to.have.length(1);
+      expect(second.requests).to.have.length(1);
     });
   });
 
   describe('refreshOnReconnect', () => {
+    const verifyAsync = (signingKeys, token) => new Promise((resolve, reject) => {
+      signingKeys.verify(token, (err, payload) => err ? reject(err) : resolve(payload));
+    });
+    const verifyError = (signingKeys, token) => new Promise((resolve) => {
+      signingKeys.verify(token, (err) => resolve(err));
+    });
+
     it('re-reads the JWKS document when the server sent no signing key', async () => {
-      const key = generateKey('kid-1');
-      const axiosStub = makeAxios(() => jwksResponse([key]));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: axiosStub,
+      const server = await serveJwks([generateKey('kid-1')]);
+      const signingKeys = forServer(server, {
         configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 0
       });
@@ -524,17 +613,14 @@ describe('signingKeys', () => {
       const refreshed = await signingKeys.refreshOnReconnect();
 
       expect(refreshed).to.equal(true);
-      expect(axiosStub.requests).to.have.length(1);
-      expect(axiosStub.requests[0].url).to.equal(JWKS_URI);
+      expect(server.requests).to.deep.equal(['/.well-known/jwks.json']);
     });
 
     it('picks up a rotated key on reconnect', async () => {
       const oldKey = generateKey('kid-old');
       const newKey = generateKey('kid-new');
-      let current = [oldKey];
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => jwksResponse(current)),
+      const server = await serveJwks([oldKey]);
+      const signingKeys = forServer(server, {
         configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 0
       });
@@ -542,24 +628,36 @@ describe('signingKeys', () => {
       await signingKeys.refreshOnReconnect();
 
       // The tenant rotates its signing key while the socket is down.
-      current = [newKey];
+      server.keys = [newKey];
       await signingKeys.refreshOnReconnect();
 
-      const payload = await new Promise((resolve, reject) => {
-        signingKeys.verify(sign(newKey), (err, p) => err ? reject(err) : resolve(p));
-      });
+      const payload = await verifyAsync(signingKeys, sign(newKey));
       expect(payload.username).to.equal('jsmith');
     });
 
-    it('re-runs the provisioning ticket process when the server sent a signing key', async () => {
-      const config = makeConfig({ TENANT_SIGNING_KEY: 'an-old-key', CONNECTION: 'my-ad' });
-      const calls = [];
-      const axiosStub = makeAxios(() => {
-        throw new Error('the JWKS endpoint must not be called in static key mode');
+    it('stops using a key that the tenant removed while the socket was down', async () => {
+      const oldKey = generateKey('kid-old');
+      const newKey = generateKey('kid-new');
+      const server = await serveJwks([oldKey]);
+      const signingKeys = forServer(server, {
+        configureConnectionFn: makeTicket(''),
+        minRefreshIntervalMs: 0
       });
-      const signingKeys = new SigningKeys({
-        configModule: config,
-        axiosModule: axiosStub,
+      await verifyAsync(signingKeys, sign(oldKey));
+
+      server.keys = [newKey];
+      await signingKeys.refreshOnReconnect();
+
+      const err = await verifyError(signingKeys, sign(oldKey));
+      expect(err).to.be.ok;
+    });
+
+    it('re-runs the provisioning ticket process when the server sent a signing key', async () => {
+      const server = await serveJwks();
+      const config = { TENANT_SIGNING_KEY: 'an-old-key', CONNECTION: 'my-ad', PROVISIONING_TICKET: PROVISIONING_TICKET };
+      const calls = [];
+      const signingKeys = forServer(server, {
+        config,
         minRefreshIntervalMs: 0,
         // configureConnection returns the refreshed values; signingKeys persists them.
         configureConnectionFn: async (args) => {
@@ -574,19 +672,30 @@ describe('signingKeys', () => {
       expect(calls).to.have.length(1);
       expect(calls[0].provisioningTicket).to.equal(PROVISIONING_TICKET);
       expect(calls[0].connectionName).to.equal('my-ad');
+      expect(server.requests).to.have.length(0);
+    });
+
+    it('persists the re-provisioned signing key when it changed', async () => {
+      const config = makeConfig({ TENANT_SIGNING_KEY: 'an-old-key', CONNECTION: 'my-ad' });
+      const signingKeys = new SigningKeys({
+        configModule: config,
+        minRefreshIntervalMs: 0,
+        configureConnectionFn: makeTicket('a-rotated-key')
+      });
+
+      await signingKeys.refreshOnReconnect();
+
       expect(config.get('TENANT_SIGNING_KEY')).to.equal('a-rotated-key');
       expect(config.saveCalls).to.equal(1);
-      expect(axiosStub.requests).to.have.length(0);
     });
 
     it('does not persist when the re-provisioned signing key is unchanged', async () => {
       const config = makeConfig({ TENANT_SIGNING_KEY: 'an-old-key', CONNECTION: 'my-ad' });
       const signingKeys = new SigningKeys({
         configModule: config,
-        axiosModule: makeAxios(() => { throw new Error('the JWKS endpoint must not be called in static key mode'); }),
         minRefreshIntervalMs: 0,
         // Reconnect with no rotation: the same key comes back, so there is nothing to persist.
-        configureConnectionFn: async () => ({ serverUrl: 'https://connector.example.com', certThumbprint: 'aa:bb', tenantSigningKey: 'an-old-key' })
+        configureConnectionFn: makeTicket('an-old-key')
       });
 
       const refreshed = await signingKeys.refreshOnReconnect();
@@ -597,25 +706,23 @@ describe('signingKeys', () => {
     });
 
     it('switches to JWKS mode when the provisioning ticket stops returning a signing key', async () => {
-      const config = makeConfig({ TENANT_SIGNING_KEY: 'an-old-key', CONNECTION: 'my-ad' });
-      const signingKeys = new SigningKeys({
-        configModule: config,
-        axiosModule: makeAxios(() => Promise.resolve({ data: { keys: [] } })),
+      const server = await serveJwks([generateKey('kid-1')]);
+      const signingKeys = forServer(server, {
+        config: { TENANT_SIGNING_KEY: 'an-old-key', CONNECTION: 'my-ad' },
         minRefreshIntervalMs: 0,
         // Simulates the tenant leaving the deprecated behaviour: no signingKey comes back.
-        configureConnectionFn: async () => ({ serverUrl: 'https://connector.example.com', certThumbprint: 'aa:bb', tenantSigningKey: '' })
+        configureConnectionFn: makeTicket('')
       });
 
       expect(signingKeys.useJwks()).to.equal(false);
       await signingKeys.refreshOnReconnect();
 
       expect(signingKeys.useJwks()).to.equal(true);
+      expect(server.requests).to.have.length(1);
     });
 
     it('does not throw when the JWKS endpoint is unreachable', async () => {
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => Promise.reject(new Error('ECONNREFUSED'))),
+      const signingKeys = forServer(await unreachableServer(), {
         configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 0
       });
@@ -641,32 +748,24 @@ describe('signingKeys', () => {
 
     it('keeps the last known good key after a failed reconnect refresh', async () => {
       const key = generateKey('kid-1');
-      let shouldFail = false;
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: makeAxios(() => shouldFail
-          ? Promise.reject(new Error('ECONNREFUSED'))
-          : jwksResponse([key])),
+      const server = await serveJwks([key]);
+      const signingKeys = forServer(server, {
         configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 0
       });
 
-      await signingKeys.refreshOnReconnect();
-      shouldFail = true;
-      await signingKeys.refreshOnReconnect();
+      await verifyAsync(signingKeys, sign(key));
+      server.failing = true;
+      const refreshed = await signingKeys.refreshOnReconnect();
 
-      const payload = await new Promise((resolve, reject) => {
-        signingKeys.verify(sign(key), (err, p) => err ? reject(err) : resolve(p));
-      });
+      expect(refreshed).to.equal(false);
+      const payload = await verifyAsync(signingKeys, sign(key));
       expect(payload.username).to.equal('jsmith');
     });
 
     it('throttles refreshes so a reconnect loop cannot hammer the tenant', async () => {
-      const key = generateKey('kid-1');
-      const axiosStub = makeAxios(() => jwksResponse([key]));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: axiosStub,
+      const server = await serveJwks([generateKey('kid-1')]);
+      const signingKeys = forServer(server, {
         configureConnectionFn: makeTicket(''),
         minRefreshIntervalMs: 60 * 1000
       });
@@ -675,16 +774,14 @@ describe('signingKeys', () => {
       await signingKeys.refreshOnReconnect();
       await signingKeys.refreshOnReconnect();
 
-      expect(axiosStub.requests).to.have.length(1);
+      expect(server.requests).to.have.length(1);
     });
 
     it('re-reads the provisioning ticket and the JWKS document on every reconnect in JWKS mode', async () => {
-      const key = generateKey('kid-1');
       const ticket = makeTicket('');
-      const axiosStub = makeAxios(() => jwksResponse([key]));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig({ CONNECTION: 'my-ad' }),
-        axiosModule: axiosStub,
+      const server = await serveJwks([generateKey('kid-1')]);
+      const signingKeys = forServer(server, {
+        config: { CONNECTION: 'my-ad' },
         configureConnectionFn: ticket,
         minRefreshIntervalMs: 0
       });
@@ -693,16 +790,16 @@ describe('signingKeys', () => {
 
       expect(refreshed).to.equal(true);
       expect(ticket.calls).to.have.length(1);
-      expect(axiosStub.requests).to.have.length(1);
+      expect(server.requests).to.have.length(1);
       expect(signingKeys.useJwks()).to.equal(true);
     });
 
     it('returns to static mode when the provisioning ticket sends a signing key again', async () => {
       const globalClientKey = generateKey('unused');
-      const config = makeConfig({ CONNECTION: 'my-ad' });
+      const server = await serveJwks();
+      const config = makeConfig({ CONNECTION: 'my-ad', PROVISIONING_TICKET: server.ticket });
       const signingKeys = new SigningKeys({
         configModule: config,
-        axiosModule: makeAxios(() => { throw new Error('the JWKS endpoint must not be called in static key mode'); }),
         configureConnectionFn: makeTicket(globalClientKey.publicPem),
         minRefreshIntervalMs: 0
       });
@@ -713,10 +810,9 @@ describe('signingKeys', () => {
       expect(signingKeys.useJwks()).to.equal(false);
       expect(config.get('TENANT_SIGNING_KEY')).to.equal(globalClientKey.publicPem);
       expect(config.saveCalls).to.equal(1);
-      const payload = await new Promise((resolve, reject) => {
-        signingKeys.verify(signWithoutKid(globalClientKey), (err, p) => err ? reject(err) : resolve(p));
-      });
+      const payload = await verifyAsync(signingKeys, signWithoutKid(globalClientKey));
       expect(payload.username).to.equal('jsmith');
+      expect(server.requests).to.have.length(0);
     });
 
     it('follows the server across a toggle that is switched off and back on', async () => {
@@ -724,9 +820,8 @@ describe('signingKeys', () => {
       const tenantKey = generateKey('kid-tsk');
       // The server answers with the global client key, then with nothing, then with the global client key again.
       const ticket = makeTicket(globalClientKey.publicPem, '', globalClientKey.publicPem);
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig({ CONNECTION: 'my-ad', TENANT_SIGNING_KEY: globalClientKey.publicPem }),
-        axiosModule: makeAxios(() => jwksResponse([tenantKey])),
+      const signingKeys = forServer(await serveJwks([tenantKey]), {
+        config: { CONNECTION: 'my-ad', TENANT_SIGNING_KEY: globalClientKey.publicPem },
         configureConnectionFn: ticket,
         minRefreshIntervalMs: 0
       });
@@ -744,11 +839,8 @@ describe('signingKeys', () => {
     });
 
     it('keeps refreshing the JWKS document when the provisioning ticket cannot be reached in JWKS mode', async () => {
-      const key = generateKey('kid-1');
-      const axiosStub = makeAxios(() => jwksResponse([key]));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: axiosStub,
+      const server = await serveJwks([generateKey('kid-1')]);
+      const signingKeys = forServer(server, {
         configureConnectionFn: makeTicket(new Error('Unexpected status while configuring connection: 503')),
         minRefreshIntervalMs: 0
       });
@@ -756,17 +848,14 @@ describe('signingKeys', () => {
       const refreshed = await signingKeys.refreshOnReconnect();
 
       expect(refreshed).to.equal(true);
-      expect(axiosStub.requests).to.have.length(1);
+      expect(server.requests).to.have.length(1);
       expect(signingKeys.useJwks()).to.equal(true);
     });
 
     it('throttles the provisioning ticket separately from the JWKS document', async () => {
-      const key = generateKey('kid-1');
       const ticket = makeTicket('');
-      const axiosStub = makeAxios(() => jwksResponse([key]));
-      const signingKeys = new SigningKeys({
-        configModule: makeConfig(),
-        axiosModule: axiosStub,
+      const server = await serveJwks([generateKey('kid-1')]);
+      const signingKeys = forServer(server, {
         configureConnectionFn: ticket,
         minRefreshIntervalMs: 60 * 1000
       });
@@ -776,21 +865,19 @@ describe('signingKeys', () => {
       await signingKeys.refreshOnReconnect();
 
       expect(ticket.calls).to.have.length(1);
-      expect(axiosStub.requests).to.have.length(1);
+      expect(server.requests).to.have.length(1);
     });
   });
 
   describe('verify when the message does not match the current mode', () => {
-    function build({ ticket, startingKey = '', jwksKeys = [], minRefreshIntervalMs = 0 }) {
-      const config = makeConfig({ CONNECTION: 'my-ad', TENANT_SIGNING_KEY: startingKey });
-      const axiosStub = makeAxios(() => jwksResponse(jwksKeys));
-      const signingKeys = new SigningKeys({
-        configModule: config,
-        axiosModule: axiosStub,
+    async function build({ ticket, startingKey = '', jwksKeys = [], minRefreshIntervalMs = 0 }) {
+      const server = await serveJwks(jwksKeys);
+      const signingKeys = forServer(server, {
+        config: { CONNECTION: 'my-ad', TENANT_SIGNING_KEY: startingKey },
         configureConnectionFn: ticket,
         minRefreshIntervalMs
       });
-      return { signingKeys, config, axiosStub };
+      return { signingKeys, server };
     }
 
     const verifyAsync = (signingKeys, token) => new Promise((resolve) => {
@@ -801,7 +888,7 @@ describe('signingKeys', () => {
       const globalClientKey = generateKey('unused');
       const tenantKeys = [generateKey('kid-a'), generateKey('kid-b')];
       const ticket = makeTicket(globalClientKey.publicPem);
-      const { signingKeys } = build({ ticket, jwksKeys: tenantKeys });
+      const { signingKeys } = await build({ ticket, jwksKeys: tenantKeys });
 
       const { err, payload } = await verifyAsync(signingKeys, signWithoutKid(globalClientKey));
 
@@ -815,7 +902,7 @@ describe('signingKeys', () => {
       const globalClientKey = generateKey('unused');
       const tenantKey = generateKey('kid-tsk');
       const ticket = makeTicket('');
-      const { signingKeys } = build({ ticket, startingKey: globalClientKey.publicPem, jwksKeys: [tenantKey] });
+      const { signingKeys } = await build({ ticket, startingKey: globalClientKey.publicPem, jwksKeys: [tenantKey] });
 
       const { err, payload } = await verifyAsync(signingKeys, sign(tenantKey));
 
@@ -828,11 +915,11 @@ describe('signingKeys', () => {
     it('returns the original error, after a single ticket call, when the server still sends the same key', async () => {
       const forger = generateKey('unused');
       const ticket = makeTicket('');
-      const { signingKeys } = build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')] });
+      const { signingKeys } = await build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')] });
 
       const { err } = await verifyAsync(signingKeys, signWithoutKid(forger));
 
-      expect(err.message).to.contain('ambiguous');
+      expect(err.message).to.contain('more than 1 key');
       expect(ticket.calls).to.have.length(1);
       expect(signingKeys.useJwks()).to.equal(true);
     });
@@ -841,7 +928,7 @@ describe('signingKeys', () => {
       const published = generateKey('kid-a');
       const forged = generateKey('kid-a');
       const ticket = makeTicket('');
-      const { signingKeys } = build({ ticket, jwksKeys: [published] });
+      const { signingKeys } = await build({ ticket, jwksKeys: [published] });
 
       const { err } = await verifyAsync(signingKeys, sign(forged));
 
@@ -852,18 +939,18 @@ describe('signingKeys', () => {
     it('returns the original error when the provisioning ticket cannot be reached', async () => {
       const globalClientKey = generateKey('unused');
       const ticket = makeTicket(new Error('Unexpected status while configuring connection: 503'));
-      const { signingKeys } = build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')] });
+      const { signingKeys } = await build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')] });
 
       const { err } = await verifyAsync(signingKeys, signWithoutKid(globalClientKey));
 
-      expect(err.message).to.contain('no kid');
+      expect(err.message).to.contain('more than 1 key');
       expect(signingKeys.useJwks()).to.equal(true);
     });
 
     it('limits how often a failed verification can re-read the provisioning ticket', async () => {
       const forger = generateKey('unused');
       const ticket = makeTicket('');
-      const { signingKeys } = build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')], minRefreshIntervalMs: 60 * 1000 });
+      const { signingKeys } = await build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')], minRefreshIntervalMs: 60 * 1000 });
 
       await verifyAsync(signingKeys, signWithoutKid(forger));
       await verifyAsync(signingKeys, signWithoutKid(forger));
@@ -875,7 +962,7 @@ describe('signingKeys', () => {
     it('shares one provisioning ticket call between concurrent failed verifications', async () => {
       const globalClientKey = generateKey('unused');
       const ticket = makeTicket(globalClientKey.publicPem);
-      const { signingKeys } = build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')], minRefreshIntervalMs: 60 * 1000 });
+      const { signingKeys } = await build({ ticket, jwksKeys: [generateKey('kid-a'), generateKey('kid-b')], minRefreshIntervalMs: 60 * 1000 });
 
       const results = await Promise.all([1, 2, 3].map(() => verifyAsync(signingKeys, signWithoutKid(globalClientKey))));
 
