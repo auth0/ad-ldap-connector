@@ -93,6 +93,12 @@ async function setupWebsocket() {
         callback = function () {};
       }
 
+      // Checked before the timeout below is armed: a timeout armed for a ping that is never sent would
+      // call back a second time, a few seconds after this one.
+      if (client.readyState !== WebSocket.OPEN) {
+        return callback(null, { failed_pings: 0 });
+      }
+
       var pong = cb(function (err) {
         if (err instanceof cb.TimeoutError &&
             client.listeners('pong').length > 0) {
@@ -106,10 +112,6 @@ async function setupWebsocket() {
         }
         callback(null, { failed_pings: count });
       }).timeout(ms('4s'));
-
-      if (client.readyState !== WebSocket.OPEN) {
-        return callback(null, { failed_pings: 0 });
-      }
 
       client.once('pong', pong).ping('');
     }

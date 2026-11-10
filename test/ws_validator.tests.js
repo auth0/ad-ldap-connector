@@ -241,6 +241,26 @@ describe('ws_validator', () => {
     });
   });
 
+  it('does not call back twice when the socket closes before the next ping', () => {
+    const { mock } = require('node:test');
+    mock.timers.enable({ apis: ['setTimeout'] });
+
+    try {
+      // The mock socket has no `OPEN` constant, so `undefined` is the open state here.
+      mockWebSocketInstance.readyState = undefined;
+      mockWebSocketInstance.emit('authenticated', {});
+      // The hub goes away after the loop has scheduled its next ping.
+      mockWebSocketInstance.readyState = 3;
+
+      expect(() => {
+        mock.timers.tick(5000);
+        mock.timers.tick(5000);
+      }).to.not.throw();
+    } finally {
+      mock.timers.reset();
+    }
+  });
+
   it('does not throw when the socket is not open for the reply to a rejected request', () => {
     captureSent();
     const before = usersCalls.length;
