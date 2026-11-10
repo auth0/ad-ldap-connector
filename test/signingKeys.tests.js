@@ -2,6 +2,7 @@ require('colors');
 
 const { expect } = require('chai');
 const crypto = require('crypto');
+const forge = require('node-forge');
 const jwt = require('jsonwebtoken');
 
 const { SigningKeys } = require('../lib/signingKeys');
@@ -346,6 +347,80 @@ describe('signingKeys', () => {
         expect(err.message).to.match(/invalid algorithm/i);
         done();
       });
+    });
+  });
+
+  describe('static key mode with a certificate', () => {
+    /**
+     * Makes an RSA key pair and a self-signed certificate that is valid between the given years.
+     */
+    function generateCertificate(validFromYear, validToYear) {
+      const keys = forge.pki.rsa.generateKeyPair(2048);
+      const cert = forge.pki.createCertificate();
+      cert.publicKey = keys.publicKey;
+      cert.serialNumber = '01';
+      cert.validity.notBefore = new Date(Date.UTC(validFromYear, 0, 1));
+      cert.validity.notAfter = new Date(Date.UTC(validToYear, 0, 1));
+      const subject = [{ name: 'commonName', value: 'global-client-key' }];
+      cert.setSubject(subject);
+      cert.setIssuer(subject);
+      cert.sign(keys.privateKey, forge.md.sha256.create());
+
+      return {
+        certificatePem: forge.pki.certificateToPem(cert),
+        privatePem: forge.pki.privateKeyToPem(keys.privateKey)
+      };
+    }
+
+    const verifyAsync = (signingKeys, token) => new Promise((resolve) => {
+      signingKeys.verify(token, (err, payload) => resolve({ err, payload }));
+    });
+
+    // Like the hub: RS256, no expiry claim, no kid.
+    const signMessage = (privatePem, options = {}) => jwt.sign(
+      { pid: 'a-request-id', username: 'jsmith' },
+      privatePem,
+      { algorithm: 'RS256', ...options }
+    );
+
+    it('accepts a message signed with a key whose certificate has expired', async () => {
+      const expired = generateCertificate(2019, 2020);
+      const signingKeys = new SigningKeys({
+        configModule: makeConfig({ TENANT_SIGNING_KEY: expired.certificatePem })
+      });
+
+      const { err, payload } = await verifyAsync(signingKeys, signMessage(expired.privatePem));
+
+      // Verification does not look at the dates of the certificate, only at the signature.
+      expect(err).to.equal(null);
+      expect(payload.username).to.equal('jsmith');
+      expect(payload.pid).to.equal('a-request-id');
+    });
+
+    it('rejects a message signed with a different key than the certificate', async () => {
+      const expired = generateCertificate(2019, 2020);
+      const other = generateCertificate(2019, 2020);
+      const signingKeys = new SigningKeys({
+        configModule: makeConfig({ TENANT_SIGNING_KEY: expired.certificatePem })
+      });
+
+      const { err } = await verifyAsync(signingKeys, signMessage(other.privatePem));
+
+      expect(err).to.be.ok;
+      expect(err.message).to.match(/invalid signature/i);
+    });
+
+    it('still rejects a message whose own expiry claim is in the past', async () => {
+      const expired = generateCertificate(2019, 2020);
+      const signingKeys = new SigningKeys({
+        configModule: makeConfig({ TENANT_SIGNING_KEY: expired.certificatePem })
+      });
+      const token = signMessage(expired.privatePem, { expiresIn: -60 });
+
+      const { err } = await verifyAsync(signingKeys, token);
+
+      expect(err).to.be.ok;
+      expect(err.name).to.equal('TokenExpiredError');
     });
   });
 
