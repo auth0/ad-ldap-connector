@@ -282,6 +282,10 @@ describe('ws_validator', () => {
     };
     const replies = () => events.filter((event) => event.n === 'pid-announce_result');
 
+    // The mock socket is closed, so the ping loop that 'authenticated' starts ends at once instead of
+    // running a timer that fires in a later test.
+    mockWebSocketInstance.readyState = 3;
+
     // An old hub accepts the connection without any payload.
     mockWebSocketInstance.emit('authenticated');
     rejectOnce();
