@@ -241,6 +241,26 @@ describe('ws_validator', () => {
     });
   });
 
+  it('does not throw when the socket is not open for the reply to a rejected request', () => {
+    captureSent();
+    const before = usersCalls.length;
+    const token = jwt.sign({ pid: 'pid-not-open', username: 'jdoe', password: 'secret' }, 'some secret');
+    mockSigningKeys.failWith = verificationFailure();
+    // The `ws` library throws this when a message is sent while the socket is connecting or closed,
+    // for example when the connector reconnected while the request was being verified.
+    const send = mockWebSocketInstance.send;
+    mockWebSocketInstance.send = () => { throw new Error('not opened'); };
+
+    try {
+      expect(() => mockWebSocketInstance.emit('authenticate_user', { jwt: token })).to.not.throw();
+    } finally {
+      mockSigningKeys.failWith = null;
+      mockWebSocketInstance.send = send;
+    }
+
+    expect(usersCalls.length).to.equal(before);
+  });
+
   ['TokenExpiredError', 'NotBeforeError'].forEach((name) => {
     it(`also replies when the request failed with ${name}, and says so`, () => {
       const events = captureSent();

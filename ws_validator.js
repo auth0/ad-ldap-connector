@@ -75,7 +75,16 @@ async function setupWebsocket() {
         return false;
       }
 
-      return rejectUnverified(token, err, replyEventSuffix, (event, payload) => ws.sendEvent(event, payload));
+      return rejectUnverified(token, err, replyEventSuffix, (event, payload) => {
+        // `ws` throws when the socket is not open, for example if the connector reconnected while the
+        // request was being verified. The reply is lost then, as it was before the reply existed, and
+        // the error must not escape the verification callback, where it would be an uncaught exception.
+        try {
+          ws.sendEvent(event, payload);
+        } catch (sendError) {
+          console.error('Could not reply to the hub: ' + sendError.message);
+        }
+      });
     }
 
     function ping(client, count, callback) {
