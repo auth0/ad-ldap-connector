@@ -55,6 +55,29 @@ async function setupWebsocket() {
       return this.sendEvent(pid + '_result', response);
     };
 
+    // Whether the hub announced, when it accepted this connection, that it understands the reply to a
+    // request that cannot be verified. Nothing is sent before it has announced it.
+    let hubRepliesToRejections = false;
+
+    /**
+     * Replies to the hub that a request could not be verified, but only if the hub announced that it
+     * understands the reply. A hub announces it only while it signs with the tenant signing key, the one
+     * key it can replace after a rotation. Otherwise the connector stays silent, as it always did, so a
+     * hub that does not know the reply (or a tenant on the global client key) sees no change.
+     *
+     * @param {string} token the request token that failed verification
+     * @param {Error} err the verification error
+     * @param {string} replyEventSuffix the suffix of the reply event for this request
+     * @return {boolean} true when a reply was sent
+     */
+    function rejectUnverifiedInJwksMode(token, err, replyEventSuffix) {
+      if (!hubRepliesToRejections) {
+        return false;
+      }
+
+      return rejectUnverified(token, err, replyEventSuffix, (event, payload) => ws.sendEvent(event, payload));
+    }
+
     function ping(client, count, callback) {
       if (typeof count === 'undefined') {
         count = 0;
@@ -108,7 +131,7 @@ async function setupWebsocket() {
       var client = this;
 
       // Remembered for this connection only. A new connection asks the hub again.
-      client.hubRepliesToRejections = hubAnnouncesReply(payload);
+      hubRepliesToRejections = hubAnnouncesReply(payload);
 
       async.whilst(
         function () {
@@ -149,7 +172,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attemp of authentication.');
           console.error('Reason: ' + err.message);
-          rejectUnverifiedInJwksMode(ws, msg.jwt, err, '_result');
+          rejectUnverifiedInJwksMode(msg.jwt, err, '_result');
           return;
         }
 
@@ -256,7 +279,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attemp of search_users.');
           console.error('Reason: ' + err.message);
-          rejectUnverifiedInJwksMode(ws, msg.jwt, err, '_search_users_result');
+          rejectUnverifiedInJwksMode(msg.jwt, err, '_search_users_result');
           return;
         }
 
@@ -282,7 +305,7 @@ async function setupWebsocket() {
         if (err) {
           console.error('Unauthorized attempt of list_groups');
           console.error('Reason: ' + err.message);
-          rejectUnverifiedInJwksMode(ws, msg.jwt, err, '_list_groups_result');
+          rejectUnverifiedInJwksMode(msg.jwt, err, '_list_groups_result');
           return;
         }
 
@@ -311,7 +334,7 @@ async function setupWebsocket() {
           if (err) {
             console.error('Unauthorized change_password attempt');
             console.error('Reason: ' + err.message);
-            rejectUnverifiedInJwksMode(ws, command.jwt, err, '_change_password_result');
+            rejectUnverifiedInJwksMode(command.jwt, err, '_change_password_result');
             return;
           };
 
@@ -403,25 +426,5 @@ setInterval(() => {
     reconnect()
   }
 }, reconnectionInterval)
-
-/**
- * Replies to the hub that a request could not be verified, but only if the hub announced when it accepted
- * this connection that it understands the reply. A hub announces it only while it signs with the tenant
- * signing key, the one key it can replace after a rotation. Otherwise the connector stays silent, as it
- * always did, so a hub that does not know the reply (or a tenant on the global client key) sees no change.
- *
- * @param {object} ws the websocket to the hub
- * @param {string} token the request token that failed verification
- * @param {Error} err the verification error
- * @param {string} replyEventSuffix the suffix of the reply event for this request
- * @return {boolean} true when a reply was sent
- */
-function rejectUnverifiedInJwksMode(ws, token, err, replyEventSuffix) {
-  if (!ws.hubRepliesToRejections) {
-    return false;
-  }
-
-  return rejectUnverified(token, err, replyEventSuffix, (event, payload) => ws.sendEvent(event, payload));
-}
 
 module.exports = emitter;

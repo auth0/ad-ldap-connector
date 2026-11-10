@@ -197,9 +197,19 @@ describe('ws_validator', () => {
     return err;
   }
 
+  const HUB_ANNOUNCES_REPLY = { features: ['invalid_signature_reply'] };
+
+  // The hub accepts the connection, with the given payload in its `authenticated` event. The mock socket
+  // is closed first, so the ping loop that `authenticated` starts ends at once instead of running a timer
+  // that fires in a later test.
+  function hubAccepts(payload) {
+    mockWebSocketInstance.readyState = 3;
+    mockWebSocketInstance.emit('authenticated', payload);
+  }
+
   // Starts a test as a connector whose hub announced the reply when it accepted the connection.
   function captureSent() {
-    mockWebSocketInstance.hubRepliesToRejections = true;
+    hubAccepts(HUB_ANNOUNCES_REPLY);
     const events = [];
     mockWebSocketInstance.on('send', (event) => events.push(JSON.parse(event)));
     return events;
@@ -256,13 +266,13 @@ describe('ws_validator', () => {
       const events = captureSent();
       const token = jwt.sign({ pid: 'pid-' + hubEvent, username: 'jdoe', password: 'secret' }, 'some secret');
       mockSigningKeys.failWith = verificationFailure();
-      mockWebSocketInstance.hubRepliesToRejections = false;
+      // A new connection, accepted by a hub that does not announce the reply.
+      hubAccepts({ features: [] });
 
       try {
         mockWebSocketInstance.emit(hubEvent, { jwt: token });
       } finally {
         mockSigningKeys.failWith = null;
-        mockWebSocketInstance.hubRepliesToRejections = true;
       }
 
       expect(events.filter((event) => /_result$/.test(event.n))).to.have.length(0);
@@ -270,7 +280,8 @@ describe('ws_validator', () => {
   });
 
   it('only replies after the hub announced the reply when it accepted the connection', () => {
-    const events = captureSent();
+    const events = [];
+    mockWebSocketInstance.on('send', (event) => events.push(JSON.parse(event)));
     const token = jwt.sign({ pid: 'pid-announce', username: 'jdoe' }, 'some secret');
     const rejectOnce = () => {
       mockSigningKeys.failWith = verificationFailure();
@@ -282,21 +293,17 @@ describe('ws_validator', () => {
     };
     const replies = () => events.filter((event) => event.n === 'pid-announce_result');
 
-    // The mock socket is closed, so the ping loop that 'authenticated' starts ends at once instead of
-    // running a timer that fires in a later test.
-    mockWebSocketInstance.readyState = 3;
-
     // An old hub accepts the connection without any payload.
-    mockWebSocketInstance.emit('authenticated');
+    hubAccepts();
     rejectOnce();
     expect(replies()).to.have.length(0);
 
     // A hub that does not use the reply for this tenant announces nothing.
-    mockWebSocketInstance.emit('authenticated', { features: [] });
+    hubAccepts({ features: [] });
     rejectOnce();
     expect(replies()).to.have.length(0);
 
-    mockWebSocketInstance.emit('authenticated', { features: ['invalid_signature_reply'] });
+    hubAccepts(HUB_ANNOUNCES_REPLY);
     rejectOnce();
     expect(replies()).to.have.length(1);
   });
