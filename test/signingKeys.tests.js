@@ -284,6 +284,67 @@ describe('signingKeys', () => {
       expect(err.message).to.match(/more than 1 key/);
     });
 
+    // Runs `fn` with console.log captured, and returns what it logged.
+    async function loggedDuring(fn) {
+      const lines = [];
+      const original = console.log;
+      console.log = (...args) => lines.push(args.join(' '));
+      try {
+        await fn();
+      } finally {
+        console.log = original;
+      }
+      return lines;
+    }
+
+    it('logs the fetch that an unknown kid causes, like the fetch on a refresh', async () => {
+      const oldKey = generateKey('kid-old');
+      const newKey = generateKey('kid-new');
+      const server = await serveJwks([oldKey]);
+      const signingKeys = forServer(server, { cacheMaxAgeMs: 60 * 60 * 1000, minRefreshIntervalMs: 0 });
+      await verifyAsync(signingKeys, sign(oldKey));
+      server.keys = [newKey];
+
+      const lines = await loggedDuring(() => verifyAsync(signingKeys, sign(newKey)));
+
+      expect(lines.filter((line) => /^(Fetching|Loaded) /.test(line))).to.deep.equal([
+        'Fetching tenant signing keys from ' + server.jwksUri,
+        'Loaded 1 tenant signing key(s).'
+      ]);
+    });
+
+    it('logs the key id, and only that, when the key that verifies a message changes', async () => {
+      const oldKey = generateKey('kid-old');
+      const newKey = generateKey('kid-new');
+      const server = await serveJwks([oldKey]);
+      const signingKeys = forServer(server, { cacheMaxAgeMs: 60 * 60 * 1000, minRefreshIntervalMs: 0 });
+
+      const lines = await loggedDuring(async () => {
+        await verifyAsync(signingKeys, sign(oldKey));
+        await verifyAsync(signingKeys, sign(oldKey));
+        server.keys = [newKey];
+        await verifyAsync(signingKeys, sign(newKey));
+        await verifyAsync(signingKeys, sign(newKey));
+      });
+
+      expect(lines.filter((line) => /^Verified /.test(line))).to.deep.equal([
+        'Verified a hub message with a new tenant signing key (kid kid-new); the previous one was kid-old.'
+      ]);
+      expect(lines.join('\n')).to.not.match(/BEGIN|PRIVATE|"n":/);
+    });
+
+    it('does not log a key id for a message that fails verification', async () => {
+      const published = generateKey('kid-1');
+      const rogue = generateKey('kid-rogue');
+      const server = await serveJwks([published]);
+      const signingKeys = forServer(server);
+      await verifyAsync(signingKeys, sign(published));
+
+      const lines = await loggedDuring(() => verifyError(signingKeys, sign(rogue)));
+
+      expect(lines.filter((line) => /^Verified /.test(line))).to.deep.equal([]);
+    });
+
     it('re-fetches on an unknown kid even while the cached keys are still fresh', async () => {
       const oldKey = generateKey('kid-old');
       const newKey = generateKey('kid-new');
