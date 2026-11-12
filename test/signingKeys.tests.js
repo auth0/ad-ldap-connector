@@ -677,6 +677,32 @@ describe('signingKeys', () => {
       expect(server.requests).to.deep.equal(['/.well-known/jwks.json']);
     });
 
+    it('does not run the provisioning ticket again right after the initial setup did, but still reads the JWKS document', async () => {
+      const server = await serveJwks([generateKey('kid-1')]);
+      const ticket = makeTicket('');
+      const signingKeys = forServer(server, { configureConnectionFn: ticket });
+
+      // server.js ran the provisioning ticket process itself during the initial setup.
+      signingKeys.markTicketAttempt();
+      const refreshed = await signingKeys.refreshOnReconnect();
+
+      expect(refreshed).to.equal(true);
+      expect(ticket.calls).to.have.length(0);
+      expect(server.requests).to.deep.equal(['/.well-known/jwks.json']);
+    });
+
+    it('runs the provisioning ticket again on a reconnect after the cooldown that follows the initial setup', async () => {
+      const server = await serveJwks([generateKey('kid-1')]);
+      const ticket = makeTicket('');
+      const signingKeys = forServer(server, { configureConnectionFn: ticket, minRefreshIntervalMs: 20 });
+
+      signingKeys.markTicketAttempt();
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      await signingKeys.refreshOnReconnect();
+
+      expect(ticket.calls).to.have.length(1);
+    });
+
     it('picks up a rotated key on reconnect', async () => {
       const oldKey = generateKey('kid-old');
       const newKey = generateKey('kid-new');

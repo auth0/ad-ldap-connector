@@ -18,6 +18,7 @@ const secureStorage = require('./lib/secureStorage');
 const cas = require('./lib/add_certs');
 const { loadProvisioningTicket } = require('./lib/provisioningTicket');
 const { configureConnection } = require('./lib/configureConnection');
+const signingKeys = require('./lib/signingKeys');
 
 
 function end () {
@@ -54,6 +55,7 @@ async function startup({
   loadTicket = loadProvisioningTicket,
   initCerts = (opts) => certificates.initialize(opts),
   configureAuth0LDAPConnection = configureConnection,
+  markTicketAttempt = () => signingKeys.markTicketAttempt(),
   storageGet = (key) => secureStorage.get(key),
   storageStore = (key, val) => secureStorage.store(key, val),
   injectCAs = () => cas.injectAsync(),
@@ -125,6 +127,9 @@ async function startup({
       provisioningTicket,
       connectionName: ticketInfo.connectionName,
     });
+
+    // The first websocket connect refreshes the signing key through the same ticket; it can skip that.
+    markTicketAttempt();
 
     config.set('SERVER_URL', serverUrl);
     config.set('LAST_SENT_THUMBPRINT', certThumbprint);
