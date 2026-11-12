@@ -44,7 +44,7 @@ function generateCert() {
   return { cert: pems.cert, key: pems.private };
 }
 
-function makeStartupMocks({ injectCAs } = {}) {
+function makeStartupMocks({ injectCAs, markTicketAttempt } = {}) {
   const mocks = {
     processBridgeFile: async () => {},
     configInitialize: async () => {},
@@ -74,6 +74,10 @@ function makeStartupMocks({ injectCAs } = {}) {
 
   if (injectCAs !== undefined) {
     mocks.injectCAs = injectCAs;
+  }
+
+  if (markTicketAttempt !== undefined) {
+    mocks.markTicketAttempt = markTicketAttempt;
   }
 
   return mocks;
@@ -107,6 +111,20 @@ describe('server.js startup — scaffold and basic LDAP connectivity', function 
 
   it('runs the full injectable startup sequence to completion with injected mocks', async function () {
     await startup(makeStartupMocks());
+  });
+
+  it('tells the signing key module that the provisioning ticket ran, after the initial setup', async function () {
+    const order = [];
+    const mocks = makeStartupMocks({ markTicketAttempt: () => order.push('marked') });
+    const configure = mocks.configureAuth0LDAPConnection;
+    mocks.configureAuth0LDAPConnection = async (args) => {
+      order.push('configured');
+      return configure(args);
+    };
+
+    await startup(mocks);
+
+    expect(order).to.deep.equal(['configured', 'marked']);
   });
 
   it('establishes a basic LDAP connection after startup (bind + search)', async function () {

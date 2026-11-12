@@ -26,6 +26,8 @@ const WrongUsername = require('./lib/errors/WrongUsername');
 const InsufficientAccessRightsError = require('./lib/errors/InsufficientAccessRightsError');
 const PasswordComplexityError = require('./lib/errors/PasswordComplexityError');
 const certificates = require('./lib/certificates');
+const signingKeys = require('./lib/signingKeys');
+const { rejectUnverified, hubAnnouncesReply } = require('./lib/rejectUnverified');
 var ws;
 
 const emitter = new EventEmitter();
@@ -52,6 +54,38 @@ async function setupWebsocket() {
     ws.reply = function (pid, response) {
       return this.sendEvent(pid + '_result', response);
     };
+
+    // Whether the hub announced, when it accepted this connection, that it understands the reply to a
+    // request that cannot be verified. Nothing is sent before it has announced it.
+    let hubRepliesToRejections = false;
+
+    /**
+     * Replies to the hub that a request could not be verified, but only if the hub announced that it
+     * understands the reply. A hub announces it only while it signs with the tenant signing key, the one
+     * key it can replace after a rotation. Otherwise the connector stays silent, as it always did, so a
+     * hub that does not know the reply (or a tenant on the global client key) sees no change.
+     *
+     * @param {string} token the request token that failed verification
+     * @param {Error} err the verification error
+     * @param {string} replyEventSuffix the suffix of the reply event for this request
+     * @return {boolean} true when a reply was sent
+     */
+    function rejectUnverifiedInJwksMode(token, err, replyEventSuffix) {
+      if (!hubRepliesToRejections) {
+        return false;
+      }
+
+      return rejectUnverified(token, err, replyEventSuffix, (event, payload) => {
+        // `ws` throws when the socket is not open, for example if the connector reconnected while the
+        // request was being verified. The reply is lost then, as it was before the reply existed, and
+        // the error must not escape the verification callback, where it would be an uncaught exception.
+        try {
+          ws.sendEvent(event, payload);
+        } catch (sendError) {
+          console.error('Could not reply to the hub: ' + sendError.message);
+        }
+      });
+    }
 
     function ping(client, count, callback) {
       if (typeof count === 'undefined') {
@@ -101,9 +135,12 @@ async function setupWebsocket() {
       console.error('Socket error: ' + err);
       openedSocket = false;
       reject(err);
-    }).on('authenticated', function () {
+    }).on('authenticated', function (payload) {
       log_from_auth0('Agent accepted.');
       var client = this;
+
+      // Remembered for this connection only. A new connection asks the hub again.
+      hubRepliesToRejections = hubAnnouncesReply(payload);
 
       async.whilst(
         function () {
@@ -140,9 +177,11 @@ async function setupWebsocket() {
         openedSocket = false;
       }
     }).on('authenticate_user', function (msg) {
-      jwt.verify(msg.jwt, config.get('TENANT_SIGNING_KEY'), function (err, payload) {
+      signingKeys.verify(msg.jwt, function (err, payload) {
         if (err) {
           console.error('Unauthorized attemp of authentication.');
+          console.error('Reason: ' + err.message);
+          rejectUnverifiedInJwksMode(msg.jwt, err, '_result');
           return;
         }
 
@@ -245,9 +284,11 @@ async function setupWebsocket() {
         });
       });
     }).on('search_users', function (msg) {
-      jwt.verify(msg.jwt, config.get('TENANT_SIGNING_KEY'), function (err, payload) {
+      signingKeys.verify(msg.jwt, function (err, payload) {
         if (err) {
           console.error('Unauthorized attemp of search_users.');
+          console.error('Reason: ' + err.message);
+          rejectUnverifiedInJwksMode(msg.jwt, err, '_search_users_result');
           return;
         }
 
@@ -269,9 +310,11 @@ async function setupWebsocket() {
         });
       });
     }).on('list_groups', function(msg) {
-      jwt.verify(msg.jwt, config.get('TENANT_SIGNING_KEY'), function(err, payload) {
+      signingKeys.verify(msg.jwt, function(err, payload) {
         if (err) {
           console.error('Unauthorized attempt of list_groups');
+          console.error('Reason: ' + err.message);
+          rejectUnverifiedInJwksMode(msg.jwt, err, '_list_groups_result');
           return;
         }
 
@@ -296,9 +339,11 @@ async function setupWebsocket() {
     // Listen only for change_password event when write back is enabled.
     if (config.get('ENABLE_WRITE_BACK')) {
       ws.on('change_password', function (command) {
-        jwt.verify(command.jwt, config.get('TENANT_SIGNING_KEY'), function (err, payload) {
+        signingKeys.verify(command.jwt, function (err, payload) {
           if (err) {
             console.error('Unauthorized change_password attempt');
+            console.error('Reason: ' + err.message);
+            rejectUnverifiedInJwksMode(command.jwt, err, '_change_password_result');
             return;
           };
 
@@ -361,6 +406,13 @@ async function setupWebsocket() {
 
 async function reconnect() {
   try {
+    // The hub may have rotated the key it signs messages with while the socket was down, so the
+    // key captured during setup cannot be assumed current. Depending on what the Auth0 server replied
+    // with during the provisioning ticket process, this either re-reads the JWKS document or runs
+    // the provisioning ticket process again. Failures are logged and swallowed inside
+    // refreshOnReconnect so that a temporarily unreachable tenant never blocks the reconnect.
+    await signingKeys.refreshOnReconnect();
+
     console.log('Connecting to websocket...');
     await setupWebsocket();
     console.log('Connected to websocket');

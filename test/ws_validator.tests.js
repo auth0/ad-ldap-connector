@@ -25,7 +25,7 @@ class MockWebSocket {
   }
 
   emit (eventType, event) {
-    this.getHandlers(eventType).forEach((handler) => handler(event));
+    this.getHandlers(eventType).forEach((handler) => handler.call(this, event));
   }
 
   send (event) {
@@ -45,7 +45,32 @@ class MockWebSocket {
   }
 }
 
-class MockUsers {}
+const usersCalls = [];
+
+class MockUsers {
+  validate (username, password, options, callback) {
+    usersCalls.push('validate');
+    callback(null, { username });
+  }
+}
+
+// Records the calls ws_validator makes into the signing key module.
+const mockSigningKeys = {
+  refreshOnReconnectCalls: 0,
+  verifyCalls: [],
+  refreshOnReconnect: async function () {
+    this.refreshOnReconnectCalls++;
+    return true;
+  },
+  failWith: null,
+  verify: function (token, callback) {
+    this.verifyCalls.push(token);
+    if (this.failWith) {
+      return callback(this.failWith);
+    }
+    callback(null, { username: 'jsmith', pid: 'a-pid' });
+  }
+};
 
 const mockConfig = {
   values: {},
@@ -113,11 +138,19 @@ describe('ws_validator', () => {
   mockConfig.set('CONNECTION', 'test-ad');
   mockConfig.set('REALM', 'urn:auth0:example');
   mockConfig.set('WS_RECONNECT_INTERVAL_MS', 1000);
+  mockConfig.set('ENABLE_WRITE_BACK', true);
 
   const wsValidator = proxyquire('../ws_validator', {
     'ws': MockWebSocket,
     './lib/config': mockConfig,
     './lib/users': MockUsers,
+    './lib/signingKeys': mockSigningKeys,
+    // ws_validator reads the connector's own key from disk via lib/certificates, so the in-memory
+    // config above is not enough to let it sign the authenticate token.
+    './lib/certificates': {
+      getPrivateKey: () => key,
+      getCertificate: () => cert,
+    },
   });
   
   it('authenticate_connector', () => {
@@ -143,14 +176,226 @@ describe('ws_validator', () => {
     expect(decoded.exp - testStart).to.equal(60);
   });
 
+  it('re-fetches the tenant signing key on the initial connect', () => {
+    // reconnect() runs at module load, so by now the refresh has already been requested.
+    expect(mockSigningKeys.refreshOnReconnectCalls).to.be.at.least(1);
+  });
+
+  it('verifies hub messages through the signing key module', () => {
+    const before = mockSigningKeys.verifyCalls.length;
+
+    mockWebSocketInstance.emit('authenticate_user', { jwt: 'a-hub-token' });
+
+    expect(mockSigningKeys.verifyCalls.length).to.equal(before + 1);
+    expect(mockSigningKeys.verifyCalls[before]).to.equal('a-hub-token');
+  });
+
+
+  function verificationFailure() {
+    const err = new Error('invalid signature');
+    err.name = 'JsonWebTokenError';
+    return err;
+  }
+
+  const HUB_ANNOUNCES_REPLY = { features: ['invalid_signature_reply'] };
+
+  // The hub accepts the connection, with the given payload in its `authenticated` event. The mock socket
+  // is closed first, so the ping loop that `authenticated` starts ends at once instead of running a timer
+  // that fires in a later test.
+  function hubAccepts(payload) {
+    mockWebSocketInstance.readyState = 3;
+    mockWebSocketInstance.emit('authenticated', payload);
+  }
+
+  // Starts a test as a connector whose hub announced the reply when it accepted the connection.
+  function captureSent() {
+    hubAccepts(HUB_ANNOUNCES_REPLY);
+    const events = [];
+    mockWebSocketInstance.on('send', (event) => events.push(JSON.parse(event)));
+    return events;
+  }
+
+  [
+    ['authenticate_user', '_result'],
+    ['search_users', '_search_users_result'],
+    ['list_groups', '_list_groups_result'],
+    ['change_password', '_change_password_result']
+  ].forEach(([hubEvent, replyEvent]) => {
+    it(`replies to a rejected ${hubEvent} request with invalid_signature and runs nothing`, () => {
+      const events = captureSent();
+      const before = usersCalls.length;
+      const token = jwt.sign({ pid: 'pid-' + hubEvent, username: 'jdoe', password: 'secret' }, 'some secret');
+      mockSigningKeys.failWith = verificationFailure();
+
+      try {
+        mockWebSocketInstance.emit(hubEvent, { jwt: token });
+      } finally {
+        mockSigningKeys.failWith = null;
+      }
+
+      const replies = events.filter((event) => event.n === 'pid-' + hubEvent + replyEvent);
+      expect(replies).to.have.length(1);
+      expect(replies[0].p.err.code).to.equal('invalid_signature');
+      expect(replies[0].p.err.reason).to.equal('JsonWebTokenError');
+      expect(usersCalls.length).to.equal(before);
+    });
+  });
+
+  it('does not call back twice when the socket closes before the next ping', () => {
+    const { mock } = require('node:test');
+    mock.timers.enable({ apis: ['setTimeout'] });
+
+    try {
+      // The mock socket has no `OPEN` constant, so `undefined` is the open state here.
+      mockWebSocketInstance.readyState = undefined;
+      mockWebSocketInstance.emit('authenticated', {});
+      // The hub goes away after the loop has scheduled its next ping.
+      mockWebSocketInstance.readyState = 3;
+
+      expect(() => {
+        mock.timers.tick(5000);
+        mock.timers.tick(5000);
+      }).to.not.throw();
+    } finally {
+      mock.timers.reset();
+    }
+  });
+
+  it('does not throw when the socket is not open for the reply to a rejected request', () => {
+    captureSent();
+    const before = usersCalls.length;
+    const token = jwt.sign({ pid: 'pid-not-open', username: 'jdoe', password: 'secret' }, 'some secret');
+    mockSigningKeys.failWith = verificationFailure();
+    // The `ws` library throws this when a message is sent while the socket is connecting or closed,
+    // for example when the connector reconnected while the request was being verified.
+    const send = mockWebSocketInstance.send;
+    mockWebSocketInstance.send = () => { throw new Error('not opened'); };
+
+    try {
+      expect(() => mockWebSocketInstance.emit('authenticate_user', { jwt: token })).to.not.throw();
+    } finally {
+      mockSigningKeys.failWith = null;
+      mockWebSocketInstance.send = send;
+    }
+
+    expect(usersCalls.length).to.equal(before);
+  });
+
+  ['TokenExpiredError', 'NotBeforeError'].forEach((name) => {
+    it(`also replies when the request failed with ${name}, and says so`, () => {
+      const events = captureSent();
+      const token = jwt.sign({ pid: 'pid-' + name, username: 'jdoe' }, 'some secret');
+      const failure = verificationFailure();
+      failure.name = name;
+      mockSigningKeys.failWith = failure;
+
+      try {
+        mockWebSocketInstance.emit('authenticate_user', { jwt: token });
+      } finally {
+        mockSigningKeys.failWith = null;
+      }
+
+      const replies = events.filter((event) => event.n === 'pid-' + name + '_result');
+      expect(replies).to.have.length(1);
+      expect(replies[0].p.err.reason).to.equal(name);
+    });
+  });
+
+  [['authenticate_user'], ['search_users'], ['list_groups'], ['change_password']].forEach(([hubEvent]) => {
+    it(`stays silent for a rejected ${hubEvent} request when the hub did not announce the reply, as before`, () => {
+      const events = captureSent();
+      const token = jwt.sign({ pid: 'pid-' + hubEvent, username: 'jdoe', password: 'secret' }, 'some secret');
+      mockSigningKeys.failWith = verificationFailure();
+      // A new connection, accepted by a hub that does not announce the reply.
+      hubAccepts({ features: [] });
+
+      try {
+        mockWebSocketInstance.emit(hubEvent, { jwt: token });
+      } finally {
+        mockSigningKeys.failWith = null;
+      }
+
+      expect(events.filter((event) => /_result$/.test(event.n))).to.have.length(0);
+    });
+  });
+
+  it('only replies after the hub announced the reply when it accepted the connection', () => {
+    const events = [];
+    mockWebSocketInstance.on('send', (event) => events.push(JSON.parse(event)));
+    const token = jwt.sign({ pid: 'pid-announce', username: 'jdoe' }, 'some secret');
+    const rejectOnce = () => {
+      mockSigningKeys.failWith = verificationFailure();
+      try {
+        mockWebSocketInstance.emit('authenticate_user', { jwt: token });
+      } finally {
+        mockSigningKeys.failWith = null;
+      }
+    };
+    const replies = () => events.filter((event) => event.n === 'pid-announce_result');
+
+    // An old hub accepts the connection without any payload.
+    hubAccepts();
+    rejectOnce();
+    expect(replies()).to.have.length(0);
+
+    // A hub that does not use the reply for this tenant announces nothing.
+    hubAccepts({ features: [] });
+    rejectOnce();
+    expect(replies()).to.have.length(0);
+
+    hubAccepts(HUB_ANNOUNCES_REPLY);
+    rejectOnce();
+    expect(replies()).to.have.length(1);
+  });
+
+  it('tells the hub which key id the rejected request was signed with', () => {
+    const events = captureSent();
+    const token = jwt.sign({ pid: 'pid-kid', username: 'jdoe' }, 'some secret', { keyid: 'kid-a' });
+    mockSigningKeys.failWith = verificationFailure();
+
+    try {
+      mockWebSocketInstance.emit('authenticate_user', { jwt: token });
+    } finally {
+      mockSigningKeys.failWith = null;
+    }
+
+    const replies = events.filter((event) => event.n === 'pid-kid_result');
+    expect(replies).to.have.length(1);
+    expect(replies[0].p.err.kid).to.equal('kid-a');
+  });
+
+  it('stays silent for a rejected request whose token carries no pid', () => {
+    const events = captureSent();
+    mockSigningKeys.failWith = verificationFailure();
+
+    try {
+      mockWebSocketInstance.emit('authenticate_user', { jwt: jwt.sign({ username: 'jdoe' }, 'some secret') });
+    } finally {
+      mockSigningKeys.failWith = null;
+    }
+
+    expect(events.filter((event) => /_result$/.test(event.n))).to.have.length(0);
+  });
+
   it('terminate socket on error', (done) => {
     mockWebSocketInstance.on('mockTerminated', () => {
       // terminate has been called on socket by the reconnection timer, all good.
       done();
     });
-    
+
     // trigger error
     mockWebSocketInstance.emit('error', new Error('test'));
+  });
+
+  it('re-fetches the tenant signing key on reconnect', (done) => {
+    const before = mockSigningKeys.refreshOnReconnectCalls;
+
+    // The reconnection timer rebuilds the socket after WS_RECONNECT_INTERVAL_MS, which must
+    // refresh the signing key before connecting again.
+    setTimeout(() => {
+      expect(mockSigningKeys.refreshOnReconnectCalls).to.be.above(before);
+      done();
+    }, 2500);
   });
 
 });
